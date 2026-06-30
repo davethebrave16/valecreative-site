@@ -1,0 +1,87 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro'
+import { getArtworks, getPublishedSeries, getContentBySlug } from '@/lib/fetchContent'
+
+const [allArtworks, series, hero] = await Promise.all([
+	getArtworks(),
+	getPublishedSeries(),
+	getContentBySlug('homepage_hero'),
+])
+
+const featuredArtworks = allArtworks.filter((a) => a.featured).slice(0, 6)
+---
+
+<BaseLayout title="Home">
+	{hero && (
+		<section style="margin-bottom: 2rem;">
+			<h1>{hero.title}</h1>
+			<div class="prose" set:html={hero.body} />
+		</section>
+	)}
+
+	{!hero && (
+		<section style="margin-bottom: 2rem;">
+			<h1>Vale Creative</h1>
+			<p>The portfolio of Valentina Damiano.</p>
+		</section>
+	)}
+
+	{featuredArtworks.length > 0 && (
+		<section style="margin-bottom: 3rem;">
+			<h2>Featured Works</h2>
+			<div class="grid" style="margin-top: 1rem;">
+				{featuredArtworks.map((artwork) => (
+					<a href={`/works/${artwork.slug}`} class="card" style="text-decoration: none;">
+						{artwork.coverImage?.thumb && (
+							<img
+								src={artwork.coverImage.thumb}
+								alt={artwork.coverImage.alt ?? artwork.title}
+								width={artwork.coverImage.width}
+								height={artwork.coverImage.height}
+								loading="lazy"
+								style="width: 100%; aspect-ratio: 1; object-fit: cover;"
+							/>
+						)}
+						{!artwork.coverImage?.thumb && (
+							<div style="width: 100%; aspect-ratio: 1; background: #f0f0f0;" />
+						)}
+						<div class="card-body">
+							<h3>{artwork.title}</h3>
+							<p style="color: #666; font-size: 0.875rem;">{artwork.year}</p>
+						</div>
+					</a>
+				))}
+			</div>
+			<p style="margin-top: 1.5rem;">
+				<a href="/works">View all works →</a>
+			</p>
+		</section>
+	)}
+
+	{series.length > 0 && (
+		<section>
+			<h2>Series</h2>
+			<div class="grid" style="margin-top: 1rem;">
+				{series.map((s) => (
+					<a href={`/series/${s.slug}`} class="card" style="text-decoration: none;">
+						{s.coverImage?.thumb && (
+							<img
+								src={s.coverImage.thumb}
+								alt={s.coverImage.alt ?? s.name}
+								loading="lazy"
+								style="width: 100%; aspect-ratio: 4/3; object-fit: cover;"
+							/>
+						)}
+						{!s.coverImage?.thumb && (
+							<div style="width: 100%; aspect-ratio: 4/3; background: #f0f0f0;" />
+						)}
+						<div class="card-body">
+							<h3>{s.name}</h3>
+							{s.description && <p style="color: #666; font-size: 0.875rem;">{s.description}</p>}
+						</div>
+					</a>
+				))}
+			</div>
+		</section>
+	)}
+</BaseLayout>

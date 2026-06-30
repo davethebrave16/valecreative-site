@@ -1,0 +1,75 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro'
+import { getPublishedSeries, getArtworks } from '@/lib/fetchContent'
+import type { Series } from '@/lib/types'
+
+export async function getStaticPaths() {
+	const series = await getPublishedSeries()
+	return series.map((s) => ({
+		params: { slug: s.slug },
+		props: { series: s },
+	}))
+}
+
+interface Props {
+	series: Series
+}
+
+const { series } = Astro.props
+const allArtworks = await getArtworks()
+const artworks = allArtworks.filter((a) => a.seriesId === series.id)
+---
+
+<BaseLayout title={series.name} description={series.description}>
+	<article>
+		<h1>{series.name}</h1>
+
+		{series.coverImage?.original && (
+			<img
+				src={series.coverImage.medium ?? series.coverImage.original}
+				alt={series.coverImage.alt ?? series.name}
+				loading="eager"
+				style="max-width: 720px; width: 100%; margin: 1rem 0 1.5rem;"
+			/>
+		)}
+
+		{series.description && (
+			<p style="max-width: 65ch; margin-bottom: 2rem;">{series.description}</p>
+		)}
+
+		{artworks.length > 0 && (
+			<section>
+				<h2 style="margin-bottom: 1rem;">Works in this series</h2>
+				<div class="grid">
+					{artworks.map((artwork) => (
+						<a href={`/works/${artwork.slug}`} class="card" style="text-decoration: none;">
+							{artwork.coverImage?.thumb && (
+								<img
+									src={artwork.coverImage.thumb}
+									alt={artwork.coverImage.alt ?? artwork.title}
+									loading="lazy"
+									style="width: 100%; aspect-ratio: 1; object-fit: cover;"
+								/>
+							)}
+							{!artwork.coverImage?.thumb && (
+								<div style="width: 100%; aspect-ratio: 1; background: #f0f0f0;" />
+							)}
+							<div class="card-body">
+								<h3>{artwork.title}</h3>
+								<p style="color: #666; font-size: 0.875rem;">{artwork.year}</p>
+							</div>
+						</a>
+					))}
+				</div>
+			</section>
+		)}
+
+		{artworks.length === 0 && (
+			<p style="color: #666;">No works in this series yet.</p>
+		)}
+
+		<p style="margin-top: 2rem;">
+			<a href="/series">← Back to Series</a>
+		</p>
+	</article>
+</BaseLayout>

@@ -1,0 +1,38 @@
+---
+// Build-time only — blurHashToDataUri uses Node.js Buffer and must not run in the browser.
+import { blurHashToDataUri } from '@/lib/blurHashUtils'
+import type { ImageObject } from '@/lib/types'
+
+interface Props {
+	image: ImageObject
+	size?: 'thumb' | 'medium' | 'original'
+	class?: string
+	style?: string
+}
+
+const { image, size = 'medium', class: className = '', style = '' } = Astro.props
+
+const src = image[size] ?? image.medium ?? image.thumb ?? image.original
+const dataUri = image.blurHash ? blurHashToDataUri(image.blurHash) : ''
+const hasPlaceholder = dataUri !== ''
+---
+
+<div
+	class={`blur-image-wrap ${className}`}
+	style={`${image.width && image.height ? `aspect-ratio: ${image.width}/${image.height};` : ''} ${style}`}
+>
+	{hasPlaceholder && (
+		<div
+			class="blur-image-placeholder"
+			style={`background-image: url('${dataUri}');`}
+			aria-hidden="true"
+		/>
+	)}
+	<img
+		src={src}
+		alt={image.alt ?? ''}
+		width={image.width}
+		height={image.height}
+		loading="lazy"
+	/>
+</div>

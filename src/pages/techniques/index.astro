@@ -1,0 +1,37 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro'
+import { getTechniques } from '@/lib/fetchContent'
+
+const techniques = await getTechniques()
+
+const categoryLabel: Record<string, string> = {
+	painting: 'Pittura',
+	engraving: 'Incisione',
+	craft: 'Artigianato',
+	other: 'Altro',
+}
+---
+
+<BaseLayout title="Techniques" description="Artistic techniques used by Valentina Damiano — Vale Creative">
+	<h1>Techniques</h1>
+
+	{techniques.length === 0 && (
+		<p style="color: #666; margin-top: 1rem;">No techniques listed yet.</p>
+	)}
+
+	{techniques.length > 0 && (
+		<ul style="list-style: none; margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem;">
+			{techniques.map((t) => (
+				<li>
+					<a href={`/techniques/${t.slug}`} style="font-weight: 600;">{t.name}</a>
+					<span style="color: #666; font-size: 0.875rem; margin-left: 0.5rem;">
+						{categoryLabel[t.category] ?? t.category}
+					</span>
+					{t.description && (
+						<p style="color: #555; font-size: 0.875rem; margin-top: 0.2rem;">{t.description}</p>
+					)}
+				</li>
+			))}
+		</ul>
+	)}
+</BaseLayout>

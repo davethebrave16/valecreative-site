@@ -1,0 +1,29 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro'
+import { getContentBySlug } from '@/lib/fetchContent'
+
+const content = await getContentBySlug('bio')
+---
+
+<BaseLayout title="About" description="About Valentina Damiano — Vale Creative">
+	<article style="max-width: 720px;">
+		<h1>{content?.title ?? 'About'}</h1>
+
+		{content?.image?.original && (
+			<img
+				src={content.image.medium ?? content.image.original}
+				alt={content.image.alt ?? 'Valentina Damiano'}
+				loading="eager"
+				style="width: 100%; max-width: 400px; margin: 1.5rem 0; border-radius: 4px;"
+			/>
+		)}
+
+		{content?.body ? (
+			<div class="prose" set:html={content.body} />
+		) : (
+			<p style="color: #666;">
+				Bio coming soon.
+			</p>
+		)}
+	</article>
+</BaseLayout>

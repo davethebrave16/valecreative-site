@@ -1,0 +1,40 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro'
+import { getPublishedSeries } from '@/lib/fetchContent'
+
+const series = await getPublishedSeries()
+---
+
+<BaseLayout title="Series" description="Artwork series by Valentina Damiano — Vale Creative">
+	<h1>Series</h1>
+
+	{series.length === 0 && (
+		<p style="color: #666; margin-top: 1rem;">No series published yet.</p>
+	)}
+
+	{series.length > 0 && (
+		<div class="grid" style="margin-top: 1.5rem;">
+			{series.map((s) => (
+				<a href={`/series/${s.slug}`} class="card" style="text-decoration: none;">
+					{s.coverImage?.thumb && (
+						<img
+							src={s.coverImage.thumb}
+							alt={s.coverImage.alt ?? s.name}
+							loading="lazy"
+							style="width: 100%; aspect-ratio: 4/3; object-fit: cover;"
+						/>
+					)}
+					{!s.coverImage?.thumb && (
+						<div style="width: 100%; aspect-ratio: 4/3; background: #f0f0f0;" />
+					)}
+					<div class="card-body">
+						<h3>{s.name}</h3>
+						{s.description && (
+							<p style="color: #666; font-size: 0.875rem; margin-top: 0.25rem;">{s.description}</p>
+						)}
+					</div>
+				</a>
+			))}
+		</div>
+	)}
+</BaseLayout>

@@ -1,0 +1,19 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro'
+import CommissionRequestForm from '@/components/CommissionRequestForm'
+---
+
+<BaseLayout
+	title="Commission a Work"
+	description="Commission an original artwork by Valentina Damiano — Vale Creative"
+>
+	<article style="max-width: 720px;">
+		<h1>Commission a Work</h1>
+		<p style="margin-bottom: 2rem; max-width: 65ch;">
+			Interested in an original piece? Fill in the form below and I'll get back to you to discuss
+			your ideas, timeline, and budget.
+		</p>
+
+		<CommissionRequestForm client:visible />
+	</article>
+</BaseLayout>

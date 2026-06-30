@@ -1,0 +1,99 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro'
+import { getArtworks, getArtworkGallery } from '@/lib/fetchContent'
+import type { Artwork } from '@/lib/types'
+
+export async function getStaticPaths() {
+	const artworks = await getArtworks()
+	return artworks.map((artwork) => ({
+		params: { slug: artwork.slug },
+		props: { artwork },
+	}))
+}
+
+interface Props {
+	artwork: Artwork
+}
+
+const { artwork } = Astro.props
+const gallery = await getArtworkGallery(artwork.id)
+
+const availabilityLabel: Record<string, string> = {
+	for_sale: 'For Sale',
+	sold: 'Sold',
+	not_for_sale: 'Not for Sale',
+}
+---
+
+<BaseLayout title={artwork.title} description={artwork.description}>
+	<article>
+		<h1>{artwork.title}</h1>
+		<p style="color: #666; margin-bottom: 1.5rem;">
+			{artwork.year}
+			{artwork.support && ` · ${artwork.support}`}
+			{artwork.dimensions?.width && artwork.dimensions?.height &&
+				` · ${artwork.dimensions.width}×${artwork.dimensions.height} ${artwork.dimensions.unit ?? 'cm'}`}
+		</p>
+
+		{artwork.coverImage?.original && (
+			<img
+				src={artwork.coverImage.medium ?? artwork.coverImage.original}
+				alt={artwork.coverImage.alt ?? artwork.title}
+				width={artwork.coverImage.width}
+				height={artwork.coverImage.height}
+				loading="eager"
+				style="max-width: 720px; width: 100%; margin-bottom: 1.5rem;"
+			/>
+		)}
+
+		<dl style="display: grid; grid-template-columns: max-content 1fr; gap: 0.25rem 1rem; margin-bottom: 1.5rem; font-size: 0.9rem;">
+			<dt style="color: #666;">Availability</dt>
+			<dd>{availabilityLabel[artwork.availability] ?? artwork.availability}</dd>
+			{artwork.availability === 'for_sale' && artwork.price != null && (
+				<>
+					<dt style="color: #666;">Price</dt>
+					<dd>€{artwork.price}</dd>
+				</>
+			)}
+			{artwork.origin && (
+				<>
+					<dt style="color: #666;">Origin</dt>
+					<dd style="text-transform: capitalize;">{artwork.origin}</dd>
+				</>
+			)}
+		</dl>
+
+		{artwork.description && (
+			<p style="max-width: 65ch; margin-bottom: 2rem;">{artwork.description}</p>
+		)}
+
+		{gallery.length > 0 && (
+			<section>
+				<h2 style="margin-bottom: 1rem;">Gallery</h2>
+				<div class="grid">
+					{gallery.map((img) => (
+						<figure style="margin: 0;">
+							<img
+								src={img.medium ?? img.thumb ?? img.original}
+								alt={img.alt ?? ''}
+								width={img.width}
+								height={img.height}
+								loading="lazy"
+								style="width: 100%; aspect-ratio: 4/3; object-fit: cover;"
+							/>
+							{img.caption && (
+								<figcaption style="font-size: 0.8rem; color: #666; margin-top: 0.25rem;">
+									{img.caption}
+								</figcaption>
+							)}
+						</figure>
+					))}
+				</div>
+			</section>
+		)}
+
+		<p style="margin-top: 2rem;">
+			<a href="/works">← Back to Works</a>
+		</p>
+	</article>
+</BaseLayout>

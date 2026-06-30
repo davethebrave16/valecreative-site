@@ -1,0 +1,76 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro'
+import { getTechniques, getArtworks } from '@/lib/fetchContent'
+import type { Technique } from '@/lib/types'
+
+export async function getStaticPaths() {
+	const techniques = await getTechniques()
+	return techniques.map((t) => ({
+		params: { slug: t.slug },
+		props: { technique: t },
+	}))
+}
+
+interface Props {
+	technique: Technique
+}
+
+const { technique } = Astro.props
+const allArtworks = await getArtworks()
+const artworks = allArtworks.filter((a) => a.techniqueId === technique.id)
+
+const categoryLabel: Record<string, string> = {
+	painting: 'Pittura',
+	engraving: 'Incisione',
+	craft: 'Artigianato',
+	other: 'Altro',
+}
+---
+
+<BaseLayout title={technique.name} description={technique.description}>
+	<article>
+		<h1>{technique.name}</h1>
+		<p style="color: #666; font-size: 0.875rem; margin-bottom: 1rem;">
+			{categoryLabel[technique.category] ?? technique.category}
+		</p>
+
+		{technique.description && (
+			<p style="max-width: 65ch; margin-bottom: 2rem;">{technique.description}</p>
+		)}
+
+		{artworks.length > 0 && (
+			<section>
+				<h2 style="margin-bottom: 1rem;">Works using this technique</h2>
+				<div class="grid">
+					{artworks.map((artwork) => (
+						<a href={`/works/${artwork.slug}`} class="card" style="text-decoration: none;">
+							{artwork.coverImage?.thumb && (
+								<img
+									src={artwork.coverImage.thumb}
+									alt={artwork.coverImage.alt ?? artwork.title}
+									loading="lazy"
+									style="width: 100%; aspect-ratio: 1; object-fit: cover;"
+								/>
+							)}
+							{!artwork.coverImage?.thumb && (
+								<div style="width: 100%; aspect-ratio: 1; background: #f0f0f0;" />
+							)}
+							<div class="card-body">
+								<h3>{artwork.title}</h3>
+								<p style="color: #666; font-size: 0.875rem;">{artwork.year}</p>
+							</div>
+						</a>
+					))}
+				</div>
+			</section>
+		)}
+
+		{artworks.length === 0 && (
+			<p style="color: #666;">No works using this technique yet.</p>
+		)}
+
+		<p style="margin-top: 2rem;">
+			<a href="/techniques">← Back to Techniques</a>
+		</p>
+	</article>
+</BaseLayout>

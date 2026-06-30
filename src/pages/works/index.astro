@@ -1,0 +1,43 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro'
+import { getArtworks } from '@/lib/fetchContent'
+
+const artworks = await getArtworks()
+---
+
+<BaseLayout title="Works" description="All works by Valentina Damiano — Vale Creative">
+	<h1>Works</h1>
+
+	{artworks.length === 0 && (
+		<p style="color: #666; margin-top: 1rem;">No works published yet.</p>
+	)}
+
+	{artworks.length > 0 && (
+		<div class="grid" style="margin-top: 1.5rem;">
+			{artworks.map((artwork) => (
+				<a href={`/works/${artwork.slug}`} class="card" style="text-decoration: none;">
+					{artwork.coverImage?.thumb && (
+						<img
+							src={artwork.coverImage.thumb}
+							alt={artwork.coverImage.alt ?? artwork.title}
+							loading="lazy"
+							style="width: 100%; aspect-ratio: 1; object-fit: cover;"
+						/>
+					)}
+					{!artwork.coverImage?.thumb && (
+						<div style="width: 100%; aspect-ratio: 1; background: #f0f0f0;" />
+					)}
+					<div class="card-body">
+						<h3>{artwork.title}</h3>
+						<p style="color: #666; font-size: 0.875rem;">{artwork.year}</p>
+						{artwork.availability === 'for_sale' && (
+							<p style="font-size: 0.875rem; color: #2e6b55; font-weight: 600; margin-top: 0.25rem;">
+								{artwork.price != null ? `€${artwork.price}` : 'For sale'}
+							</p>
+						)}
+					</div>
+				</a>
+			))}
+		</div>
+	)}
+</BaseLayout>

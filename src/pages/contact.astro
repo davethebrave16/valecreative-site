@@ -1,0 +1,15 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro'
+import ContactForm from '@/components/ContactForm'
+---
+
+<BaseLayout title="Contact" description="Get in touch with Valentina Damiano — Vale Creative">
+	<article style="max-width: 720px;">
+		<h1>Contact</h1>
+		<p style="margin-bottom: 2rem; max-width: 65ch;">
+			Have a question or just want to say hello? Use the form below.
+		</p>
+
+		<ContactForm client:visible />
+	</article>
+</BaseLayout>
