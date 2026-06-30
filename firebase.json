@@ -1,5 +1,6 @@
 {
 	"hosting": {
+		"target": "valecreative-site",
 		"public": "dist",
 		"ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
 		"cleanUrls": true

@@ -17,7 +17,8 @@ npm run build
 
 echo ""
 echo "Build complete. Summary:"
-echo "  Target: Firebase Hosting (project from .firebaserc)"
+echo "  Project: valecreative-prod"
+echo "  Hosting target: valecreative-site"
 echo "  Output: dist/"
 echo ""
 read -p "Deploy to Firebase Hosting? [y/N] " CONFIRM
@@ -27,6 +28,6 @@ if [ "$CONFIRM" != "y" ] && [ "$CONFIRM" != "Y" ]; then
 fi
 
 echo "==> Deploying..."
-firebase deploy --only hosting
+firebase deploy --only hosting:valecreative-site
 echo ""
 echo "Deploy complete."
