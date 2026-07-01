@@ -13,6 +13,7 @@ const [allArtworks, series, hero] = await Promise.all([
 ])
 
 const featuredArtworks = allArtworks.filter((a) => a.featured).slice(0, 5)
+const heroArtwork = allArtworks.find((a) => a.isHero) ?? featuredArtworks[0]
 
 // Count artworks per series for the series teaser
 const artworkCountBySeries: Record<string, number> = {}
@@ -67,12 +68,12 @@ const heroBody = hero?.body
 				<!-- Hero image: first featured artwork or gradient placeholder -->
 				<div class="vd-rise" style="position:relative">
 					<div style="position:relative;aspect-ratio:4/5;border-radius:4px;overflow:hidden;border:1px solid var(--line);box-shadow:0 30px 70px -36px rgba(31,42,34,.6)">
-						{featuredArtworks[0]?.coverImage?.medium || featuredArtworks[0]?.coverImage?.original ? (
+						{heroArtwork?.coverImage?.medium || heroArtwork?.coverImage?.original ? (
 							<img
-								src={featuredArtworks[0].coverImage!.medium ?? featuredArtworks[0].coverImage!.original}
-								alt={featuredArtworks[0].coverImage!.alt ?? featuredArtworks[0].title}
-								width={featuredArtworks[0].coverImage!.width}
-								height={featuredArtworks[0].coverImage!.height}
+								src={heroArtwork.coverImage!.medium ?? heroArtwork.coverImage!.original}
+								alt={heroArtwork.coverImage!.alt ?? heroArtwork.title}
+								width={heroArtwork.coverImage!.width}
+								height={heroArtwork.coverImage!.height}
 								loading="eager"
 								style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"
 							/>
@@ -80,10 +81,10 @@ const heroBody = hero?.body
 							<div style="position:absolute;inset:0;background:radial-gradient(130% 120% at 30% 14%,#d9b25e 0%,#6b4f37 44%,#243029 100%)"></div>
 						)}
 						<div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 55%,rgba(20,28,22,.55))"></div>
-						{featuredArtworks[0] && (
+						{heroArtwork && (
 							<div style="position:absolute;left:18px;right:18px;bottom:16px;color:#fff">
-								<div style="font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600">{featuredArtworks[0].title}</div>
-								<div style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.1em;opacity:.85;margin-top:3px">{featuredArtworks[0].year}</div>
+								<div style="font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600">{heroArtwork.title}</div>
+								<div style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.1em;opacity:.85;margin-top:3px">{heroArtwork.year}</div>
 							</div>
 						)}
 					</div>
