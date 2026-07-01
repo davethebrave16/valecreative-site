@@ -5,7 +5,7 @@ export const it = {
 		works: 'Opere',
 		series: 'Serie',
 		techniques: 'Tecniche',
-		about: 'Studio',
+		about: 'Chi sono',
 		contact: 'Contattami',
 	},
 
