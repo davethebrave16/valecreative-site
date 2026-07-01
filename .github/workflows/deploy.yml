@@ -30,6 +30,21 @@ jobs:
           VITE_GA_MEASUREMENT_ID: ${{ secrets.VITE_GA_MEASUREMENT_ID }}
         run: npm run build
 
+      - name: Create .firebaserc
+        env:
+          PROJECT_ID: ${{ secrets.PUBLIC_FIREBASE_PROJECT_ID }}
+        run: |
+          cat > .firebaserc <<EOF
+          {
+            "projects": { "default": "$PROJECT_ID" },
+            "targets": {
+              "$PROJECT_ID": {
+                "hosting": { "valecreative-site": ["valecreative-site"] }
+              }
+            }
+          }
+          EOF
+
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
