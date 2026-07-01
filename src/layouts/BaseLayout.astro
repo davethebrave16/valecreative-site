@@ -40,7 +40,10 @@ const year = new Date().getFullYear()
 		<meta name="description" content={description} />
 		<meta name="robots" content="noindex, nofollow" />
 		<title>{title} — Vale Creative</title>
-		<link rel="icon" type="image/svg+xml" href="/logo.svg" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+		<link rel="icon" type="image/x-icon" href="/favicon.ico" />
+		<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link
@@ -55,7 +58,7 @@ const year = new Date().getFullYear()
 
 				<!-- Logo -->
 				<a href={p('/')} style="display:flex;align-items:center;gap:12px;text-decoration:none">
-					<img src="/logo.svg" alt="Valentina Damiano" width="42" height="42" style="border-radius:50%;flex:none" />
+					<img src="/logo512.png" alt="Valentina Damiano" width="42" height="42" style="border-radius:50%;flex:none" />
 					<span style="display:flex;flex-direction:column;align-items:flex-start;line-height:1">
 						<span style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:20px;letter-spacing:.01em;color:var(--ink)">Valentina Damiano</span>
 						<span style="font-family:'Spline Sans Mono',monospace;font-size:9.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--muted);margin-top:3px">{t.footer.tagline}</span>
@@ -125,7 +128,7 @@ const year = new Date().getFullYear()
 			<div style="max-width:1320px;margin:0 auto;padding:clamp(40px,5vw,70px) clamp(18px,4vw,52px) 34px;position:relative">
 				<div style="display:grid;grid-template-columns:1fr;gap:30px">
 					<div style="display:flex;align-items:center;gap:14px">
-						<img src="/logo.svg" alt="" width="52" height="52" style="border-radius:50%" />
+						<img src="/logowhite512.png" alt="" width="52" height="52" style="border-radius:50%" />
 						<div>
 							<div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:#f3ecdc">Valentina Damiano</div>
 							<div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-soft);margin-top:3px">{t.footer.tagline}</div>
