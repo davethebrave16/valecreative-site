@@ -180,4 +180,12 @@ export const it = {
 		support: 'Supporto',
 		year: 'Anno',
 	},
+
+	// Image lightbox controls
+	lightbox: {
+		close: 'Chiudi',
+		next: 'Immagine successiva',
+		previous: 'Immagine precedente',
+		open: 'Ingrandisci immagine',
+	},
 } as const

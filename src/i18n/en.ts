@@ -179,4 +179,12 @@ export const en = {
 		support: 'Support',
 		year: 'Year',
 	},
+
+	// Image lightbox controls
+	lightbox: {
+		close: 'Close',
+		next: 'Next image',
+		previous: 'Previous image',
+		open: 'Enlarge image',
+	},
 } as const

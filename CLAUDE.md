@@ -85,6 +85,8 @@ All layout and animation utilities are prefixed `vd-`:
 | `.vd-btn-primary` | Verde pill CTA button |
 | `.vd-btn-outline` | Outline pill button |
 | `.vd-desk` / `.vd-burger` | Desktop nav / mobile burger (responsive toggle) |
+| `.vd-zoom-trigger` / `.vd-zoom-icon` | Click-to-enlarge affordance on an image (hover-fade icon) |
+| `.vd-lightbox` | Full-size image dialog (see Image Lightbox below) |
 
 ## Project Layout
 
@@ -115,7 +117,8 @@ src/
 │   ├── WorksGrid.tsx              # React island — filterable masonry artwork grid
 │   ├── CommissionRequestForm.jsx  # React island — writes to Firestore at runtime
 │   ├── ContactForm.jsx            # React island — stub, see TODO inside
-│   └── BlurHashImage.astro        # Astro component — decodes BlurHash at build time
+│   ├── BlurHashImage.astro        # Astro component — decodes BlurHash at build time
+│   └── ImageLightbox.astro        # Full-size image dialog — click-to-enlarge (see below)
 ├── pages/
 │   ├── index.astro           # / — thin wrapper: <HomePage locale="it" />
 │   ├── works/
@@ -229,6 +232,22 @@ The `categories` collection (`src/lib/fetchContent.ts → getCategories()`) stor
 `blurHashUtils.ts` → `blurHashToDataUri(hash, w, h)`:
 - **Only call from `.astro` files** — uses `Buffer` which is not available in the browser
 - `BlurHashImage.astro` uses this to inline a placeholder background before the real image loads
+
+## Image Lightbox
+
+`src/components/ImageLightbox.astro` renders a native `<dialog>`-based click-to-enlarge viewer, currently wired into `WorkDetailPage.astro` for the cover image + gallery.
+
+Usage:
+```astro
+<ImageLightbox items={lightboxItems} labels={t.lightbox} />
+```
+where `items` is an ordered `{ src, alt?, caption? }[]` (use `.original`, not `.medium`/`.thumb`, so the dialog shows full resolution) and `labels` is `t.lightbox` (`close`/`next`/`previous`, plus `open` used directly for trigger `aria-label`s).
+
+Any element elsewhere on the page becomes a trigger by adding `data-lightbox-index={n}` matching that item's index in the array — see the `<button class="vd-zoom-trigger" data-lightbox-index="0">` wrapping the cover `<img>` in `WorkDetailPage.astro`. One `<ImageLightbox>` per page is enough; wrap every enlargeable image's triggers into a single shared `items` array (as `WorkDetailPage.astro` does by concatenating cover + gallery) so prev/next paging cycles through all of them.
+
+The interactivity is a plain inline `<script>` (no framework — matches the mobile-nav-burger pattern in `BaseLayout.astro`), using `dialog.showModal()`/`.close()`, `Escape`/backdrop-click/arrow-key handling, and focus restoration to the trigger on close.
+
+**Gotcha**: `<dialog>` is hidden by default via the *user-agent* stylesheet rule `dialog:not([open]) { display: none }`. Any author CSS that sets `display` on the dialog (e.g. `.vd-lightbox { display: flex }`, needed to center its contents while open) permanently overrides that UA rule — author styles always beat UA styles regardless of specificity — so the dialog stays visible (and, being `position: fixed`, blocks clicks on the whole page) even when closed. Always pair a `display` declaration on a `<dialog>` with an explicit `.your-dialog:not([open]) { display: none; }` rule (see `global.css`).
 
 ## Slug Pages Pattern
 

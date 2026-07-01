@@ -1,0 +1,89 @@
+---
+interface LightboxItem {
+	src: string
+	alt?: string
+	caption?: string
+}
+
+interface Props {
+	items: LightboxItem[]
+	labels: {
+		close: string
+		next: string
+		previous: string
+	}
+}
+
+const { items, labels } = Astro.props
+---
+
+<dialog id="vd-lightbox" class="vd-lightbox">
+	<script type="application/json" id="vd-lightbox-data" set:html={JSON.stringify(items)} />
+
+	<button type="button" id="vd-lightbox-close" class="vd-lightbox-btn vd-lightbox-close" aria-label={labels.close}>×</button>
+	<button type="button" id="vd-lightbox-prev" class="vd-lightbox-btn vd-lightbox-nav vd-lightbox-prev" aria-label={labels.previous}>‹</button>
+	<button type="button" id="vd-lightbox-next" class="vd-lightbox-btn vd-lightbox-nav vd-lightbox-next" aria-label={labels.next}>›</button>
+
+	<figure class="vd-lightbox-figure">
+		<img id="vd-lightbox-img" class="vd-lightbox-img" src="" alt="" />
+		<figcaption id="vd-lightbox-caption" class="vd-lightbox-caption"></figcaption>
+	</figure>
+</dialog>
+
+<script>
+	const dialog = document.getElementById('vd-lightbox')
+	const dataEl = document.getElementById('vd-lightbox-data')
+	const imgEl = document.getElementById('vd-lightbox-img')
+	const capEl = document.getElementById('vd-lightbox-caption')
+	const closeBtn = document.getElementById('vd-lightbox-close')
+	const prevBtn = document.getElementById('vd-lightbox-prev')
+	const nextBtn = document.getElementById('vd-lightbox-next')
+
+	if (dialog && dataEl && imgEl && capEl && closeBtn && prevBtn && nextBtn) {
+		const items = JSON.parse(dataEl.textContent || '[]')
+		let currentIndex = 0
+		let lastTrigger = null
+
+		function show(index) {
+			const item = items[index]
+			if (!item) return
+			currentIndex = index
+			imgEl.src = item.src
+			imgEl.alt = item.alt || ''
+			capEl.textContent = item.caption || ''
+			capEl.style.display = item.caption ? 'block' : 'none'
+			const multi = items.length > 1
+			prevBtn.style.display = multi ? 'flex' : 'none'
+			nextBtn.style.display = multi ? 'flex' : 'none'
+		}
+
+		function openAt(index, trigger) {
+			lastTrigger = trigger ?? null
+			show(index)
+			dialog.showModal()
+		}
+
+		document.querySelectorAll('[data-lightbox-index]').forEach((el) => {
+			el.addEventListener('click', () => {
+				openAt(Number(el.getAttribute('data-lightbox-index')), el)
+			})
+		})
+
+		closeBtn.addEventListener('click', () => dialog.close())
+		prevBtn.addEventListener('click', () => show((currentIndex - 1 + items.length) % items.length))
+		nextBtn.addEventListener('click', () => show((currentIndex + 1) % items.length))
+
+		dialog.addEventListener('click', (event) => {
+			if (event.target === dialog) dialog.close()
+		})
+
+		dialog.addEventListener('keydown', (event) => {
+			if (event.key === 'ArrowLeft') show((currentIndex - 1 + items.length) % items.length)
+			if (event.key === 'ArrowRight') show((currentIndex + 1) % items.length)
+		})
+
+		dialog.addEventListener('close', () => {
+			if (lastTrigger) lastTrigger.focus()
+		})
+	}
+</script>
