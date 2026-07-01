@@ -38,11 +38,33 @@ Opens at http://localhost:4321. The site fetches content from Firestore at build
 
 ## Deploy
 
+### Manual
+
 ```bash
 ./deploy.sh
 ```
 
 Builds the static site, then asks for confirmation before deploying to Firebase Hosting.
+
+### Automated (GitHub Actions)
+
+`.github/workflows/deploy.yml` triggers a full build + Firebase Hosting deploy on:
+
+- **`repository_dispatch`** with type `publish-site` — fired externally (e.g. from the backoffice after a content publish)
+- **`workflow_dispatch`** — manual run from the GitHub Actions UI
+
+Required GitHub repository secrets:
+
+| Secret | Where to find it |
+|--------|-----------------|
+| `PUBLIC_FIREBASE_API_KEY` | Firebase console → Project settings → Web app |
+| `PUBLIC_FIREBASE_AUTH_DOMAIN` | same |
+| `PUBLIC_FIREBASE_PROJECT_ID` | same |
+| `PUBLIC_FIREBASE_STORAGE_BUCKET` | same |
+| `PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | same |
+| `PUBLIC_FIREBASE_APP_ID` | same |
+| `VITE_GA_MEASUREMENT_ID` | Google Analytics → Admin → Data Streams |
+| `FIREBASE_SERVICE_ACCOUNT` | Firebase console → Project settings → Service accounts → Generate new private key (JSON) |
 
 ## Routes
 
