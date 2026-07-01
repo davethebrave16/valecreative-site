@@ -148,6 +148,12 @@ export const en = {
 		error: 'Something went wrong. Please try again.',
 	},
 
+	// Contact
+	contact: {
+		title: 'Contact',
+		intro: 'Have a question or just want to say hello? Use the form below.',
+	},
+
 	// Footer
 	footer: {
 		tagline: 'Creations · Pisa · Lucca',

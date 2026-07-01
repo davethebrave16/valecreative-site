@@ -1,21 +1,25 @@
 ---
 import TechniqueDetailPage from '@/components/pages/TechniqueDetailPage.astro'
 import { getTechniques } from '@/lib/fetchContent'
+import { nonDefaultLocales } from '@/i18n/utils'
 import type { Technique } from '@/lib/types'
 
 export async function getStaticPaths() {
 	const techniques = await getTechniques()
-	return techniques.map((t) => ({
-		params: { slug: t.slug },
-		props: { technique: t },
-	}))
+	return nonDefaultLocales.flatMap((locale) =>
+		techniques.map((t) => ({
+			params: { locale, slug: t.slug },
+			props: { technique: t },
+		}))
+	)
 }
 
 interface Props {
 	technique: Technique
 }
 
+const { locale } = Astro.params
 const { technique } = Astro.props
 ---
 
-<TechniqueDetailPage locale="it" technique={technique} />
+<TechniqueDetailPage locale={locale} technique={technique} />

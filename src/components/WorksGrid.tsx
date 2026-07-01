@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { getLocalePath } from '@/i18n/utils'
 
 export interface WorkItem {
 	id: string
@@ -55,7 +56,7 @@ function availabilityColor(availability: string) {
 	return '#9a8d77'
 }
 
-export default function WorksGrid({ artworks, categories, labels }: Props) {
+export default function WorksGrid({ artworks, categories, locale, labels }: Props) {
 	const [originFilter, setOriginFilter] = useState<'personal' | 'commissioned'>('personal')
 	const [categoryFilter, setCategoryFilter] = useState<string>('all')
 
@@ -141,7 +142,7 @@ export default function WorksGrid({ artworks, categories, labels }: Props) {
 					return (
 						<a
 							key={artwork.id}
-							href={`/works/${artwork.slug}`}
+							href={getLocalePath(locale, `/works/${artwork.slug}`)}
 							className="vd-cell"
 							style={cellGridStyle(orient)}
 						>

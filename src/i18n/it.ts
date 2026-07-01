@@ -149,6 +149,12 @@ export const it = {
 		error: 'Qualcosa è andato storto. Riprova.',
 	},
 
+	// Contact
+	contact: {
+		title: 'Contatti',
+		intro: 'Hai una domanda o vuoi semplicemente salutare? Usa il modulo qui sotto.',
+	},
+
 	// Footer
 	footer: {
 		tagline: 'Creazioni · Pisa · Lucca',

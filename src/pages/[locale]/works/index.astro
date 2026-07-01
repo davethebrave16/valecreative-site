@@ -1,0 +1,12 @@
+---
+import WorksIndexPage from '@/components/pages/WorksIndexPage.astro'
+import { nonDefaultLocales } from '@/i18n/utils'
+
+export function getStaticPaths() {
+	return nonDefaultLocales.map((locale) => ({ params: { locale } }))
+}
+
+const { locale } = Astro.params
+---
+
+<WorksIndexPage locale={locale} />

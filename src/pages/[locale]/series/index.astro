@@ -1,0 +1,12 @@
+---
+import SeriesIndexPage from '@/components/pages/SeriesIndexPage.astro'
+import { nonDefaultLocales } from '@/i18n/utils'
+
+export function getStaticPaths() {
+	return nonDefaultLocales.map((locale) => ({ params: { locale } }))
+}
+
+const { locale } = Astro.params
+---
+
+<SeriesIndexPage locale={locale} />

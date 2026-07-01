@@ -1,6 +1,6 @@
 # Vale Creative — Public Site
 
-Public-facing portfolio and contact site for artist Valentina Damiano. Built with Astro (static output) + Firebase. The site is bilingual (Italian default, English at `/en/`) using Astro's built-in i18n routing.
+Public-facing portfolio and contact site for artist Valentina Damiano. Built with Astro (static output) + Firebase. The site is bilingual (Italian default, English at `/en/`) using Astro's i18n config plus a `[locale]` dynamic route tree — see "i18n" below.
 
 ## Prerequisites
 
@@ -78,7 +78,7 @@ Required GitHub repository secrets:
 | `/techniques/:slug` | Technique detail |
 | `/about` | Studio / bio |
 | `/commissions` | Commission request form |
-| `/en/*` | English versions of all the above |
+| `/en/*` | English versions of all the above (served by `src/pages/[locale]/*`) |
 
 ## Design System
 
@@ -88,19 +88,18 @@ Key tokens: `--ink` (text), `--paper` (background), `--verde` (primary action), 
 
 ## i18n
 
-The site uses Astro's built-in i18n routing:
+The site is bilingual using a single set of page bodies plus Astro dynamic routing — there is no duplicated page markup per locale:
 
-- Italian is the default locale — pages live at clean paths (`/`, `/works`, etc.)
-- English pages live under `/en/` (`/en/`, `/en/works`, etc.)
-- UI strings live in `src/i18n/it.ts` and `src/i18n/en.ts`
+- Each page's actual content lives once, in a shared component under `src/components/pages/` (e.g. `HomePage.astro`, `WorksIndexPage.astro`), which takes a `locale` prop and builds all internal links via `getLocalePath(locale, path)`.
+- Italian (the default locale) is served by ordinary unprefixed files directly under `src/pages/` (`index.astro`, `works/index.astro`, etc.) that just render the shared component with `locale="it"`.
+- English (and any future non-default locale) is served by a parallel `src/pages/[locale]/` tree, where each file's `getStaticPaths()` loops over `nonDefaultLocales` (exported from `src/i18n/utils.ts`) to generate `/en/...` and any future locale's routes from the same file.
+- UI strings live in `src/i18n/it.ts` and `src/i18n/en.ts`.
 
 ### Adding a new language
 
 1. Add the locale code to `locales` in `astro.config.mjs`
-2. Create `src/i18n/{locale}.ts` with all keys from `it.ts`
-3. Duplicate `src/pages/en/` as `src/pages/{locale}/`
-4. Update all internal `href` attributes to use the new prefix
-5. Pass `lang="{locale}"` to `<BaseLayout>` in each new page
+2. Create `src/i18n/{locale}.ts` with all keys from `it.ts` — it's automatically picked up by `locales`/`nonDefaultLocales` in `src/i18n/utils.ts`
+3. Nothing else to do — every file under `src/pages/[locale]/` already generates a route for it via `getStaticPaths()`
 
 ## Logo
 

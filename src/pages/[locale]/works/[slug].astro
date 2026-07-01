@@ -1,21 +1,25 @@
 ---
 import WorkDetailPage from '@/components/pages/WorkDetailPage.astro'
 import { getArtworks } from '@/lib/fetchContent'
+import { nonDefaultLocales } from '@/i18n/utils'
 import type { Artwork } from '@/lib/types'
 
 export async function getStaticPaths() {
 	const artworks = await getArtworks()
-	return artworks.map((artwork) => ({
-		params: { slug: artwork.slug },
-		props: { artwork },
-	}))
+	return nonDefaultLocales.flatMap((locale) =>
+		artworks.map((artwork) => ({
+			params: { locale, slug: artwork.slug },
+			props: { artwork },
+		}))
+	)
 }
 
 interface Props {
 	artwork: Artwork
 }
 
+const { locale } = Astro.params
 const { artwork } = Astro.props
 ---
 
-<WorkDetailPage locale="it" artwork={artwork} />
+<WorkDetailPage locale={locale} artwork={artwork} />

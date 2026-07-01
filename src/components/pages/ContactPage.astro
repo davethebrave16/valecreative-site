@@ -1,0 +1,23 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro'
+import ContactForm from '@/components/ContactForm'
+import { useTranslations } from '@/i18n/utils'
+
+interface Props {
+	locale: string
+}
+
+const { locale } = Astro.props
+const t = useTranslations(locale)
+---
+
+<BaseLayout title={t.contact.title} lang={locale} description="Get in touch with Valentina Damiano — Vale Creative">
+	<article style="max-width: 720px;">
+		<h1>{t.contact.title}</h1>
+		<p style="margin-bottom: 2rem; max-width: 65ch;">
+			{t.contact.intro}
+		</p>
+
+		<ContactForm client:visible />
+	</article>
+</BaseLayout>

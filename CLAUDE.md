@@ -29,7 +29,7 @@ Required GitHub secrets: `PUBLIC_FIREBASE_API_KEY`, `PUBLIC_FIREBASE_AUTH_DOMAIN
 - **Firebase JS SDK 12** — Firestore (build-time reads + runtime form writes)
 - **blurhash** — BlurHash decode for image placeholders (build-time only)
 - **TypeScript strict** — all source files
-- **Astro i18n** — built-in routing, `defaultLocale: 'it'`, `prefixDefaultLocale: false`
+- **Astro i18n** — `defaultLocale: 'it'`, `prefixDefaultLocale: false`, plus a manual `[locale]` dynamic route tree for non-default locales (see i18n section below)
 
 ## Design System
 
@@ -97,43 +97,52 @@ src/
 ├── i18n/
 │   ├── it.ts                 # Italian UI strings (default locale)
 │   ├── en.ts                 # English UI strings
-│   └── utils.ts              # useTranslations(locale) + getLocalePath(locale, path)
+│   └── utils.ts              # useTranslations(locale), getLocalePath(locale, path), locales/nonDefaultLocales
 ├── lib/
 │   ├── firebaseConfig.ts     # Firebase init (guarded against double-init)
 │   ├── types.ts              # Firestore schema interfaces — cross-project contract
 │   ├── fetchContent.ts       # Build-time Firestore query functions
 │   └── blurHashUtils.ts      # blurHashToDataUri() — Node.js Buffer, build-time only
+├── components/
+│   ├── pages/                 # Shared page bodies — one file per page, `locale` prop, used by both route trees below
+│   │   ├── HomePage.astro
+│   │   ├── AboutPage.astro
+│   │   ├── CommissionsPage.astro
+│   │   ├── ContactPage.astro
+│   │   ├── WorksIndexPage.astro / WorkDetailPage.astro
+│   │   ├── SeriesIndexPage.astro / SeriesDetailPage.astro
+│   │   └── TechniquesIndexPage.astro / TechniqueDetailPage.astro
+│   ├── WorksGrid.tsx              # React island — filterable masonry artwork grid
+│   ├── CommissionRequestForm.jsx  # React island — writes to Firestore at runtime
+│   ├── ContactForm.jsx            # React island — stub, see TODO inside
+│   └── BlurHashImage.astro        # Astro component — decodes BlurHash at build time
 ├── pages/
-│   ├── index.astro           # / — homepage (hero, featured, band, series teaser)
+│   ├── index.astro           # / — thin wrapper: <HomePage locale="it" />
 │   ├── works/
-│   │   ├── index.astro       # /works — gallery with WorksGrid React island
-│   │   └── [slug].astro      # /works/:slug — artwork detail (two-column)
+│   │   ├── index.astro       # /works — thin wrapper: <WorksIndexPage locale="it" />
+│   │   └── [slug].astro      # /works/:slug — getStaticPaths (slug only) + <WorkDetailPage locale="it" .../>
 │   ├── series/
-│   │   ├── index.astro       # /series — series list cards
-│   │   └── [slug].astro      # /series/:slug — series detail (hero banner + grid)
+│   │   ├── index.astro       # /series — thin wrapper
+│   │   └── [slug].astro      # /series/:slug — getStaticPaths (slug only) + shared component
 │   ├── techniques/
-│   │   ├── index.astro       # /techniques — numbered list
-│   │   └── [slug].astro      # /techniques/:slug — technique detail + related works
-│   ├── about.astro           # /about — Studio/bio two-column layout
-│   ├── commissions.astro     # /commissions — commission request form (Contatti)
-│   ├── contact.astro         # /contact — contact stub
-│   └── en/                   # English locale stubs (mirrors Italian pages)
-│       ├── index.astro
-│       ├── works/index.astro
-│       ├── series/index.astro
-│       ├── techniques/index.astro
+│   │   ├── index.astro       # /techniques — thin wrapper
+│   │   └── [slug].astro      # /techniques/:slug — getStaticPaths (slug only) + shared component
+│   ├── about.astro            # /about — thin wrapper
+│   ├── commissions.astro      # /commissions — thin wrapper
+│   ├── contact.astro          # /contact — thin wrapper
+│   └── [locale]/               # Non-default locales (currently just `en`) — mirrors the tree above
+│       ├── index.astro         # getStaticPaths loops nonDefaultLocales; renders <HomePage locale={locale} />
 │       ├── about.astro
-│       └── commissions.astro
-└── components/
-    ├── WorksGrid.tsx              # React island — filterable masonry artwork grid
-    ├── CommissionRequestForm.jsx  # React island — writes to Firestore at runtime
-    ├── ContactForm.jsx            # React island — stub, see TODO inside
-    └── BlurHashImage.astro        # Astro component — decodes BlurHash at build time
+│       ├── commissions.astro
+│       ├── contact.astro
+│       ├── works/{index,[slug]}.astro
+│       ├── series/{index,[slug]}.astro
+│       └── techniques/{index,[slug]}.astro   # [slug] files cross nonDefaultLocales × content list in getStaticPaths
 ```
 
 ## i18n
 
-Astro's built-in i18n is configured in `astro.config.mjs`:
+Astro's i18n config in `astro.config.mjs` sets the default locale and drives `BaseLayout`'s hreflang computation:
 
 ```js
 i18n: {
@@ -143,21 +152,27 @@ i18n: {
 }
 ```
 
-Italian pages live at clean paths (`/`, `/works`, etc.). English pages live under `/en/` (`/en/`, `/en/works`, etc.).
+Because `prefixDefaultLocale: false` means the default locale has no URL segment, a single dynamic route can't represent both "no segment" and "/en" — so routing is split in two, both rendering the *same* shared component from `src/components/pages/`:
+
+- **Default locale (`it`)**: ordinary unprefixed files under `src/pages/` (`index.astro`, `works/index.astro`, ...) that just do `<XPage locale="it" />`.
+- **Non-default locales**: a parallel `src/pages/[locale]/` tree. Each file's `getStaticPaths()` calls `nonDefaultLocales` (from `src/i18n/utils.ts`, derived from the keys of `src/i18n/it.ts`/`en.ts`) to generate one route per locale — currently just `en`, but adding a locale needs no new page files. `[slug]` pages under `[locale]/` additionally cross `nonDefaultLocales` with the content list in `getStaticPaths` (locale × slug).
+
+Page markup itself is **never duplicated** — each shared component in `src/components/pages/` takes a `locale` prop, calls `useTranslations(locale)`, and builds every internal link with `getLocalePath(locale, path)` so the same file works for both `/works` and `/en/works`.
 
 ### Adding a new locale
 
 1. Add the locale code to `locales` in `astro.config.mjs`
-2. Create `src/i18n/{locale}.ts` with all keys from `src/i18n/it.ts`
-3. Copy `src/pages/en/` to `src/pages/{locale}/`, updating all `href` attributes to use the new prefix
-4. Pass `lang="{locale}"` to `<BaseLayout>` in each new page
+2. Create `src/i18n/{locale}.ts` with all keys from `src/i18n/it.ts` — it's picked up automatically via `nonDefaultLocales`
+3. Nothing else — every `src/pages/[locale]/*` file already loops over `nonDefaultLocales` in its `getStaticPaths()`
 
-### Using translations in a page
+### Using translations in a shared page component
 
 ```astro
 ---
+// src/components/pages/SomePage.astro
 import { useTranslations, getLocalePath } from '@/i18n/utils'
-const locale = Astro.currentLocale ?? 'it'
+interface Props { locale: string }
+const { locale } = Astro.props
 const t = useTranslations(locale)
 const p = (path: string) => getLocalePath(locale, path)
 ---
@@ -207,7 +222,7 @@ The `categories` collection (`src/lib/fetchContent.ts → getCategories()`) stor
 1. **Origin tabs** — Personal / Commissioned (no "All" tab)
 2. **Category chips** — "Tutte/All" chip (resets filter) + one chip per category that has at least one artwork in the active origin tab
 
-Both `/works/index.astro` and `/en/works/index.astro` fetch categories at build time and pass them as the `categories` prop to `WorksGrid`. Category chip visibility is computed client-side to avoid showing empty filters.
+`src/components/pages/WorksIndexPage.astro` (shared by both `/works` and `/en/works`) fetches categories at build time and passes them, plus `locale`, as props to `WorksGrid`. `WorksGrid` uses `locale` with `getLocalePath()` to build correctly-prefixed artwork links. Category chip visibility is computed client-side to avoid showing empty filters.
 
 ## BlurHash Pattern
 
@@ -217,12 +232,23 @@ Both `/works/index.astro` and `/en/works/index.astro` fetch categories at build 
 
 ## Slug Pages Pattern
 
-All `[slug].astro` files follow this pattern:
+Default-locale `[slug].astro` files follow this pattern:
 
 ```ts
 export async function getStaticPaths() {
   const items = await getXxx() // always returns [] on empty/error, never throws
   return items.map(i => ({ params: { slug: i.slug }, props: { item: i } }))
+}
+```
+
+Their `src/pages/[locale]/.../[slug].astro` counterparts cross `nonDefaultLocales` with the same content list:
+
+```ts
+export async function getStaticPaths() {
+  const items = await getXxx()
+  return nonDefaultLocales.flatMap((locale) =>
+    items.map((i) => ({ params: { locale, slug: i.slug }, props: { item: i } }))
+  )
 }
 ```
 
@@ -236,7 +262,7 @@ All SEO signals are centralised in `src/layouts/BaseLayout.astro`. Key props bey
 |---|---|---|---|
 | `ogImage` | `string` (absolute URL) | `https://valentinadamiano.it/og-default.jpg` | Open Graph / Twitter card image |
 | `ogType` | `'website' \| 'article'` | `'website'` | OG content type — use `'article'` for artwork detail pages |
-| `noAlternate` | `boolean` | `false` | Suppresses hreflang links — **required** for dynamic slug pages that have no EN counterpart (`works/[slug]`, `series/[slug]`, `techniques/[slug]`) |
+| `noAlternate` | `boolean` | `false` | Suppresses hreflang links — only needed for a page that genuinely has no counterpart in the other locale |
 
 **Canonical & hreflang** are computed automatically from `Astro.url.pathname` plus the `site` property in `astro.config.mjs`. No manual URL passing needed for static pages.
 

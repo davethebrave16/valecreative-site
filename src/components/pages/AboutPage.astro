@@ -1,16 +1,27 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro'
 import { getContentBySlug } from '@/lib/fetchContent'
-import { useTranslations } from '@/i18n/utils'
+import { useTranslations, getLocalePath } from '@/i18n/utils'
 
-const locale = 'en'
+interface Props {
+	locale: string
+}
+
+const { locale } = Astro.props
 const t = useTranslations(locale)
+const p = (path: string) => getLocalePath(locale, path)
+const SITE = 'https://valentinadamiano.it'
 
 const content = await getContentBySlug('bio')
+
+const pageTitle = locale === 'it' ? 'Lo Studio di Valentina Damiano' : "About — Valentina Damiano's Studio"
+const jobTitle = locale === 'it' ? 'Pittrice e Incisore' : 'Painter and Engraver'
+const region = locale === 'it' ? 'Toscana' : 'Tuscany'
+const firenze = locale === 'it' ? 'Firenze' : 'Florence'
 ---
 
 <BaseLayout
-	title="About — Valentina Damiano's Studio"
+	title={pageTitle}
 	lang={locale}
 	description={t.meta.aboutDescription}
 	ogImage={content?.image?.medium ?? content?.image?.original}
@@ -18,21 +29,21 @@ const content = await getContentBySlug('bio')
 	<script slot="head" type="application/ld+json" set:html={JSON.stringify({
 		'@context': 'https://schema.org',
 		'@type': 'Person',
-		'@id': 'https://valentinadamiano.it/#person',
+		'@id': `${SITE}/#person`,
 		name: 'Valentina Damiano',
-		url: 'https://valentinadamiano.it/en/about',
-		jobTitle: 'Painter and Engraver',
+		url: `${SITE}${p('/about')}`,
+		jobTitle,
 		email: 'studio@valentinadamiano.it',
 		birthPlace: { '@type': 'Place', name: 'Pisa' },
 		birthDate: '1989',
 		alumniOf: [
 			{ '@type': 'EducationalOrganization', name: 'Istituto d\'Arte F. Russoli', addressLocality: 'Pisa' },
-			{ '@type': 'EducationalOrganization', name: 'Accademia di Belle Arti di Firenze', addressLocality: 'Florence' },
+			{ '@type': 'EducationalOrganization', name: 'Accademia di Belle Arti di Firenze', addressLocality: firenze },
 		],
 		address: {
 			'@type': 'PostalAddress',
 			addressLocality: 'Pisa',
-			addressRegion: 'Tuscany',
+			addressRegion: region,
 			addressCountry: 'IT',
 		},
 		sameAs: ['https://www.instagram.com/valentinadamiano.creazioni'],
@@ -41,10 +52,16 @@ const content = await getContentBySlug('bio')
 	<section class="vd-rise" style="padding:clamp(34px,5vw,64px) 0 clamp(50px,6vw,90px)">
 		<div class="container">
 			<div class="vd-two">
+				<!-- Left: portrait + stats -->
 				<div>
 					<div style="position:relative;aspect-ratio:3/4;border-radius:4px;overflow:hidden;border:1px solid var(--line);box-shadow:0 24px 60px -36px rgba(31,42,34,.5)">
 						{content?.image?.original ? (
-							<img src={content.image.medium ?? content.image.original} alt={content.image.alt ?? 'Valentina Damiano'} loading="eager" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" />
+							<img
+								src={content.image.medium ?? content.image.original}
+								alt={content.image.alt ?? 'Valentina Damiano'}
+								loading="eager"
+								style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"
+							/>
 						) : (
 							<>
 								<div style="position:absolute;inset:0;background:radial-gradient(120% 110% at 35% 18%,#d9b25e 0%,#6b4f37 46%,#243029 100%)"></div>
@@ -52,6 +69,8 @@ const content = await getContentBySlug('bio')
 							</>
 						)}
 					</div>
+
+					<!-- Stats -->
 					<div style="display:flex;flex-direction:column;margin-top:24px;border-top:1px solid var(--line)">
 						<div style="display:flex;justify-content:space-between;gap:14px;padding:13px 0;border-bottom:1px solid var(--line)">
 							<span style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)">{t.about.statsLabels.born}</span>
@@ -67,27 +86,40 @@ const content = await getContentBySlug('bio')
 						</div>
 					</div>
 				</div>
+
+				<!-- Right: bio -->
 				<div>
 					<div class="vd-eyebrow">{t.about.eyebrow}</div>
 					<h1 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(34px,5vw,60px);line-height:1.02;margin:10px 0 0;color:var(--ink)">
 						{t.about.titleLine1}<br/>
 						<span style="font-style:italic;color:var(--forest)">{t.about.titleLine2}</span>
 					</h1>
+
+					<!-- Role chips -->
 					<div style="display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 26px">
 						{t.about.chips.map((chip) => (
 							<span style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.1em;padding:6px 13px;border:1px solid var(--line);border-radius:999px;color:var(--forest)">{chip}</span>
 						))}
 					</div>
+
+					<!-- Bio body or fallback -->
 					{content?.body ? (
 						<div class="prose" set:html={content.body} />
+					) : locale === 'it' ? (
+						<div style="display:flex;flex-direction:column;gap:18px;max-width:62ch;font-size:16.5px;line-height:1.78;color:#41463d">
+							<p style="margin:0">Valentina Damiano nasce a Pisa nel 1989. Si forma all'Istituto d'Arte «F. Russoli» nell'incisione Ex-Libris e nella pittura dal vero, per poi approfondire la pittura di paesaggio all'Accademia di Belle Arti di Firenze.</p>
+							<p style="margin:0">La sua ricerca intreccia le velature classiche con graffi e segni incisi. La foglia oro, ispirata alla pittura d'icona medievale, porta luce e speranza nella materia. Il soggetto dominante è la natura: boschi onirici dove alberi e piante diventano proiezione del sé.</p>
+						</div>
 					) : (
 						<div style="display:flex;flex-direction:column;gap:18px;max-width:62ch;font-size:16.5px;line-height:1.78;color:#41463d">
 							<p style="margin:0">Valentina Damiano was born in Pisa in 1989. She trained at the Istituto d'Arte «F. Russoli» in Ex-Libris engraving and life painting, later deepening her study of landscape painting at the Accademia di Belle Arti di Firenze.</p>
 							<p style="margin:0">Her work weaves classical glazing with engraved marks and gold-leaf gilding. Nature is the dominant subject: dreamlike forests where trees become a projection of the self, with a Romantic sensibility for the sublime.</p>
 						</div>
 					)}
+
 					<blockquote style="margin:30px 0 0;padding-left:20px;border-left:2px solid var(--gold);font-family:'Cormorant Garamond',serif;font-style:italic;font-size:clamp(22px,2.8vw,30px);line-height:1.35;color:var(--forest)">{t.about.quote}</blockquote>
-					<a href="/en/commissions" class="vd-btn-primary" style="margin-top:30px">{t.about.cta}</a>
+
+					<a href={p('/commissions')} class="vd-btn-primary" style="margin-top:30px">{t.about.cta}</a>
 				</div>
 			</div>
 		</div>

@@ -1,23 +1,29 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro'
-import { getArtworks, getPublishedSeries, getContentBySlug } from '@/lib/fetchContent'
-import { useTranslations } from '@/i18n/utils'
+import { getArtworks, getPublishedSeries, getContentBySlug, getCategories } from '@/lib/fetchContent'
+import { useTranslations, getLocalePath } from '@/i18n/utils'
 
-const locale = 'en'
+interface Props {
+	locale: string
+}
+
+const { locale } = Astro.props
 const t = useTranslations(locale)
+const p = (path: string) => getLocalePath(locale, path)
+const SITE = 'https://valentinadamiano.it'
 
-const [allArtworks, series, hero] = await Promise.all([
+const [allArtworks, series, hero, categories] = await Promise.all([
 	getArtworks(),
 	getPublishedSeries(),
 	getContentBySlug('homepage_hero'),
+	getCategories(),
 ])
+const categoryById = Object.fromEntries(categories.map(c => [c.id, c.name]))
 
 const featuredArtworks = allArtworks.filter((a) => a.featured).slice(0, 5)
 const heroArtwork = allArtworks.find((a) => a.isHero) ?? featuredArtworks[0]
 
-const heroTitle = hero?.title ?? t.home.heroTitle
-const heroBody = hero?.body
-
+// Count artworks per series for the series teaser
 const artworkCountBySeries: Record<string, number> = {}
 for (const a of allArtworks) {
 	if (a.seriesId) artworkCountBySeries[a.seriesId] = (artworkCountBySeries[a.seriesId] ?? 0) + 1
@@ -36,10 +42,19 @@ function cellGridStyle(orient: string) {
 	if (orient === 'landscape') return 'grid-row:span 2;grid-column:span 2'
 	return 'grid-row:span 2'
 }
+
+const heroTitle = hero?.title ?? t.home.heroTitle
+const heroBody = hero?.body
+
+const pageTitle = locale === 'it'
+	? 'Valentina Damiano — Pittrice e Incisore'
+	: 'Valentina Damiano — Painter & Engraver'
+const jobTitle = locale === 'it' ? 'Pittrice e Incisore' : 'Painter and Engraver'
+const region = locale === 'it' ? 'Toscana' : 'Tuscany'
 ---
 
 <BaseLayout
-	title="Valentina Damiano — Painter &amp; Engraver"
+	title={pageTitle}
 	lang={locale}
 	description={t.meta.homeDescription}
 	ogImage={heroArtwork?.coverImage?.medium ?? heroArtwork?.coverImage?.original}
@@ -49,22 +64,22 @@ function cellGridStyle(orient: string) {
 		'@graph': [
 			{
 				'@type': 'WebSite',
-				'@id': 'https://valentinadamiano.it/#website',
-				url: 'https://valentinadamiano.it',
+				'@id': `${SITE}/#website`,
+				url: SITE,
 				name: 'Vale Creative — Valentina Damiano',
-				inLanguage: 'en-US',
+				inLanguage: locale === 'it' ? 'it-IT' : 'en-US',
 			},
 			{
 				'@type': 'Person',
-				'@id': 'https://valentinadamiano.it/#person',
+				'@id': `${SITE}/#person`,
 				name: 'Valentina Damiano',
-				url: 'https://valentinadamiano.it/en/about',
-				jobTitle: 'Painter and Engraver',
+				url: `${SITE}${p('/about')}`,
+				jobTitle,
 				email: 'studio@valentinadamiano.it',
 				address: {
 					'@type': 'PostalAddress',
 					addressLocality: 'Pisa',
-					addressRegion: 'Tuscany',
+					addressRegion: region,
 					addressCountry: 'IT',
 				},
 				sameAs: ['https://www.instagram.com/valentinadamiano.creazioni'],
@@ -73,6 +88,7 @@ function cellGridStyle(orient: string) {
 	})} />
 
 
+	<!-- ── Hero ── -->
 	<section style="position:relative;overflow:hidden">
 		<div style="position:absolute;inset:0;background:radial-gradient(130% 90% at 78% 8%,rgba(216,185,106,.42),rgba(239,231,214,0) 46%),radial-gradient(120% 100% at 8% 100%,rgba(46,64,58,.34),rgba(239,231,214,0) 50%);pointer-events:none"></div>
 		<div class="container" style="padding-block:clamp(40px,6vw,92px) clamp(34px,4vw,64px);position:relative">
@@ -91,14 +107,23 @@ function cellGridStyle(orient: string) {
 					)}
 					<p style="max-width:46ch;margin:26px 0 0;font-size:clamp(16px,1.6vw,18.5px);line-height:1.7;color:#41463d">{t.home.heroSubtitle}</p>
 					<div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:34px">
-						<a href="/en/works" class="vd-btn-primary">{t.home.ctaWorks} <span>→</span></a>
-						<a href="/en/commissions" class="vd-btn-outline">{t.home.ctaCommission}</a>
+						<a href={p('/works')} class="vd-btn-primary">{t.home.ctaWorks} <span>→</span></a>
+						<a href={p('/commissions')} class="vd-btn-outline">{t.home.ctaCommission}</a>
 					</div>
 				</div>
+
+				<!-- Hero image: first featured artwork or gradient placeholder -->
 				<div class="vd-rise" style="position:relative">
 					<div style="position:relative;aspect-ratio:4/5;border-radius:4px;overflow:hidden;border:1px solid var(--line);box-shadow:0 30px 70px -36px rgba(31,42,34,.6)">
 						{heroArtwork?.coverImage?.medium || heroArtwork?.coverImage?.original ? (
-							<img src={heroArtwork.coverImage!.medium ?? heroArtwork.coverImage!.original} alt={heroArtwork.coverImage!.alt ?? heroArtwork.title} loading="eager" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" />
+							<img
+								src={heroArtwork.coverImage!.medium ?? heroArtwork.coverImage!.original}
+								alt={heroArtwork.coverImage!.alt ?? heroArtwork.title}
+								width={heroArtwork.coverImage!.width}
+								height={heroArtwork.coverImage!.height}
+								loading="eager"
+								style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"
+							/>
 						) : (
 							<div style="position:absolute;inset:0;background:radial-gradient(130% 120% at 30% 14%,#d9b25e 0%,#6b4f37 44%,#243029 100%)"></div>
 						)}
@@ -110,11 +135,13 @@ function cellGridStyle(orient: string) {
 							</div>
 						)}
 					</div>
+					<div style="position:absolute;left:-18px;bottom:-18px;width:96px;height:96px;border-radius:50%;background:conic-gradient(from 200deg,var(--rose),var(--syellow),var(--sblue),var(--rose));filter:blur(26px);opacity:.32;z-index:-1"></div>
 				</div>
 			</div>
 		</div>
 	</section>
 
+	<!-- ── Ornamental divider ── -->
 	<div class="container">
 		<div class="vd-divider" style="padding:clamp(34px,5vw,58px) 0 clamp(20px,2vw,28px)">
 			<span class="vd-divider-line"></span>
@@ -123,6 +150,7 @@ function cellGridStyle(orient: string) {
 		</div>
 	</div>
 
+	<!-- ── Featured works ── -->
 	{featuredArtworks.length > 0 && (
 		<section style="padding-bottom:clamp(30px,4vw,56px)">
 			<div class="container">
@@ -131,18 +159,31 @@ function cellGridStyle(orient: string) {
 						<div class="vd-eyebrow">{t.home.featuredEyebrow}</div>
 						<h2 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(28px,4vw,44px);margin:8px 0 0;color:var(--ink)">{t.home.featuredTitle}</h2>
 					</div>
-					<a href="/en/works" style="font-weight:600;font-size:14px;color:var(--verde);white-space:nowrap">{t.home.featuredLink}</a>
+					<a href={p('/works')} style="font-weight:600;font-size:14px;color:var(--verde);white-space:nowrap;transition:color .2s" onmouseover="this.style.color='var(--verde-deep)'" onmouseout="this.style.color='var(--verde)'">{t.home.featuredLink}</a>
 				</div>
 				<div class="vd-grid">
 					{featuredArtworks.map((artwork) => {
 						const orient = getOrientation(artwork.dimensions)
 						const imgSrc = artwork.coverImage?.thumb ?? artwork.coverImage?.medium ?? artwork.coverImage?.original
 						return (
-							<a href={`/en/works/${artwork.slug}`} class="vd-cell" style={cellGridStyle(orient)}>
+							<a
+								href={p(`/works/${artwork.slug}`)}
+								class="vd-cell"
+								style={cellGridStyle(orient)}
+							>
 								{imgSrc ? (
-									<img src={imgSrc} alt={artwork.coverImage?.alt ?? artwork.title} loading="lazy" class="vd-img" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" />
+									<img
+										src={imgSrc}
+										alt={artwork.coverImage?.alt ?? artwork.title}
+										loading="lazy"
+										class="vd-img"
+										style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"
+									/>
 								) : (
-									<div class="vd-img" style="position:absolute;inset:0;background:radial-gradient(130% 120% at 30% 14%,#d9b25e 0%,#6b4f37 44%,#243029 100%)"></div>
+									<div class="vd-img" style={`position:absolute;inset:0;background:radial-gradient(130% 120% at 30% 14%,#d9b25e 0%,#6b4f37 44%,#243029 100%)`}></div>
+								)}
+								{artwork.categoryIds?.[0] && categoryById[artwork.categoryIds[0]] && (
+									<span style="position:absolute;left:11px;top:9px;font-family:'Spline Sans Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.82);z-index:2">[ {categoryById[artwork.categoryIds[0]]} ]</span>
 								)}
 								<div class="vd-cap" style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:14px;background:linear-gradient(180deg,rgba(0,0,0,0) 45%,rgba(18,26,20,.74));z-index:2">
 									<div style="font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:600;color:#fff;line-height:1.05">{artwork.title}</div>
@@ -156,6 +197,7 @@ function cellGridStyle(orient: string) {
 		</section>
 	)}
 
+	<!-- ── Intro band ── -->
 	<section style="background:var(--forest);color:#ece4d2">
 		<div class="container" style="padding-block:clamp(46px,6vw,84px)">
 			<div class="vd-two">
@@ -166,25 +208,31 @@ function cellGridStyle(orient: string) {
 				<div>
 					<p style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:clamp(24px,3.2vw,38px);line-height:1.32;margin:0;color:#f3ecdc">{t.home.bandQuote}</p>
 					<p style="max-width:58ch;margin:24px 0 0;font-size:16.5px;line-height:1.75;color:#cfc8b6">{t.home.bandText}</p>
-					<a href="/en/about" style="display:inline-flex;align-items:center;gap:9px;margin-top:28px;font-weight:600;font-size:15px;color:var(--gold-soft)">{t.home.bandLink}</a>
+					<a href={p('/about')} style="display:inline-flex;align-items:center;gap:9px;margin-top:28px;font-weight:600;font-size:15px;color:var(--gold-soft);transition:color .2s" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--gold-soft)'">{t.home.bandLink}</a>
 				</div>
 			</div>
 		</div>
 	</section>
 
+	<!-- ── Series teaser ── -->
 	{series.length > 0 && (
 		<section>
 			<div class="container" style="padding-block:clamp(46px,6vw,80px)">
 				<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:26px">
 					<h2 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(28px,4vw,44px);margin:0;color:var(--ink)">{t.home.seriesTitle}</h2>
-					<a href="/en/series" style="font-weight:600;font-size:14px;color:var(--verde)">{t.home.seriesLink}</a>
+					<a href={p('/series')} style="font-weight:600;font-size:14px;color:var(--verde);transition:color .2s" onmouseover="this.style.color='var(--verde-deep)'" onmouseout="this.style.color='var(--verde)'">{t.home.seriesLink}</a>
 				</div>
 				<div class="vd-cards">
 					{series.map((s) => {
 						const count = artworkCountBySeries[s.id] ?? 0
 						const imgSrc = s.coverImage?.thumb ?? s.coverImage?.medium ?? s.coverImage?.original
 						return (
-							<a href={`/en/series/${s.slug}`} style="text-align:left;border:1px solid var(--line);background:var(--parchment);border-radius:5px;overflow:hidden;display:block;text-decoration:none;transition:border-color .25s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--line)'">
+							<a
+								href={p(`/series/${s.slug}`)}
+								style="text-align:left;border:1px solid var(--line);background:var(--parchment);border-radius:5px;overflow:hidden;display:block;text-decoration:none;transition:border-color .25s"
+								onmouseover="this.style.borderColor='var(--gold)'"
+								onmouseout="this.style.borderColor='var(--line)'"
+							>
 								{imgSrc ? (
 									<img src={imgSrc} alt={s.coverImage?.alt ?? s.name} loading="lazy" style="width:100%;height:150px;object-fit:cover" />
 								) : (
@@ -202,4 +250,5 @@ function cellGridStyle(orient: string) {
 			</div>
 		</section>
 	)}
+
 </BaseLayout>
