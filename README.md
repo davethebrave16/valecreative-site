@@ -102,6 +102,17 @@ Deploy the updated rules from the backoffice repo:
 cd ../valecreative-admin-backoffice && npm run deploy:rules
 ```
 
+## CMS Content Blocks
+
+Some page sections can be edited in the backoffice without a code change or redeploy. They live in the `contents` Firestore collection. After editing in the backoffice, trigger a new site build/deploy for changes to appear (the site is static — there is no live Firestore listener).
+
+| Slug | Appears on | What it controls |
+|------|------------|-----------------|
+| `homepage_hero` | `/` and `/en/` | Hero heading text (supports HTML markup via `set:html`) |
+| `bio` | `/about` and `/en/about` | Biography prose and portrait photo |
+
+Pages fall back to built-in placeholder text when the document is missing or unpublished.
+
 ## Architecture
 
 - All content (artworks, series, techniques, bio) is fetched from Firestore **at build time** — the static HTML is pre-rendered

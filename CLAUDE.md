@@ -217,3 +217,23 @@ The `commissions` collection allows **unauthenticated creates** (for the public 
 ```bash
 cd ../valecreative-admin-backoffice && npm run deploy:rules
 ```
+
+## CMS Content Blocks (`contents` collection)
+
+Certain page sections are editable via the backoffice `contents` collection without a code change or redeploy. The site fetches them at **build time** using `getContentBySlug(slug)` from `src/lib/fetchContent.ts`. If a document is not found or not published, the page falls back to hardcoded i18n strings — no build failure.
+
+### Slug contract
+
+| Slug | Page(s) | Fields used | Fallback |
+|------|---------|-------------|----------|
+| `homepage_hero` | `/` and `/en/` | `body` (HTML injected into `<h1>` via `set:html`) | `t.home.heroTitle` |
+| `bio` | `/about` and `/en/about` | `body` (HTML prose block), `image` (portrait photo) | Hardcoded IT/EN paragraphs |
+
+### Adding a new content block
+
+1. Decide on a slug (e.g. `commissions_intro`)
+2. In the page frontmatter: `const content = await getContentBySlug('commissions_intro')`
+3. In the template: render `content?.body` with `set:html` if present, otherwise render the i18n fallback
+4. In the backoffice: create a `contents` document with that exact slug and publish it
+
+**Never change an existing slug** without updating both the site code and the backoffice document — a mismatch silently falls back to the hardcoded string.
