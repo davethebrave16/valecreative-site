@@ -154,6 +154,16 @@ export const en = {
 		copyright: (year: number) => `© ${year} Valentina Damiano — All rights reserved`,
 	},
 
+	// Per-page SEO meta descriptions
+	meta: {
+		homeDescription: 'Painter and engraver based in Pisa and Lucca, Tuscany. Dreamlike oil glazing, gold-leaf gilding, and engraving. Art commissions, thematic series, and courses.',
+		worksDescription: 'Gallery of original paintings by Valentina Damiano: oil on canvas, mixed media, watercolour and engraving. Available for purchase, commission, and organised in thematic series.',
+		seriesDescription: 'Thematic series by Valentina Damiano: collections of paintings united by subject, technique, or creative period. Forests, landscapes, and dreamlike visions.',
+		techniquesDescription: 'Artistic techniques by Valentina Damiano: oil glazing, copper engraving, gold-leaf gilding, watercolour, and creative craft.',
+		aboutDescription: 'Painter, engraver and art teacher trained at the Istituto Russoli and the Accademia di Belle Arti di Firenze. Discover Valentina Damiano\'s artistic journey in Pisa and Lucca, Tuscany.',
+		commissionsDescription: 'Commission a bespoke artwork by Valentina Damiano: portraits, landscapes, gold-leaf gilding, personalised art courses. Studio in Pisa and Lucca, Tuscany.',
+	},
+
 	// Artwork detail meta labels
 	artworkMeta: {
 		technique: 'Technique',

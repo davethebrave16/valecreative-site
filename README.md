@@ -112,6 +112,30 @@ Some page sections can be edited in the backoffice without a code change or rede
 
 Pages fall back to built-in placeholder text when the document is missing or unpublished.
 
+## SEO & Analytics
+
+### Google Analytics 4
+
+Add your GA4 Measurement ID to `.env`:
+```
+VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
+```
+To get a Measurement ID: Google Analytics → Admin → Data Streams → Web stream → copy the `G-...` value. The tracking script is injected only when this variable is set — omitting it disables analytics without affecting the build.
+
+### Google Search Console
+
+After deploying, submit the sitemap in Search Console → Sitemaps:
+```
+https://valentinadamiano.it/sitemap-index.xml
+```
+Verify domain ownership via the DNS TXT record method (recommended for Firebase Hosting).
+
+### OG Social Card
+
+Place a `1200×630 px` JPEG at `public/og-default.jpg`. This image is used as the fallback Open Graph image when a page has no specific cover image. Artwork and series detail pages automatically use their own cover image.
+
+---
+
 ## Architecture
 
 - All content (artworks, series, techniques, bio) is fetched from Firestore **at build time** — the static HTML is pre-rendered

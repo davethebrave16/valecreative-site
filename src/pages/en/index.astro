@@ -38,7 +38,40 @@ function cellGridStyle(orient: string) {
 }
 ---
 
-<BaseLayout title="Home" lang={locale} description={`Vale Creative — ${t.home.heroSubtitle}`}>
+<BaseLayout
+	title="Valentina Damiano — Painter &amp; Engraver"
+	lang={locale}
+	description={t.meta.homeDescription}
+	ogImage={heroArtwork?.coverImage?.medium ?? heroArtwork?.coverImage?.original}
+>
+	<script slot="head" type="application/ld+json" set:html={JSON.stringify({
+		'@context': 'https://schema.org',
+		'@graph': [
+			{
+				'@type': 'WebSite',
+				'@id': 'https://valentinadamiano.it/#website',
+				url: 'https://valentinadamiano.it',
+				name: 'Vale Creative — Valentina Damiano',
+				inLanguage: 'en-US',
+			},
+			{
+				'@type': 'Person',
+				'@id': 'https://valentinadamiano.it/#person',
+				name: 'Valentina Damiano',
+				url: 'https://valentinadamiano.it/en/about',
+				jobTitle: 'Painter and Engraver',
+				email: 'studio@valentinadamiano.it',
+				address: {
+					'@type': 'PostalAddress',
+					addressLocality: 'Pisa',
+					addressRegion: 'Tuscany',
+					addressCountry: 'IT',
+				},
+				sameAs: ['https://www.instagram.com/valentinadamiano.creazioni'],
+			},
+		],
+	})} />
+
 
 	<section style="position:relative;overflow:hidden">
 		<div style="position:absolute;inset:0;background:radial-gradient(130% 90% at 78% 8%,rgba(216,185,106,.42),rgba(239,231,214,0) 46%),radial-gradient(120% 100% at 8% 100%,rgba(46,64,58,.34),rgba(239,231,214,0) 50%);pointer-events:none"></div>

@@ -41,7 +41,39 @@ const heroTitle = hero?.title ?? t.home.heroTitle
 const heroBody = hero?.body
 ---
 
-<BaseLayout title="Home" description={`Vale Creative — ${t.home.heroSubtitle}`}>
+<BaseLayout
+	title="Valentina Damiano — Pittrice e Incisore"
+	description={t.meta.homeDescription}
+	ogImage={heroArtwork?.coverImage?.medium ?? heroArtwork?.coverImage?.original}
+>
+	<script slot="head" type="application/ld+json" set:html={JSON.stringify({
+		'@context': 'https://schema.org',
+		'@graph': [
+			{
+				'@type': 'WebSite',
+				'@id': 'https://valentinadamiano.it/#website',
+				url: 'https://valentinadamiano.it',
+				name: 'Vale Creative — Valentina Damiano',
+				inLanguage: 'it-IT',
+			},
+			{
+				'@type': 'Person',
+				'@id': 'https://valentinadamiano.it/#person',
+				name: 'Valentina Damiano',
+				url: 'https://valentinadamiano.it/about',
+				jobTitle: 'Pittrice e Incisore',
+				email: 'studio@valentinadamiano.it',
+				address: {
+					'@type': 'PostalAddress',
+					addressLocality: 'Pisa',
+					addressRegion: 'Toscana',
+					addressCountry: 'IT',
+				},
+				sameAs: ['https://www.instagram.com/valentinadamiano.creazioni'],
+			},
+		],
+	})} />
+
 
 	<!-- ── Hero ── -->
 	<section style="position:relative;overflow:hidden">

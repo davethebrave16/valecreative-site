@@ -46,7 +46,49 @@ const formatDim = (d?: { width?: number; height?: number; unit?: string }) =>
 const dimStr = formatDim(artwork.dimensions)
 ---
 
-<BaseLayout title={artwork.title} description={artwork.description}>
+<BaseLayout
+	title={artwork.title}
+	description={artwork.description ?? `${artwork.title} · ${artwork.year}${techniqueName ? ` · ${techniqueName}` : ''} — Valentina Damiano`}
+	ogImage={artwork.coverImage?.medium ?? artwork.coverImage?.original}
+	ogType="article"
+	noAlternate={true}
+>
+	<script slot="head" type="application/ld+json" set:html={JSON.stringify({
+		'@context': 'https://schema.org',
+		'@graph': [
+			{
+				'@type': 'VisualArtwork',
+				name: artwork.title,
+				...(artwork.description ? { description: artwork.description } : {}),
+				...(artwork.coverImage?.original ? { image: artwork.coverImage.original } : {}),
+				dateCreated: String(artwork.year ?? ''),
+				creator: { '@type': 'Person', name: 'Valentina Damiano' },
+				...(techniqueName ? { artMedium: techniqueName } : {}),
+				...(artwork.support ? { artworkSurface: artwork.support } : {}),
+				...(artwork.dimensions?.width && artwork.dimensions?.height ? {
+					width: `${artwork.dimensions.width} ${artwork.dimensions.unit ?? 'cm'}`,
+					height: `${artwork.dimensions.height} ${artwork.dimensions.unit ?? 'cm'}`,
+				} : {}),
+				...(artwork.availability === 'for_sale' ? {
+					offers: {
+						'@type': 'Offer',
+						availability: 'https://schema.org/InStock',
+						priceCurrency: 'EUR',
+						seller: { '@type': 'Person', name: 'Valentina Damiano' },
+					},
+				} : {}),
+			},
+			{
+				'@type': 'BreadcrumbList',
+				itemListElement: [
+					{ '@type': 'ListItem', position: 1, name: 'Home', item: 'https://valentinadamiano.it' },
+					{ '@type': 'ListItem', position: 2, name: 'Opere', item: 'https://valentinadamiano.it/works' },
+					{ '@type': 'ListItem', position: 3, name: artwork.title },
+				],
+			},
+		],
+	})} />
+
 	<section class="vd-rise" style="padding:clamp(20px,3vw,40px) 0 clamp(50px,6vw,80px)">
 		<div class="container">
 			<!-- Breadcrumb -->

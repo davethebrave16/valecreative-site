@@ -155,6 +155,16 @@ export const it = {
 		copyright: (year: number) => `© ${year} Valentina Damiano — Tutti i diritti riservati`,
 	},
 
+	// Per-page SEO meta descriptions
+	meta: {
+		homeDescription: 'Pittrice e incisore a Pisa e Lucca. Paesaggi onirici con velature a olio, foglia oro e incisione. Commissioni, serie tematiche e corsi d\'arte in Toscana.',
+		worksDescription: 'Galleria di dipinti originali di Valentina Damiano: olio su tela, tecnica mista, acquerello e incisione. Opere disponibili all\'acquisto, su commissione e in serie tematiche.',
+		seriesDescription: 'Le serie tematiche di Valentina Damiano: raccolte di dipinti unite da soggetto, tecnica o periodo creativo. Boschi, paesaggi e visioni oniriche.',
+		techniquesDescription: 'Le tecniche artistiche di Valentina Damiano: pittura a olio con velature, incisione su rame, doratura a foglia oro, acquerello e artigianato creativo.',
+		aboutDescription: 'Pittrice, incisore e insegnante d\'arte formata all\'Istituto Russoli e all\'Accademia di Belle Arti di Firenze. Scopri il percorso artistico di Valentina Damiano a Pisa e Lucca.',
+		commissionsDescription: 'Richiedi una commissione pittorica a Valentina Damiano: ritratti, paesaggi, doratura a foglia oro, corsi d\'arte personalizzati. Studio a Pisa e Lucca.',
+	},
+
 	// Artwork detail meta labels
 	artworkMeta: {
 		technique: 'Tecnica',

@@ -9,7 +9,35 @@ const t = useTranslations(locale)
 const content = await getContentBySlug('bio')
 ---
 
-<BaseLayout title={t.about.eyebrow} lang={locale}>
+<BaseLayout
+	title="About — Valentina Damiano's Studio"
+	lang={locale}
+	description={t.meta.aboutDescription}
+	ogImage={content?.image?.medium ?? content?.image?.original}
+>
+	<script slot="head" type="application/ld+json" set:html={JSON.stringify({
+		'@context': 'https://schema.org',
+		'@type': 'Person',
+		'@id': 'https://valentinadamiano.it/#person',
+		name: 'Valentina Damiano',
+		url: 'https://valentinadamiano.it/en/about',
+		jobTitle: 'Painter and Engraver',
+		email: 'studio@valentinadamiano.it',
+		birthPlace: { '@type': 'Place', name: 'Pisa' },
+		birthDate: '1989',
+		alumniOf: [
+			{ '@type': 'EducationalOrganization', name: 'Istituto d\'Arte F. Russoli', addressLocality: 'Pisa' },
+			{ '@type': 'EducationalOrganization', name: 'Accademia di Belle Arti di Firenze', addressLocality: 'Florence' },
+		],
+		address: {
+			'@type': 'PostalAddress',
+			addressLocality: 'Pisa',
+			addressRegion: 'Tuscany',
+			addressCountry: 'IT',
+		},
+		sameAs: ['https://www.instagram.com/valentinadamiano.creazioni'],
+	})} />
+
 	<section class="vd-rise" style="padding:clamp(34px,5vw,64px) 0 clamp(50px,6vw,90px)">
 		<div class="container">
 			<div class="vd-two">
