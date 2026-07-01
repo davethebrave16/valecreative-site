@@ -24,6 +24,7 @@ const workItems = artworks.map((a) => ({
 	slug: a.slug,
 	year: a.year,
 	availability: a.availability,
+	origin: a.origin,
 	dimensions: a.dimensions,
 	coverImage: a.coverImage,
 	seriesName: a.seriesId ? seriesById[a.seriesId] : undefined,
@@ -49,7 +50,9 @@ const seriesNames = series.map((s) => s.name)
 					seriesNames={seriesNames}
 					labels={{
 						filterAll: t.works.filterAll,
-						countLabel: t.works.countLabel,
+						filterPersonal: t.works.filterPersonal,
+						filterCommissioned: t.works.filterCommissioned,
+						countSuffix: t.works.countSuffix,
 						legendAvailable: t.works.legendAvailable,
 						legendRequest: t.works.legendRequest,
 						legendSold: t.works.legendSold,

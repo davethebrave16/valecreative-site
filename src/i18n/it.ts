@@ -38,7 +38,10 @@ export const it = {
 		subtitle:
 			'Dipinti su tela e tavola di formati e orientamenti diversi.',
 		filterAll: 'Tutte',
+		filterPersonal: 'Personali',
+		filterCommissioned: 'Commissionate',
 		countLabel: (n: number) => `${n} opere`,
+		countSuffix: 'opere',
 		legendAvailable: 'Disponibile',
 		legendRequest: 'Su richiesta',
 		legendSold: 'Venduto / non disp.',

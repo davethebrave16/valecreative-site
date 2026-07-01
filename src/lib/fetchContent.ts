@@ -18,7 +18,7 @@ function docToArtwork(d: { id: string; data: () => Record<string, unknown> }): A
 		title: String(data.title ?? ''),
 		slug: String(data.slug ?? ''),
 		year: Number(data.year ?? 0),
-		techniqueId: String(data.techniqueId ?? (data.techniqueId as { id?: string } | null)?.id ?? ''),
+		techniqueId: String((data.techniqueId as { id?: string } | null)?.id ?? data.techniqueId ?? ''),
 		seriesId: data.seriesId
 			? String((data.seriesId as { id?: string } | null)?.id ?? data.seriesId)
 			: undefined,
@@ -37,7 +37,8 @@ export async function getArtworks(): Promise<Artwork[]> {
 	try {
 		const snap = await getDocs(query(collection(db, 'artworks'), orderBy('createdAt', 'desc')))
 		return snap.docs.map(docToArtwork)
-	} catch {
+	} catch (err) {
+		console.error('[fetchContent] getArtworks failed:', err)
 		return []
 	}
 }
@@ -48,7 +49,8 @@ export async function getArtworkBySlug(slug: string): Promise<Artwork | null> {
 		if (snap.empty) return null
 		const d = snap.docs[0]
 		return docToArtwork(d)
-	} catch {
+	} catch (err) {
+		console.error('[fetchContent] getArtworkBySlug failed:', err)
 		return null
 	}
 }
@@ -73,7 +75,8 @@ export async function getArtworkGallery(artworkId: string): Promise<GalleryImage
 				order: data.order != null ? Number(data.order) : undefined,
 			} satisfies GalleryImage
 		})
-	} catch {
+	} catch (err) {
+		console.error('[fetchContent] getArtworkGallery failed:', err)
 		return []
 	}
 }
@@ -99,7 +102,8 @@ export async function getPublishedSeries(): Promise<Series[]> {
 				published: Boolean(data.published),
 			} satisfies Series
 		})
-	} catch {
+	} catch (err) {
+		console.error('[fetchContent] getPublishedSeries failed:', err)
 		return []
 	}
 }
@@ -119,7 +123,8 @@ export async function getSeriesBySlug(slug: string): Promise<Series | null> {
 			order: data.order != null ? Number(data.order) : undefined,
 			published: Boolean(data.published),
 		}
-	} catch {
+	} catch (err) {
+		console.error('[fetchContent] getSeriesBySlug failed:', err)
 		return null
 	}
 }
@@ -137,7 +142,8 @@ export async function getTechniques(): Promise<Technique[]> {
 				category: (data.category as Technique['category']) ?? 'other',
 			} satisfies Technique
 		})
-	} catch {
+	} catch (err) {
+		console.error('[fetchContent] getTechniques failed:', err)
 		return []
 	}
 }
@@ -155,7 +161,8 @@ export async function getTechniqueBySlug(slug: string): Promise<Technique | null
 			description: data.description ? String(data.description) : undefined,
 			category: (data.category as Technique['category']) ?? 'other',
 		}
-	} catch {
+	} catch (err) {
+		console.error('[fetchContent] getTechniqueBySlug failed:', err)
 		return null
 	}
 }
@@ -176,7 +183,8 @@ export async function getPublishedContents(): Promise<Content[]> {
 				image: data.image as Content['image'],
 			} satisfies Content
 		})
-	} catch {
+	} catch (err) {
+		console.error('[fetchContent] getPublishedContents failed:', err)
 		return []
 	}
 }
@@ -197,7 +205,8 @@ export async function getContentBySlug(slug: string): Promise<Content | null> {
 			published: Boolean(data.published),
 			image: data.image as Content['image'],
 		}
-	} catch {
+	} catch (err) {
+		console.error('[fetchContent] getContentBySlug failed:', err)
 		return null
 	}
 }

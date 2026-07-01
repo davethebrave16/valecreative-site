@@ -6,6 +6,7 @@ export interface WorkItem {
 	slug: string
 	year: number
 	availability: 'for_sale' | 'sold' | 'not_for_sale'
+	origin?: 'personal' | 'commissioned'
 	dimensions?: { width?: number; height?: number; unit?: string }
 	coverImage?: { thumb?: string; medium?: string; original?: string; alt?: string }
 	seriesName?: string
@@ -17,7 +18,9 @@ interface Props {
 	locale?: string
 	labels: {
 		filterAll: string
-		countLabel: (n: number) => string
+		filterPersonal: string
+		filterCommissioned: string
+		countSuffix: string
 		legendAvailable: string
 		legendRequest: string
 		legendSold: string
@@ -47,31 +50,79 @@ function availabilityColor(availability: string) {
 }
 
 export default function WorksGrid({ artworks, seriesNames, labels }: Props) {
-	const [filter, setFilter] = useState<string>(labels.filterAll)
+	const [originFilter, setOriginFilter] = useState<'all' | 'personal' | 'commissioned'>('all')
+	const [seriesFilter, setSeriesFilter] = useState<string>(labels.filterAll)
 
-	const filtered = filter === labels.filterAll
-		? artworks
-		: artworks.filter((a) => a.seriesName === filter)
+	const originFiltered =
+		originFilter === 'all'
+			? artworks
+			: artworks.filter((a) => a.origin === originFilter)
 
-	const chips = [labels.filterAll, ...seriesNames]
+	const visibleSeriesNames = Array.from(
+		new Set(originFiltered.map((a) => a.seriesName).filter(Boolean) as string[])
+	).filter((name) => seriesNames.includes(name))
+
+	const filtered =
+		seriesFilter === labels.filterAll
+			? originFiltered
+			: originFiltered.filter((a) => a.seriesName === seriesFilter)
+
+	function handleOriginChange(next: 'all' | 'personal' | 'commissioned') {
+		setOriginFilter(next)
+		setSeriesFilter(labels.filterAll)
+	}
+
+	const originTabs: { key: 'all' | 'personal' | 'commissioned'; label: string }[] = [
+		{ key: 'all', label: labels.filterAll },
+		{ key: 'personal', label: labels.filterPersonal },
+		{ key: 'commissioned', label: labels.filterCommissioned },
+	]
+
+	const seriesChips = [labels.filterAll, ...visibleSeriesNames]
 
 	return (
 		<>
-			{/* Filter chips */}
-			<div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, margin: '30px 0 22px' }}>
-				{chips.map((chip) => (
+			{/* Origin tabs */}
+			<div style={{ display: 'flex', gap: 6, margin: '30px 0 0', borderBottom: '1px solid var(--line)', paddingBottom: 0 }}>
+				{originTabs.map(({ key, label }) => (
+					<button
+						key={key}
+						onClick={() => handleOriginChange(key)}
+						style={{
+							fontFamily: "'Spline Sans Mono', monospace",
+							fontSize: 11,
+							letterSpacing: '0.12em',
+							textTransform: 'uppercase',
+							padding: '8px 18px',
+							border: 'none',
+							background: 'none',
+							cursor: 'pointer',
+							color: originFilter === key ? 'var(--forest)' : 'var(--muted)',
+							borderBottom: originFilter === key ? '2px solid var(--forest)' : '2px solid transparent',
+							marginBottom: -1,
+							transition: 'color 0.15s, border-color 0.15s',
+						}}
+					>
+						{label}
+					</button>
+				))}
+			</div>
+
+			{/* Series chips */}
+			<div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, margin: '18px 0 22px' }}>
+				{seriesChips.map((chip) => (
 					<button
 						key={chip}
 						className="vd-chip"
-						data-active={chip === filter ? '' : undefined}
-						onClick={() => setFilter(chip)}
-						style={chip === filter ? { background: 'var(--verde)', color: '#fff', borderColor: 'var(--verde)' } : {}}
+						data-active={chip === seriesFilter ? '' : undefined}
+						onClick={() => setSeriesFilter(chip)}
+						style={chip === seriesFilter ? { background: 'var(--verde)', color: '#fff', borderColor: 'var(--verde)' } : {}}
 					>
 						{chip}
 					</button>
 				))}
 				<span style={{ marginLeft: 'auto', fontFamily: "'Spline Sans Mono', monospace", fontSize: 11, letterSpacing: '0.12em', color: 'var(--muted)' }}>
-					{labels.countLabel(filtered.length)}
+					{filtered.length} {labels.countSuffix}
 				</span>
 			</div>
 
