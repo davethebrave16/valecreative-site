@@ -154,7 +154,7 @@ const t = useTranslations(locale)
 const p = (path: string) => getLocalePath(locale, path)
 ---
 <h1>{t.works.title}</h1>
-<a href={p('/series')}>{t.nav.series}</a>
+<a href={p('/works')}>{t.nav.works}</a>
 ```
 
 ## Masonry Grid Cell Spanning
@@ -190,6 +190,16 @@ All Firebase config uses the `PUBLIC_FIREBASE_*` prefix (Astro convention for br
 `src/lib/types.ts` mirrors the backoffice's `src/types/resources.ts` exactly:
 - **Do not** change field names or enum values without syncing the backoffice
 - camelCase fields, same enum string values (`'for_sale'`, `'not_for_sale'`, `'sold'`, `'personal'`, `'commissioned'`, etc.)
+
+## Categories & WorksGrid Filtering
+
+The `categories` collection (`src/lib/fetchContent.ts → getCategories()`) stores artwork taxonomy labels. Each `Artwork` document carries `categoryIds: string[]` — an array of plain category document IDs.
+
+`WorksGrid.tsx` (`client:visible` React island) implements a two-level filter:
+1. **Origin tabs** — Personal / Commissioned (no "All" tab)
+2. **Category chips** — "Tutte/All" chip (resets filter) + one chip per category that has at least one artwork in the active origin tab
+
+Both `/works/index.astro` and `/en/works/index.astro` fetch categories at build time and pass them as the `categories` prop to `WorksGrid`. Category chip visibility is computed client-side to avoid showing empty filters.
 
 ## BlurHash Pattern
 

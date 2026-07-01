@@ -7,14 +7,20 @@ export interface WorkItem {
 	year: number
 	availability: 'for_sale' | 'sold' | 'not_for_sale'
 	origin?: 'personal' | 'commissioned'
+	categoryIds?: string[]
 	dimensions?: { width?: number; height?: number; unit?: string }
 	coverImage?: { thumb?: string; medium?: string; original?: string; alt?: string }
 	seriesName?: string
 }
 
+interface CategoryOption {
+	id: string
+	name: string
+}
+
 interface Props {
 	artworks: WorkItem[]
-	seriesNames: string[]
+	categories: CategoryOption[]
 	locale?: string
 	labels: {
 		filterAll: string
@@ -49,36 +55,32 @@ function availabilityColor(availability: string) {
 	return '#9a8d77'
 }
 
-export default function WorksGrid({ artworks, seriesNames, labels }: Props) {
-	const [originFilter, setOriginFilter] = useState<'all' | 'personal' | 'commissioned'>('all')
-	const [seriesFilter, setSeriesFilter] = useState<string>(labels.filterAll)
+export default function WorksGrid({ artworks, categories, labels }: Props) {
+	const [originFilter, setOriginFilter] = useState<'personal' | 'commissioned'>('personal')
+	const [categoryFilter, setCategoryFilter] = useState<string>('all')
 
-	const originFiltered =
-		originFilter === 'all'
-			? artworks
-			: artworks.filter((a) => a.origin === originFilter)
+	const originFiltered = artworks.filter((a) => a.origin === originFilter)
 
-	const visibleSeriesNames = Array.from(
-		new Set(originFiltered.map((a) => a.seriesName).filter(Boolean) as string[])
-	).filter((name) => seriesNames.includes(name))
+	const visibleCategories = categories.filter((cat) =>
+		originFiltered.some((a) => a.categoryIds?.includes(cat.id))
+	)
 
 	const filtered =
-		seriesFilter === labels.filterAll
+		categoryFilter === 'all'
 			? originFiltered
-			: originFiltered.filter((a) => a.seriesName === seriesFilter)
+			: originFiltered.filter((a) => a.categoryIds?.includes(categoryFilter))
 
-	function handleOriginChange(next: 'all' | 'personal' | 'commissioned') {
+	function handleOriginChange(next: 'personal' | 'commissioned') {
 		setOriginFilter(next)
-		setSeriesFilter(labels.filterAll)
+		setCategoryFilter('all')
 	}
 
-	const originTabs: { key: 'all' | 'personal' | 'commissioned'; label: string }[] = [
-		{ key: 'all', label: labels.filterAll },
+	const originTabs: { key: 'personal' | 'commissioned'; label: string }[] = [
 		{ key: 'personal', label: labels.filterPersonal },
 		{ key: 'commissioned', label: labels.filterCommissioned },
 	]
 
-	const seriesChips = [labels.filterAll, ...visibleSeriesNames]
+	const categoryChips = [{ id: 'all', name: labels.filterAll }, ...visibleCategories]
 
 	return (
 		<>
@@ -108,17 +110,17 @@ export default function WorksGrid({ artworks, seriesNames, labels }: Props) {
 				))}
 			</div>
 
-			{/* Series chips */}
+			{/* Category chips */}
 			<div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, margin: '18px 0 22px' }}>
-				{seriesChips.map((chip) => (
+				{categoryChips.map((chip) => (
 					<button
-						key={chip}
+						key={chip.id}
 						className="vd-chip"
-						data-active={chip === seriesFilter ? '' : undefined}
-						onClick={() => setSeriesFilter(chip)}
-						style={chip === seriesFilter ? { background: 'var(--verde)', color: '#fff', borderColor: 'var(--verde)' } : {}}
+						data-active={chip.id === categoryFilter ? '' : undefined}
+						onClick={() => setCategoryFilter(chip.id)}
+						style={chip.id === categoryFilter ? { background: 'var(--verde)', color: '#fff', borderColor: 'var(--verde)' } : {}}
 					>
-						{chip}
+						{chip.name}
 					</button>
 				))}
 				<span style={{ marginLeft: 'auto', fontFamily: "'Spline Sans Mono', monospace", fontSize: 11, letterSpacing: '0.12em', color: 'var(--muted)' }}>
@@ -133,7 +135,8 @@ export default function WorksGrid({ artworks, seriesNames, labels }: Props) {
 					const imgSrc = artwork.coverImage?.thumb ?? artwork.coverImage?.medium ?? artwork.coverImage?.original
 					const avail = artwork.availability
 					const dotColor = availabilityColor(avail)
-					const tag = labels.orientation[orient] ?? ''
+					const firstCategory = categories.find(c => artwork.categoryIds?.includes(c.id))
+					const tag = firstCategory ? `[ ${firstCategory.name} ]` : ''
 
 					return (
 						<a

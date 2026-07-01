@@ -41,6 +41,12 @@ export interface ArtworkDimensions {
 	unit?: string
 }
 
+export interface Category {
+	id: string
+	name: string
+	slug: string
+}
+
 export interface Artwork {
 	id: string
 	title: string
@@ -48,6 +54,7 @@ export interface Artwork {
 	year: number
 	techniqueId: string
 	seriesId?: string
+	categoryIds?: string[]
 	coverImage?: ImageObject
 	origin: ArtworkOrigin
 	availability: ArtworkAvailability

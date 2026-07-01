@@ -1,16 +1,17 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro'
 import WorksGrid from '@/components/WorksGrid'
-import { getArtworks, getPublishedSeries, getTechniques } from '@/lib/fetchContent'
+import { getArtworks, getPublishedSeries, getTechniques, getCategories } from '@/lib/fetchContent'
 import { useTranslations } from '@/i18n/utils'
 
 const locale = 'en'
 const t = useTranslations(locale)
 
-const [artworks, series, techniques] = await Promise.all([
+const [artworks, series, techniques, categories] = await Promise.all([
 	getArtworks(),
 	getPublishedSeries(),
 	getTechniques(),
+	getCategories(),
 ])
 
 const seriesById = Object.fromEntries(series.map((s) => [s.id, s.name]))
@@ -23,13 +24,12 @@ const workItems = artworks.map((a) => ({
 	year: a.year,
 	availability: a.availability,
 	origin: a.origin,
+	categoryIds: a.categoryIds,
 	dimensions: a.dimensions,
 	coverImage: a.coverImage,
 	seriesName: a.seriesId ? seriesById[a.seriesId] : undefined,
 	techniqueName: a.techniqueId ? techniqueById[a.techniqueId] : undefined,
 }))
-
-const seriesNames = series.map((s) => s.name)
 ---
 
 <BaseLayout title={t.works.title} lang={locale}>
@@ -45,7 +45,7 @@ const seriesNames = series.map((s) => s.name)
 				<WorksGrid
 					client:visible
 					artworks={workItems}
-					seriesNames={seriesNames}
+					categories={categories}
 					labels={{
 						filterAll: t.works.filterAll,
 						filterPersonal: t.works.filterPersonal,

@@ -9,7 +9,7 @@ import {
 	orderBy,
 } from 'firebase/firestore'
 import { db } from './firebaseConfig'
-import type { Artwork, GalleryImage, Series, Technique, Content } from './types'
+import type { Artwork, Category, GalleryImage, Series, Technique, Content } from './types'
 
 function docToArtwork(d: { id: string; data: () => Record<string, unknown> }): Artwork {
 	const data = d.data()
@@ -21,6 +21,9 @@ function docToArtwork(d: { id: string; data: () => Record<string, unknown> }): A
 		techniqueId: String((data.techniqueId as { id?: string } | null)?.id ?? data.techniqueId ?? ''),
 		seriesId: data.seriesId
 			? String((data.seriesId as { id?: string } | null)?.id ?? data.seriesId)
+			: undefined,
+		categoryIds: Array.isArray(data.categoryIds)
+			? (data.categoryIds as unknown[]).map(String)
 			: undefined,
 		coverImage: data.coverImage as Artwork['coverImage'],
 		origin: (data.origin as Artwork['origin']) ?? 'personal',
@@ -185,6 +188,23 @@ export async function getPublishedContents(): Promise<Content[]> {
 		})
 	} catch (err) {
 		console.error('[fetchContent] getPublishedContents failed:', err)
+		return []
+	}
+}
+
+export async function getCategories(): Promise<Category[]> {
+	try {
+		const snap = await getDocs(query(collection(db, 'categories'), orderBy('name', 'asc')))
+		return snap.docs.map((d) => {
+			const data = d.data()
+			return {
+				id: d.id,
+				name: String(data.name ?? ''),
+				slug: String(data.slug ?? ''),
+			} satisfies Category
+		})
+	} catch (err) {
+		console.error('[fetchContent] getCategories failed:', err)
 		return []
 	}
 }
