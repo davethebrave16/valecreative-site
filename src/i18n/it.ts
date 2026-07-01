@@ -175,6 +175,7 @@ export const it = {
 	artworkMeta: {
 		technique: 'Tecnica',
 		dimensions: 'Dimensioni',
+		categories: 'Categorie',
 		series: 'Serie',
 		availability: 'Disponibilità',
 		support: 'Supporto',

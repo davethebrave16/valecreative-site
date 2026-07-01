@@ -174,6 +174,7 @@ export const en = {
 	artworkMeta: {
 		technique: 'Technique',
 		dimensions: 'Dimensions',
+		categories: 'Categories',
 		series: 'Series',
 		availability: 'Availability',
 		support: 'Support',

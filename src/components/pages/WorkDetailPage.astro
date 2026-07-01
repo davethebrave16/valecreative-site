@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro'
 import ImageLightbox from '@/components/ImageLightbox.astro'
-import { getArtworkGallery, getPublishedSeries, getTechniques } from '@/lib/fetchContent'
+import { getArtworkGallery, getCategories, getPublishedSeries, getTechniques } from '@/lib/fetchContent'
 import { useTranslations, getLocalePath } from '@/i18n/utils'
 import type { Artwork } from '@/lib/types'
 
@@ -15,17 +15,22 @@ const t = useTranslations(locale)
 const p = (path: string) => getLocalePath(locale, path)
 const SITE = 'https://valentinadamiano.it'
 
-const [gallery, series, techniques] = await Promise.all([
+const [gallery, series, techniques, categories] = await Promise.all([
 	getArtworkGallery(artwork.id),
 	getPublishedSeries(),
 	getTechniques(),
+	getCategories(),
 ])
 
 const seriesById = Object.fromEntries(series.map((s) => [s.id, s.name]))
 const techniqueById = Object.fromEntries(techniques.map((te) => [te.id, te.name]))
+const categoryById = Object.fromEntries(categories.map((c) => [c.id, c.name]))
 
 const seriesName = artwork.seriesId ? seriesById[artwork.seriesId] : undefined
 const techniqueName = artwork.techniqueId ? techniqueById[artwork.techniqueId] : undefined
+const categoryNames = (artwork.categoryIds ?? [])
+	.map((id) => categoryById[id])
+	.filter((name): name is string => Boolean(name))
 
 const availColor = artwork.availability === 'for_sale'
 	? 'var(--verde)'
@@ -127,7 +132,6 @@ const lightboxItems = [
 					) : (
 						<div style="position:absolute;inset:0;background:radial-gradient(130% 120% at 30% 14%,#d9b25e 0%,#6b4f37 44%,#243029 100%)"></div>
 					)}
-					<span style="position:absolute;left:16px;top:14px;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.72)">{artwork.year}</span>
 				</div>
 
 				<!-- Detail panel -->
@@ -161,6 +165,12 @@ const lightboxItems = [
 							<div class="vd-meta-row">
 								<span class="vd-meta-label">{t.artworkMeta.dimensions}</span>
 								<span class="vd-meta-value">{dimStr}</span>
+							</div>
+						)}
+						{categoryNames.length > 0 && (
+							<div class="vd-meta-row">
+								<span class="vd-meta-label">{t.artworkMeta.categories}</span>
+								<span class="vd-meta-value">{categoryNames.join(', ')}</span>
 							</div>
 						)}
 						{seriesName && (
