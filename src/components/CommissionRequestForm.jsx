@@ -10,6 +10,7 @@ export default function CommissionRequestForm({ labels }) {
 	const [status, setStatus] = useState('idle') // 'idle' | 'pending' | 'success' | 'error'
 	const [serverError, setServerError] = useState('')
 	const [reqType, setReqType] = useState(form.requestTypes?.[0] ?? 'Commissione')
+	const [fieldErrors, setFieldErrors] = useState({})
 
 	const [fields, setFields] = useState({
 		clientName: '',
@@ -18,16 +19,36 @@ export default function CommissionRequestForm({ labels }) {
 		honeypot: '',
 	})
 
+	const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+	const validate = () => {
+		const errors = {}
+		if (!fields.clientName.trim()) errors.clientName = form.requiredError
+		if (!fields.email.trim()) errors.email = form.requiredError
+		else if (!EMAIL_RE.test(fields.email.trim())) errors.email = form.emailInvalidError
+		if (!fields.description.trim()) errors.description = form.requiredError
+		return errors
+	}
+
 	const handleChange = (e) => {
-		setFields((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+		const { name, value } = e.target
+		setFields((prev) => ({ ...prev, [name]: value }))
+		setFieldErrors((prev) => (prev[name] ? { ...prev, [name]: undefined } : prev))
 	}
 
 	const handleSubmit = async (e) => {
 		e.preventDefault()
 		if (fields.honeypot) return
 
+		const errors = validate()
+		if (Object.keys(errors).length > 0) {
+			setFieldErrors(errors)
+			return
+		}
+
 		setStatus('pending')
 		setServerError('')
+		setFieldErrors({})
 
 		try {
 			await addDoc(collection(db, 'commissions'), {
@@ -86,7 +107,12 @@ export default function CommissionRequestForm({ labels }) {
 						autoComplete="name"
 						placeholder={form.namePlaceholder}
 						disabled={status === 'pending'}
+						aria-invalid={fieldErrors.clientName ? 'true' : 'false'}
+						style={fieldErrors.clientName ? { borderColor: 'var(--rose)' } : undefined}
 					/>
+					{fieldErrors.clientName && (
+						<span role="alert" style={{ color: 'var(--rose)', fontSize: '0.85rem' }}>{fieldErrors.clientName}</span>
+					)}
 				</label>
 				<label style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
 					<span style={{ fontFamily: "'Spline Sans Mono', monospace", fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--bark)' }}>{form.email}</span>
@@ -100,7 +126,12 @@ export default function CommissionRequestForm({ labels }) {
 						autoComplete="email"
 						placeholder={form.emailPlaceholder}
 						disabled={status === 'pending'}
+						aria-invalid={fieldErrors.email ? 'true' : 'false'}
+						style={fieldErrors.email ? { borderColor: 'var(--rose)' } : undefined}
 					/>
+					{fieldErrors.email && (
+						<span role="alert" style={{ color: 'var(--rose)', fontSize: '0.85rem' }}>{fieldErrors.email}</span>
+					)}
 				</label>
 			</div>
 
@@ -147,8 +178,12 @@ export default function CommissionRequestForm({ labels }) {
 					rows={5}
 					placeholder={form.messagePlaceholder}
 					disabled={status === 'pending'}
-					style={{ resize: 'vertical', lineHeight: 1.5 }}
+					style={fieldErrors.description ? { resize: 'vertical', lineHeight: 1.5, borderColor: 'var(--rose)' } : { resize: 'vertical', lineHeight: 1.5 }}
+					aria-invalid={fieldErrors.description ? 'true' : 'false'}
 				/>
+				{fieldErrors.description && (
+					<span role="alert" style={{ color: 'var(--rose)', fontSize: '0.85rem' }}>{fieldErrors.description}</span>
+				)}
 			</label>
 
 			{status === 'error' && (

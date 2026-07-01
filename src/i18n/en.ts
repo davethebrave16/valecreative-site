@@ -6,7 +6,7 @@ export const en = {
 		series: 'Series',
 		techniques: 'Techniques',
 		about: 'Studio',
-		commissions: 'Commissions',
+		contact: 'Contact',
 	},
 
 	// Home page
@@ -115,9 +115,9 @@ export const en = {
 	// Commissions form (Contact)
 	commissions: {
 		eyebrow: 'Contact',
-		title: 'Request a commission',
+		title: 'Get in touch',
 		subtitle:
-			'For bespoke artworks, gilding, engravings, or art courses. Tell me your idea — I\'ll reply personally.',
+			'Questions, ideas, or a commission in mind — I\'d love to hear from you. Tell me what\'s on your mind and I\'ll reply personally.',
 		form: {
 			name: 'Full name',
 			namePlaceholder: 'Your name',
@@ -129,6 +129,8 @@ export const en = {
 			messagePlaceholder: 'Describe your idea, subject, dimensions, timeline…',
 			submit: 'Send request',
 			submitting: 'Sending…',
+			requiredError: 'This field is required.',
+			emailInvalidError: 'Please enter a valid email address.',
 		},
 		success: {
 			title: 'Thank you!',
@@ -136,12 +138,6 @@ export const en = {
 			again: 'Send another request',
 		},
 		error: 'Something went wrong. Please try again.',
-	},
-
-	// Contact
-	contact: {
-		title: 'Contact',
-		intro: 'Have a question or just want to say hello? Use the form below.',
 	},
 
 	// Footer
@@ -157,7 +153,7 @@ export const en = {
 		seriesDescription: 'Thematic series by Valentina Damiano: collections of paintings united by subject, technique, or creative period. Forests, landscapes, and dreamlike visions.',
 		techniquesDescription: 'Artistic techniques by Valentina Damiano: oil glazing, copper engraving, gold-leaf gilding, watercolour, and creative craft.',
 		aboutDescription: 'Painter, engraver and art teacher trained at the Istituto Russoli and the Accademia di Belle Arti di Firenze. Discover Valentina Damiano\'s artistic journey in Pisa and Lucca, Tuscany.',
-		commissionsDescription: 'Commission a bespoke artwork by Valentina Damiano: portraits, landscapes, gold-leaf gilding, personalised art courses. Studio in Pisa and Lucca, Tuscany.',
+		contactDescription: 'Get in touch with Valentina Damiano for questions, bespoke artwork commissions, gold-leaf gilding, or personalised art courses. Studio in Pisa and Lucca, Tuscany.',
 	},
 
 	// Artwork detail meta labels

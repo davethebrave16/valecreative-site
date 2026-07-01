@@ -21,4 +21,8 @@ export default defineConfig({
 			prefixDefaultLocale: false,
 		},
 	},
+	redirects: {
+		'/commissions': '/contact',
+		'/en/commissions': '/en/contact',
+	},
 })

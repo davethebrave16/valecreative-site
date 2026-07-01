@@ -6,7 +6,7 @@ export const it = {
 		series: 'Serie',
 		techniques: 'Tecniche',
 		about: 'Studio',
-		commissions: 'Commissioni',
+		contact: 'Contattami',
 	},
 
 	// Home page
@@ -113,12 +113,12 @@ export const it = {
 		placeholder: '[ ritratto · valentina ]',
 	},
 
-	// Commissions form (Contatti)
+	// Commissions form (Contattami)
 	commissions: {
-		eyebrow: 'Contatti',
-		title: 'Richiedi una commissione',
+		eyebrow: 'Contattami',
+		title: 'Mettiti in contatto',
 		subtitle:
-			'Per opere su misura, doratura, incisioni o corsi d\'arte. Raccontami la tua idea: ti risponderò personalmente.',
+			'Domande, idee o una commissione in mente: scrivimi pure. Raccontami cosa hai in mente, ti risponderò personalmente.',
 		form: {
 			name: 'Nome e cognome',
 			namePlaceholder: 'Il tuo nome',
@@ -130,6 +130,8 @@ export const it = {
 			messagePlaceholder: 'Descrivi la tua idea, soggetto, dimensioni, tempi…',
 			submit: 'Invia la richiesta',
 			submitting: 'Invio…',
+			requiredError: 'Questo campo è obbligatorio.',
+			emailInvalidError: 'Inserisci un indirizzo email valido.',
 		},
 		success: {
 			title: 'Grazie!',
@@ -137,12 +139,6 @@ export const it = {
 			again: 'Invia un\'altra richiesta',
 		},
 		error: 'Qualcosa è andato storto. Riprova.',
-	},
-
-	// Contact
-	contact: {
-		title: 'Contatti',
-		intro: 'Hai una domanda o vuoi semplicemente salutare? Usa il modulo qui sotto.',
 	},
 
 	// Footer
@@ -158,7 +154,7 @@ export const it = {
 		seriesDescription: 'Le serie tematiche di Valentina Damiano: raccolte di dipinti unite da soggetto, tecnica o periodo creativo. Boschi, paesaggi e visioni oniriche.',
 		techniquesDescription: 'Le tecniche artistiche di Valentina Damiano: pittura a olio con velature, incisione su rame, doratura a foglia oro, acquerello e artigianato creativo.',
 		aboutDescription: 'Pittrice, incisore e insegnante d\'arte formata all\'Istituto Russoli e all\'Accademia di Belle Arti di Firenze. Scopri il percorso artistico di Valentina Damiano a Pisa e Lucca.',
-		commissionsDescription: 'Richiedi una commissione pittorica a Valentina Damiano: ritratti, paesaggi, doratura a foglia oro, corsi d\'arte personalizzati. Studio a Pisa e Lucca.',
+		contactDescription: 'Mettiti in contatto con Valentina Damiano per domande, commissioni pittoriche su misura, doratura a foglia oro o corsi d\'arte personalizzati. Studio a Pisa e Lucca.',
 	},
 
 	// Artwork detail meta labels
