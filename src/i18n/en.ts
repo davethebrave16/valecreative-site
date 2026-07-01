@@ -118,16 +118,6 @@ export const en = {
 		title: 'Request a commission',
 		subtitle:
 			'For bespoke artworks, gilding, engravings, or art courses. Tell me your idea — I\'ll reply personally.',
-		contactLabels: {
-			email: 'Email',
-			atelier: 'Atelier',
-			instagram: 'Instagram',
-		},
-		contactValues: {
-			email: 'studio@valentinadamiano.it',
-			atelier: 'Pisa · Lucca, Tuscany',
-			instagram: '@valentinadamiano.creazioni',
-		},
 		form: {
 			name: 'Full name',
 			namePlaceholder: 'Your name',

@@ -119,16 +119,6 @@ export const it = {
 		title: 'Richiedi una commissione',
 		subtitle:
 			'Per opere su misura, doratura, incisioni o corsi d\'arte. Raccontami la tua idea: ti risponderò personalmente.',
-		contactLabels: {
-			email: 'Email',
-			atelier: 'Atelier',
-			instagram: 'Instagram',
-		},
-		contactValues: {
-			email: 'studio@valentinadamiano.it',
-			atelier: 'Pisa · Lucca, Toscana',
-			instagram: '@valentinadamiano.creazioni',
-		},
 		form: {
 			name: 'Nome e cognome',
 			namePlaceholder: 'Il tuo nome',
