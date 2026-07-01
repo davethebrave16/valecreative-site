@@ -1,48 +1,164 @@
 ---
 import '../styles/global.css'
+import { useTranslations, getLocalePath } from '@/i18n/utils'
 
 interface Props {
 	title: string
 	description?: string
+	lang?: string
 }
 
-const { title, description = 'Vale Creative — the portfolio of Valentina Damiano' } = Astro.props
+const {
+	title,
+	description = 'Vale Creative — il portfolio di Valentina Damiano',
+	lang,
+} = Astro.props
+
+const locale = lang ?? Astro.currentLocale ?? 'it'
+const t = useTranslations(locale)
+const p = (path: string) => getLocalePath(locale, path)
+
+const pathname = Astro.url.pathname
+const isActive = (href: string) =>
+	href === p('/') ? pathname === p('/') || pathname === p('') : pathname.startsWith(href)
+
+const navLinks = [
+	{ label: t.nav.home, href: p('/') },
+	{ label: t.nav.works, href: p('/works') },
+	{ label: t.nav.series, href: p('/series') },
+	{ label: t.nav.techniques, href: p('/techniques') },
+	{ label: t.nav.about, href: p('/about') },
+]
+
+const year = new Date().getFullYear()
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang={locale}>
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="description" content={description} />
 		<title>{title} — Vale Creative</title>
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" type="image/svg+xml" href="/logo.svg" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Hanken+Grotesk:wght@300;400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&display=swap"
+			rel="stylesheet"
+		/>
 	</head>
 	<body>
-		<header>
-			<div class="container">
-				<nav>
-					<a href="/">Home</a>
-					<a href="/works">Works</a>
-					<a href="/series">Series</a>
-					<a href="/techniques">Techniques</a>
-					<a href="/about">About</a>
-					<a href="/commissions">Commissions</a>
-					<a href="/contact">Contact</a>
+
+		<header id="vd-header" style="position:sticky;top:0;z-index:40;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);background:rgba(239,231,214,.82);border-bottom:1px solid var(--line)">
+			<div style="max-width:1320px;margin:0 auto;padding:14px clamp(18px,4vw,52px);display:flex;align-items:center;justify-content:space-between;gap:20px">
+
+				<!-- Logo -->
+				<a href={p('/')} style="display:flex;align-items:center;gap:12px;text-decoration:none">
+					<img src="/logo.svg" alt="Valentina Damiano" width="42" height="42" style="border-radius:50%;flex:none" />
+					<span style="display:flex;flex-direction:column;align-items:flex-start;line-height:1">
+						<span style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:20px;letter-spacing:.01em;color:var(--ink)">Valentina Damiano</span>
+						<span style="font-family:'Spline Sans Mono',monospace;font-size:9.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--muted);margin-top:3px">{t.footer.tagline}</span>
+					</span>
+				</a>
+
+				<!-- Desktop nav -->
+				<nav class="vd-desk" style="align-items:center;gap:clamp(14px,1.8vw,30px)">
+					{navLinks.map((link) => (
+						<a
+							class="vd-navlink"
+							href={link.href}
+							data-active={isActive(link.href) ? '' : undefined}
+						>
+							{link.label}
+						</a>
+					))}
+					<a
+						href={p('/commissions')}
+						style="font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;font-weight:600;padding:9px 18px;border:1px solid var(--verde);border-radius:999px;color:var(--verde);transition:background .2s,color .2s"
+						onmouseover="this.style.background='var(--verde)';this.style.color='#fff'"
+						onmouseout="this.style.background='';this.style.color='var(--verde)'"
+					>
+						{t.nav.commissions}
+					</a>
 				</nav>
+
+				<!-- Burger button -->
+				<button
+					class="vd-burger"
+					id="vd-burger"
+					aria-label="Menu"
+					aria-expanded="false"
+					style="align-items:center;justify-content:center;width:42px;height:42px;border:1px solid var(--line);border-radius:10px;background:var(--parchment)"
+				>
+					<span style="display:block;width:18px;height:11px;border-top:1.6px solid var(--ink);border-bottom:1.6px solid var(--ink);position:relative">
+						<span style="position:absolute;top:4px;left:0;right:0;height:1.6px;background:var(--ink)"></span>
+					</span>
+				</button>
+
+			</div>
+
+			<!-- Mobile menu -->
+			<div id="vd-menu" style="display:none;border-top:1px solid var(--line);background:var(--parchment);padding:8px clamp(18px,4vw,52px) 18px;flex-direction:column">
+				{navLinks.map((link) => (
+					<a
+						href={link.href}
+						style={`padding:13px 2px;font-size:17px;font-weight:${isActive(link.href) ? 600 : 500};color:${isActive(link.href) ? 'var(--verde)' : 'var(--ink)'};border-bottom:1px solid var(--line);font-family:'Cormorant Garamond',serif;text-decoration:none;display:block`}
+					>
+						{link.label}
+					</a>
+				))}
+				<a
+					href={p('/commissions')}
+					style="padding:13px 2px;font-size:17px;font-weight:600;color:var(--verde);border-bottom:1px solid var(--line);font-family:'Cormorant Garamond',serif;text-decoration:none;display:block"
+				>
+					{t.nav.commissions}
+				</a>
 			</div>
 		</header>
 
 		<main>
-			<div class="container">
-				<slot />
-			</div>
+			<slot />
 		</main>
 
 		<footer>
-			<div class="container">
-				<p>© {new Date().getFullYear()} Valentina Damiano — Vale Creative</p>
+			<div style="max-width:1320px;margin:0 auto;padding:clamp(40px,5vw,70px) clamp(18px,4vw,52px) 34px;position:relative">
+				<div style="display:grid;grid-template-columns:1fr;gap:30px">
+					<div style="display:flex;align-items:center;gap:14px">
+						<img src="/logo.svg" alt="" width="52" height="52" style="border-radius:50%" />
+						<div>
+							<div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:#f3ecdc">Valentina Damiano</div>
+							<div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-soft);margin-top:3px">{t.footer.tagline}</div>
+						</div>
+					</div>
+					<nav style="display:flex;flex-wrap:wrap;gap:18px 26px">
+						{navLinks.map((link) => (
+							<a href={link.href} style="font-size:14px;color:#cfc8b6;text-decoration:none;transition:color .2s" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#cfc8b6'">
+								{link.label}
+							</a>
+						))}
+						<a href={p('/commissions')} style="font-size:14px;color:#cfc8b6;text-decoration:none;transition:color .2s" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#cfc8b6'">
+							{t.nav.commissions}
+						</a>
+					</nav>
+				</div>
+				<div style="display:flex;align-items:center;gap:16px;margin:34px 0 0;padding-top:20px;border-top:1px solid rgba(255,255,255,.12)">
+					<span style="flex:1;font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.06em;color:#8f897b">{t.footer.copyright(year)}</span>
+				</div>
 			</div>
 		</footer>
+
+		<script>
+			const burger = document.getElementById('vd-burger')
+			const menu = document.getElementById('vd-menu')
+			if (burger && menu) {
+				burger.addEventListener('click', () => {
+					const open = menu.style.display === 'flex'
+					menu.style.display = open ? 'none' : 'flex'
+					burger.setAttribute('aria-expanded', String(!open))
+				})
+			}
+		</script>
+
 	</body>
 </html>

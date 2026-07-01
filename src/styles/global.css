@@ -1,3 +1,22 @@
+/* ─── Design tokens ─────────────────────────────────────────────────────── */
+:root {
+	--ink: #1f2a22;
+	--forest: #2e403a;
+	--bark: #6b4f37;
+	--paper: #efe7d6;
+	--parchment: #fbf6ec;
+	--gold: #b68a3c;
+	--gold-soft: #d8b96a;
+	--verde: #2c7466;
+	--verde-deep: #205c52;
+	--line: rgba(31, 42, 34, 0.14);
+	--muted: #7c7567;
+	--rose: #c8536b;
+	--syellow: #e2b043;
+	--sblue: #4e6fa0;
+}
+
+/* ─── Reset ─────────────────────────────────────────────────────────────── */
 *,
 *::before,
 *::after {
@@ -12,11 +31,11 @@ html {
 }
 
 body {
-	font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+	font-family: 'Hanken Grotesk', system-ui, -apple-system, sans-serif;
 	font-size: clamp(1rem, 1vw + 0.75rem, 1.125rem);
 	line-height: 1.6;
-	color: #111;
-	background: #fff;
+	color: var(--ink);
+	background: var(--paper);
 	min-height: 100vh;
 	display: flex;
 	flex-direction: column;
@@ -30,89 +49,238 @@ img {
 
 a {
 	color: inherit;
+	text-decoration: none;
 }
 
-/* Structural container — no design decisions, just prevents content touching edges */
-.container {
-	width: 100%;
-	max-width: 1200px;
-	margin-inline: auto;
-	padding-inline: clamp(1rem, 4vw, 2rem);
+button {
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
 }
 
-/* Layout slots */
-header {
-	border-bottom: 1px solid #e5e5e5;
+::selection {
+	background: rgba(44, 116, 102, 0.22);
 }
 
+/* ─── Animations ─────────────────────────────────────────────────────────── */
+@keyframes vdRise {
+	from { opacity: 0; transform: translateY(14px); }
+	to   { opacity: 1; transform: none; }
+}
+
+@keyframes vdShimmer {
+	0%   { background-position: -200% 0; }
+	100% { background-position: 200% 0; }
+}
+
+.vd-rise {
+	animation: vdRise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+/* ─── Layout ─────────────────────────────────────────────────────────────── */
 main {
 	flex: 1;
-	padding-block: clamp(1.5rem, 4vw, 3rem);
 }
 
-footer {
-	border-top: 1px solid #e5e5e5;
-	padding-block: 1.5rem;
-	font-size: 0.875rem;
-	color: #666;
+/* Container — 1320px max, fluid horizontal padding */
+.container {
+	width: 100%;
+	max-width: 1320px;
+	margin-inline: auto;
+	padding-inline: clamp(18px, 4vw, 52px);
 }
 
-/* Nav */
-nav {
-	display: flex;
-	align-items: center;
-	flex-wrap: wrap;
-	gap: 0.25rem 1.5rem;
-	padding-block: 1rem;
+/* ─── Nav ────────────────────────────────────────────────────────────────── */
+.vd-desk { display: flex; }
+.vd-burger { display: none; }
+
+@media (max-width: 880px) {
+	.vd-desk { display: none; }
+	.vd-burger { display: inline-flex; }
 }
 
-nav a {
-	text-decoration: none;
-	white-space: nowrap;
+.vd-navlink {
+	position: relative;
+	font-family: 'Hanken Grotesk', system-ui, sans-serif;
+	font-size: 14px;
+	font-weight: 500;
+	padding-bottom: 2px;
+	color: var(--ink);
 }
 
-nav a:hover {
-	text-decoration: underline;
+.vd-navlink::after {
+	content: '';
+	position: absolute;
+	left: 0;
+	right: 100%;
+	bottom: -3px;
+	height: 1.5px;
+	background: var(--verde);
+	transition: right 0.3s ease;
 }
 
-/* Basic grid utility for listing pages */
-.grid {
+.vd-navlink:hover::after,
+.vd-navlink[data-active]::after {
+	right: 0;
+}
+
+.vd-navlink[data-active] {
+	font-weight: 600;
+	color: var(--verde);
+}
+
+/* ─── Hero layout ────────────────────────────────────────────────────────── */
+.vd-hero {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
-	gap: clamp(1rem, 2vw, 1.5rem);
+	grid-template-columns: 1fr;
+	gap: clamp(28px, 5vw, 72px);
+	align-items: center;
 }
 
-/* Card placeholder */
-.card {
-	border: 1px solid #e5e5e5;
-	border-radius: 4px;
+@media (min-width: 900px) {
+	.vd-hero { grid-template-columns: 1.04fr 0.96fr; }
+}
+
+/* ─── Two-column layout ──────────────────────────────────────────────────── */
+.vd-two {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: clamp(22px, 4vw, 60px);
+	align-items: start;
+}
+
+@media (min-width: 820px) {
+	.vd-two { grid-template-columns: 0.85fr 1.15fr; }
+}
+
+/* ─── Artwork detail layout ──────────────────────────────────────────────── */
+.vd-detailwrap {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: clamp(20px, 3vw, 46px);
+	align-items: start;
+}
+
+@media (min-width: 860px) {
+	.vd-detailwrap { grid-template-columns: minmax(0, 1.7fr) minmax(300px, 1fr); }
+}
+
+/* ─── Masonry artwork grid ───────────────────────────────────────────────── */
+.vd-grid {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: clamp(10px, 1.4vw, 18px);
+	grid-auto-rows: clamp(78px, 10vw, 128px);
+	grid-auto-flow: dense;
+}
+
+@media (min-width: 560px) {
+	.vd-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (min-width: 920px) {
+	.vd-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* ─── Cards grid (series, techniques) ───────────────────────────────────── */
+.vd-cards {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(min(265px, 100%), 1fr));
+	gap: clamp(16px, 2vw, 30px);
+}
+
+/* ─── Masonry cell ───────────────────────────────────────────────────────── */
+.vd-cell {
+	position: relative;
 	overflow: hidden;
+	border: 1px solid var(--line);
+	background: var(--parchment);
+	border-radius: 3px;
 }
 
-.card-body {
-	padding: 1rem;
+.vd-cell .vd-img {
+	transition:
+		filter 0.85s ease,
+		opacity 0.85s ease,
+		transform 0.85s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
-/* Headings */
-h1 {
-	font-size: clamp(1.75rem, 3vw + 1rem, 2.5rem);
-	line-height: 1.2;
-	margin-bottom: 1rem;
+.vd-cell:hover .vd-img {
+	transform: scale(1.05);
 }
 
-h2 {
-	font-size: clamp(1.25rem, 2vw + 0.75rem, 1.75rem);
-	line-height: 1.3;
-	margin-bottom: 0.75rem;
+.vd-cell:focus-visible {
+	outline: 2px solid var(--verde);
+	outline-offset: 2px;
 }
 
-h3 {
-	font-size: clamp(1rem, 1.5vw + 0.5rem, 1.25rem);
-	line-height: 1.4;
-	margin-bottom: 0.5rem;
+/* ─── Hover caption ──────────────────────────────────────────────────────── */
+.vd-cap {
+	opacity: 0;
+	transform: translateY(10px);
+	transition: 0.42s ease;
 }
 
-/* Rich text content (from Firestore HTML body field) */
+.vd-cell:hover .vd-cap,
+.vd-cell:focus-visible .vd-cap {
+	opacity: 1;
+	transform: none;
+}
+
+/* ─── Chip filter buttons ────────────────────────────────────────────────── */
+.vd-chip {
+	transition: 0.25s ease;
+	font-family: 'Hanken Grotesk', system-ui, sans-serif;
+	font-size: 13.5px;
+	font-weight: 600;
+	padding: 8px 16px;
+	border-radius: 999px;
+	border: 1px solid var(--line);
+	cursor: pointer;
+	background: transparent;
+	color: var(--ink);
+}
+
+.vd-chip[data-active] {
+	background: var(--verde);
+	color: #fff;
+	border-color: var(--verde);
+}
+
+/* ─── Form field focus ───────────────────────────────────────────────────── */
+.vd-field {
+	font: 16px 'Hanken Grotesk', system-ui, sans-serif;
+	padding: 12px 14px;
+	border: 1px solid var(--line);
+	border-radius: 7px;
+	background: #fdfbf6;
+	color: var(--ink);
+	width: 100%;
+	transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.vd-field:focus {
+	outline: none;
+	border-color: var(--verde);
+	background: #fff;
+}
+
+/* ─── Typography ─────────────────────────────────────────────────────────── */
+h1, h2, h3 {
+	font-family: 'Cormorant Garamond', Georgia, serif;
+	line-height: 1.1;
+}
+
+/* ─── Prose (rich text from Firestore) ──────────────────────────────────── */
+.prose {
+	max-width: 65ch;
+	font-size: 16.5px;
+	line-height: 1.78;
+	color: #41463d;
+}
+
+.prose p { margin-bottom: 1em; }
+
 .prose h1,
 .prose h2,
 .prose h3,
@@ -121,71 +289,17 @@ h3 {
 	margin-bottom: 0.5em;
 }
 
-.prose p {
-	margin-bottom: 1em;
-}
-
 .prose ul,
 .prose ol {
 	padding-left: 1.5em;
 	margin-bottom: 1em;
 }
 
-/* Form basics */
-form {
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
-	max-width: 540px;
-}
-
-label {
-	display: flex;
-	flex-direction: column;
-	gap: 0.25rem;
-	font-size: 0.9rem;
-	font-weight: 500;
-}
-
-input,
-textarea,
-select {
-	font: inherit;
-	padding: 0.5rem 0.75rem;
-	border: 1px solid #ccc;
-	border-radius: 4px;
-	width: 100%;
-}
-
-input:focus,
-textarea:focus,
-select:focus {
-	outline: 2px solid #2e6b55;
-	outline-offset: 1px;
-}
-
-button[type='submit'] {
-	font: inherit;
-	font-weight: 600;
-	padding: 0.625rem 1.5rem;
-	border: none;
-	border-radius: 4px;
-	cursor: pointer;
-	background: #2e6b55;
-	color: #fff;
-	align-self: flex-start;
-}
-
-button[type='submit']:disabled {
-	opacity: 0.6;
-	cursor: not-allowed;
-}
-
-/* BlurHash image container */
+/* ─── BlurHash image container ───────────────────────────────────────────── */
 .blur-image-wrap {
 	position: relative;
 	overflow: hidden;
-	background: #f0f0f0;
+	background: var(--parchment);
 }
 
 .blur-image-wrap img {
@@ -202,4 +316,108 @@ button[type='submit']:disabled {
 	background-size: cover;
 	background-position: center;
 	z-index: 0;
+}
+
+/* ─── Ornamental divider ─────────────────────────────────────────────────── */
+.vd-divider {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+}
+
+.vd-divider-line {
+	flex: 1;
+	height: 1px;
+	background: var(--line);
+}
+
+.vd-divider-diamond {
+	width: 9px;
+	height: 9px;
+	border: 1px solid var(--gold);
+	transform: rotate(45deg);
+}
+
+/* ─── Metadata table (definition list) ──────────────────────────────────── */
+.vd-meta {
+	display: flex;
+	flex-direction: column;
+	border-top: 1px solid var(--line);
+}
+
+.vd-meta-row {
+	display: flex;
+	justify-content: space-between;
+	gap: 14px;
+	padding: 12px 0;
+	border-bottom: 1px solid var(--line);
+}
+
+.vd-meta-label {
+	font-family: 'Spline Sans Mono', monospace;
+	font-size: 11px;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--muted);
+	flex-shrink: 0;
+}
+
+.vd-meta-value {
+	font-size: 14.5px;
+	color: var(--ink);
+	text-align: right;
+}
+
+/* ─── Section eyebrow label ──────────────────────────────────────────────── */
+.vd-eyebrow {
+	font-family: 'Spline Sans Mono', monospace;
+	font-size: 11px;
+	letter-spacing: 0.26em;
+	text-transform: uppercase;
+	color: var(--bark);
+}
+
+/* ─── Availability dot ───────────────────────────────────────────────────── */
+.vd-dot-available  { background: var(--verde); }
+.vd-dot-for-sale   { background: var(--verde); }
+.vd-dot-request    { background: var(--gold); }
+.vd-dot-sold       { background: #9a8d77; }
+.vd-dot-unavailable{ background: #9a8d77; }
+
+/* ─── CTA pill button ────────────────────────────────────────────────────── */
+.vd-btn-primary {
+	display: inline-flex;
+	align-items: center;
+	gap: 9px;
+	background: var(--verde);
+	color: #fff;
+	font-weight: 600;
+	font-size: 15px;
+	padding: 13px 24px;
+	border-radius: 999px;
+	border: none;
+	transition: background 0.2s ease;
+}
+
+.vd-btn-primary:hover { background: var(--verde-deep); }
+
+.vd-btn-outline {
+	display: inline-flex;
+	align-items: center;
+	font-weight: 600;
+	font-size: 15px;
+	padding: 13px 22px;
+	border-radius: 999px;
+	border: 1px solid var(--line);
+	color: var(--ink);
+	background: transparent;
+	transition: border-color 0.2s ease;
+}
+
+.vd-btn-outline:hover { border-color: var(--ink); }
+
+/* ─── Footer ─────────────────────────────────────────────────────────────── */
+footer {
+	background: var(--ink);
+	color: #cfc8b6;
 }

@@ -3,7 +3,7 @@ import BaseLayout from '@/layouts/BaseLayout.astro'
 import { getPublishedSeries, getArtworks } from '@/lib/fetchContent'
 import { useTranslations } from '@/i18n/utils'
 
-const locale = Astro.currentLocale ?? 'it'
+const locale = 'en'
 const t = useTranslations(locale)
 
 const [series, allArtworks] = await Promise.all([getPublishedSeries(), getArtworks()])
@@ -12,39 +12,26 @@ const countById: Record<string, number> = {}
 for (const a of allArtworks) {
 	if (a.seriesId) countById[a.seriesId] = (countById[a.seriesId] ?? 0) + 1
 }
-
-const GRADS = [
-	'linear-gradient(155deg,#33473b 0%,#5d6b4d 40%,#b68a3c 100%)',
-	'radial-gradient(120% 110% at 72% 18%,#c98f5a 0%,#4a5640 50%,#20281f 100%)',
-	'linear-gradient(160deg,#2e403a 0%,#7d8a6a 54%,#e3c277 100%)',
-	'radial-gradient(120% 120% at 40% 82%,#b68a3c 0%,#5a4632 42%,#232e26 100%)',
-]
 ---
 
-<BaseLayout title={t.series.title} description={`${t.series.eyebrow} · Vale Creative`}>
+<BaseLayout title={t.series.title} lang={locale}>
 	<section class="vd-rise" style="padding:clamp(34px,5vw,64px) 0 clamp(50px,6vw,90px)">
 		<div class="container">
 			<div class="vd-eyebrow">{t.series.eyebrow}</div>
 			<h1 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(34px,5.5vw,62px);margin:10px 0 28px;color:var(--ink)">{t.series.title}</h1>
-
 			{series.length === 0 ? (
 				<p style="color:var(--muted)">{t.series.empty}</p>
 			) : (
 				<div class="vd-cards">
-					{series.map((s, i) => {
+					{series.map((s) => {
 						const count = countById[s.id] ?? 0
 						const imgSrc = s.coverImage?.thumb ?? s.coverImage?.medium ?? s.coverImage?.original
 						return (
-							<a
-								href={`/series/${s.slug}`}
-								style="text-align:left;border:1px solid var(--line);background:var(--parchment);border-radius:5px;overflow:hidden;display:block;text-decoration:none;transition:border-color .25s"
-								onmouseover="this.style.borderColor='var(--gold)'"
-								onmouseout="this.style.borderColor='var(--line)'"
-							>
+							<a href={`/en/series/${s.slug}`} style="text-align:left;border:1px solid var(--line);background:var(--parchment);border-radius:5px;overflow:hidden;display:block;text-decoration:none;transition:border-color .25s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--line)'">
 								{imgSrc ? (
 									<img src={imgSrc} alt={s.coverImage?.alt ?? s.name} loading="lazy" style="width:100%;height:210px;object-fit:cover" />
 								) : (
-									<div style={`height:210px;background:${GRADS[i % GRADS.length]}`}></div>
+									<div style="height:210px;background:linear-gradient(155deg,#33473b 0%,#5d6b4d 40%,#b68a3c 100%)"></div>
 								)}
 								<div style="padding:20px">
 									<div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--bark)">{t.series.worksCount(count)}</div>

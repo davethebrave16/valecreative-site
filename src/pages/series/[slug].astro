@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro'
 import { getPublishedSeries, getArtworks } from '@/lib/fetchContent'
+import { useTranslations } from '@/i18n/utils'
 import type { Series } from '@/lib/types'
 
 export async function getStaticPaths() {
@@ -15,61 +16,82 @@ interface Props {
 	series: Series
 }
 
+const locale = Astro.currentLocale ?? 'it'
+const t = useTranslations(locale)
+
 const { series } = Astro.props
 const allArtworks = await getArtworks()
 const artworks = allArtworks.filter((a) => a.seriesId === series.id)
+
+function getOrientation(dims?: { width?: number; height?: number }) {
+	if (!dims?.width || !dims?.height) return 'square'
+	const r = dims.width / dims.height
+	if (r < 0.85) return 'portrait'
+	if (r > 1.2) return 'landscape'
+	return 'square'
+}
+
+function cellGridStyle(orient: string) {
+	if (orient === 'portrait') return 'grid-row:span 3'
+	if (orient === 'landscape') return 'grid-row:span 2;grid-column:span 2'
+	return 'grid-row:span 2'
+}
+
+const heroBg = series.coverImage?.original
+	? `url('${series.coverImage.medium ?? series.coverImage.original}') center/cover no-repeat`
+	: 'radial-gradient(130% 120% at 30% 14%,#d9b25e 0%,#6b4f37 44%,#243029 100%)'
 ---
 
 <BaseLayout title={series.name} description={series.description}>
-	<article>
-		<h1>{series.name}</h1>
+	<section class="vd-rise">
+		<!-- Hero banner -->
+		<div style={`position:relative;overflow:hidden;background:${heroBg}`}>
+			<div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,28,22,.18),rgba(20,28,22,.62))"></div>
+			<div class="container" style="position:relative;padding-block:clamp(46px,7vw,110px)">
+				<a href="/series" style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.85);display:inline-block;margin-bottom:16px">{t.series.backLink}</a>
+				<h1 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(38px,6vw,76px);margin:0;color:#fff">{series.name}</h1>
+				{series.description && (
+					<p style="max-width:54ch;margin:14px 0 0;font-size:clamp(16px,1.7vw,19px);line-height:1.6;color:#ece5d6">{series.description}</p>
+				)}
+			</div>
+		</div>
 
-		{series.coverImage?.original && (
-			<img
-				src={series.coverImage.medium ?? series.coverImage.original}
-				alt={series.coverImage.alt ?? series.name}
-				loading="eager"
-				style="max-width: 720px; width: 100%; margin: 1rem 0 1.5rem;"
-			/>
-		)}
-
-		{series.description && (
-			<p style="max-width: 65ch; margin-bottom: 2rem;">{series.description}</p>
-		)}
-
-		{artworks.length > 0 && (
-			<section>
-				<h2 style="margin-bottom: 1rem;">Works in this series</h2>
-				<div class="grid">
-					{artworks.map((artwork) => (
-						<a href={`/works/${artwork.slug}`} class="card" style="text-decoration: none;">
-							{artwork.coverImage?.thumb && (
-								<img
-									src={artwork.coverImage.thumb}
-									alt={artwork.coverImage.alt ?? artwork.title}
-									loading="lazy"
-									style="width: 100%; aspect-ratio: 1; object-fit: cover;"
-								/>
-							)}
-							{!artwork.coverImage?.thumb && (
-								<div style="width: 100%; aspect-ratio: 1; background: #f0f0f0;" />
-							)}
-							<div class="card-body">
-								<h3>{artwork.title}</h3>
-								<p style="color: #666; font-size: 0.875rem;">{artwork.year}</p>
-							</div>
-						</a>
-					))}
+		<!-- Artworks grid -->
+		<div class="container" style="padding-block:clamp(34px,4vw,56px) clamp(50px,6vw,90px)">
+			{artworks.length === 0 ? (
+				<p style="color:var(--muted)">{t.series.noWorks}</p>
+			) : (
+				<div class="vd-grid">
+					{artworks.map((artwork) => {
+						const orient = getOrientation(artwork.dimensions)
+						const imgSrc = artwork.coverImage?.thumb ?? artwork.coverImage?.medium ?? artwork.coverImage?.original
+						return (
+							<a
+								href={`/works/${artwork.slug}`}
+								class="vd-cell"
+								style={cellGridStyle(orient)}
+							>
+								{imgSrc ? (
+									<img
+										src={imgSrc}
+										alt={artwork.coverImage?.alt ?? artwork.title}
+										loading="lazy"
+										class="vd-img"
+										style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"
+									/>
+								) : (
+									<div class="vd-img" style="position:absolute;inset:0;background:radial-gradient(130% 120% at 30% 14%,#d9b25e 0%,#6b4f37 44%,#243029 100%)"></div>
+								)}
+								<span style="position:absolute;left:11px;top:9px;font-family:'Spline Sans Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.82);z-index:2">{orient === 'portrait' ? '[ ritratto ]' : orient === 'landscape' ? '[ paesaggio ]' : '[ quadrato ]'}</span>
+								<div class="vd-cap" style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:14px;background:linear-gradient(180deg,rgba(0,0,0,0) 42%,rgba(18,26,20,.76));z-index:2">
+									<div style="font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:600;color:#fff;line-height:1.05">{artwork.title}</div>
+									<div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:.08em;color:rgba(255,255,255,.82);margin-top:4px">{artwork.year}</div>
+								</div>
+							</a>
+						)
+					})}
 				</div>
-			</section>
-		)}
-
-		{artworks.length === 0 && (
-			<p style="color: #666;">No works in this series yet.</p>
-		)}
-
-		<p style="margin-top: 2rem;">
-			<a href="/series">← Back to Series</a>
-		</p>
-	</article>
+			)}
+		</div>
+	</section>
 </BaseLayout>

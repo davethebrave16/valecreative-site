@@ -4,7 +4,7 @@ import WorksGrid from '@/components/WorksGrid'
 import { getArtworks, getPublishedSeries, getTechniques } from '@/lib/fetchContent'
 import { useTranslations } from '@/i18n/utils'
 
-const locale = Astro.currentLocale ?? 'it'
+const locale = 'en'
 const t = useTranslations(locale)
 
 const [artworks, series, techniques] = await Promise.all([
@@ -13,11 +13,9 @@ const [artworks, series, techniques] = await Promise.all([
 	getTechniques(),
 ])
 
-// Build lookup maps
 const seriesById = Object.fromEntries(series.map((s) => [s.id, s.name]))
 const techniqueById = Object.fromEntries(techniques.map((t) => [t.id, t.name]))
 
-// Enrich artworks for the client component
 const workItems = artworks.map((a) => ({
 	id: a.id,
 	title: a.title,
@@ -33,7 +31,7 @@ const workItems = artworks.map((a) => ({
 const seriesNames = series.map((s) => s.name)
 ---
 
-<BaseLayout title={t.works.title} description={`${t.works.eyebrow} · Vale Creative`}>
+<BaseLayout title={t.works.title} lang={locale}>
 	<section class="vd-rise" style="padding:clamp(34px,5vw,64px) 0 clamp(50px,6vw,90px)">
 		<div class="container">
 			<div class="vd-eyebrow">{t.works.eyebrow}</div>
