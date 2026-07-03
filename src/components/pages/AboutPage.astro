@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro'
 import { getContentBySlug } from '@/lib/fetchContent'
-import { useTranslations, getLocalePath } from '@/i18n/utils'
+import { useTranslations, getLocalePath, type Locale } from '@/i18n/utils'
 
 interface Props {
 	locale: string
@@ -12,7 +12,7 @@ const t = useTranslations(locale)
 const p = (path: string) => getLocalePath(locale, path)
 const SITE = 'https://valentinadamiano.it'
 
-const content = await getContentBySlug('bio')
+const content = await getContentBySlug('bio', locale as Locale)
 
 const pageTitle = locale === 'it' ? 'Lo Studio di Valentina Damiano' : "About — Valentina Damiano's Studio"
 const jobTitle = locale === 'it' ? 'Pittrice e Incisore' : 'Painter and Engraver'

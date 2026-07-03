@@ -226,6 +226,17 @@ All Firebase config uses the `PUBLIC_FIREBASE_*` prefix (Astro convention for br
 `src/lib/types.ts` mirrors the backoffice's `src/types/resources.ts` exactly:
 - **Do not** change field names or enum values without syncing the backoffice
 - camelCase fields, same enum string values (`'for_sale'`, `'not_for_sale'`, `'sold'`, `'personal'`, `'commissioned'`, etc.)
+- This includes the optional `*En` bilingual fields — see [Bilingual content fields](#bilingual-content-fields) below.
+
+## Bilingual content fields
+
+`artworks`, `techniques`, `categories`, `contents`, and `artworks/{id}/gallery` documents carry optional English sibling fields alongside their Italian text (flat-suffixed with `En`: `titleEn`, `descriptionEn`, `nameEn`, `bodyEn`, `captionEn` — added in the backoffice, see its `CLAUDE.md` → "Bilingual (IT/EN) content fields"). `series` is not part of this — it stays Italian-only.
+
+- `src/i18n/utils.ts` exports `localize(it, en, locale)`, which returns `en` when `locale === 'en'` and `en` is non-empty, otherwise falls back to `it`.
+- Every fetcher in `src/lib/fetchContent.ts` that returns localizable text (`getArtworks`, `getArtworkBySlug`, `getArtworkGallery`, `getTechniques`, `getTechniqueBySlug`, `getPublishedContents`, `getContentBySlug`, `getCategories`) takes a `locale: Locale = 'it'` parameter and resolves the correct-language string via `localize()` inside the doc mapper — callers always get back plain, already-localized strings (e.g. `artwork.title`), never the raw `*En` field.
+- Every call site passes `locale as Locale` (the `locale` prop threaded down from `Astro.params.locale` in each `src/pages/[locale]/**` route). If you add a new fetch call, pass locale through the same way — grep `fetchContent` imports in `src/components/pages/*.astro` for the pattern.
+- `[slug]` pages (`works/[slug].astro`, `techniques/[slug].astro`) fetch the full list **once per locale** inside `getStaticPaths()` (`locales.map(async (locale) => getXxx(locale))`, then `.flat()`) rather than fetching once and reusing across both locale routes — otherwise the `props.item` passed to the detail page would always be the Italian-only data even on `/en/*`.
+- `getPublishedSeries`/`getSeriesBySlug` are unchanged (no `locale` param) since `series` is out of scope for this feature.
 
 ## Categories & WorksGrid Filtering
 
@@ -265,12 +276,17 @@ The interactivity is a plain inline `<script>` (no framework — matches the mob
 
 ```ts
 export async function getStaticPaths() {
-  const items = await getXxx() // always returns [] on empty/error, never throws
-  return locales.flatMap((locale) =>
-    items.map((i) => ({ params: { locale, slug: i.slug }, props: { item: i } }))
+  const paths = await Promise.all(
+    locales.map(async (locale) => {
+      const items = await getXxx(locale) // always returns [] on empty/error, never throws
+      return items.map((i) => ({ params: { locale, slug: i.slug }, props: { item: i } }))
+    })
   )
+  return paths.flat()
 }
 ```
+
+Fetching **per locale** (rather than once and reusing the same list across both locale routes) is what makes `props.item.title`/`.description` correctly resolve to the English text on `/en/*` — see [Bilingual content fields](#bilingual-content-fields).
 
 Empty collections return `[]` from `getStaticPaths()` — Astro generates zero pages for that route, which is correct and never an error.
 
@@ -318,13 +334,15 @@ Certain page sections are editable via the backoffice `contents` collection with
 
 | Slug | Page(s) | Fields used | Fallback |
 |------|---------|-------------|----------|
-| `homepage_hero` | `/` and `/en/` | `body` (HTML injected into `<h1>` via `set:html`) | `t.home.heroTitle` |
-| `bio` | `/about` and `/en/about` | `body` (HTML prose block), `image` (portrait photo) | Hardcoded IT/EN paragraphs |
+| `homepage_hero` | `/` and `/en/` | `body`/`bodyEn` (HTML injected into `<h1>` via `set:html`) | `t.home.heroTitle` |
+| `bio` | `/about` and `/en/about` | `body`/`bodyEn` (HTML prose block), `image` (portrait photo) | Hardcoded IT/EN paragraphs |
+
+`getContentBySlug(slug, locale)` already resolves `body`/`bodyEn` and `title`/`titleEn` down to a single localized string via `localize()` — see [Bilingual content fields](#bilingual-content-fields). If `bodyEn` is empty on the `/en/*` page, the site silently shows the Italian `body` (fallback), not the hardcoded i18n string — the i18n fallback only kicks in when the Firestore document itself is missing or unpublished.
 
 ### Adding a new content block
 
 1. Decide on a slug (e.g. `commissions_intro`)
-2. In the page frontmatter: `const content = await getContentBySlug('commissions_intro')`
+2. In the page frontmatter: `const content = await getContentBySlug('commissions_intro', locale as Locale)`
 3. In the template: render `content?.body` with `set:html` if present, otherwise render the i18n fallback
 4. In the backoffice: create a `contents` document with that exact slug and publish it
 

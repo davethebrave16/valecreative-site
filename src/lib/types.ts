@@ -1,5 +1,8 @@
 // Cross-project contract with valecreative-admin-backoffice.
 // Field names and enum values MUST stay identical to src/types/resources.ts in the backoffice.
+// Optional `*En` fields are English translations, flat-suffixed on the Italian field they mirror
+// (titleEn, descriptionEn, nameEn, bodyEn, captionEn). fetchContent.ts resolves them via localize()
+// and falls back to the Italian value when empty — see src/i18n/utils.ts.
 
 export interface ImageObject {
 	original: string
@@ -17,8 +20,10 @@ export type TechniqueCategory = 'painting' | 'engraving' | 'craft' | 'other'
 export interface Technique {
 	id: string
 	name: string
+	nameEn?: string
 	slug: string
 	description?: string
+	descriptionEn?: string
 	category: TechniqueCategory
 }
 
@@ -44,12 +49,14 @@ export interface ArtworkDimensions {
 export interface Category {
 	id: string
 	name: string
+	nameEn?: string
 	slug: string
 }
 
 export interface Artwork {
 	id: string
 	title: string
+	titleEn?: string
 	slug: string
 	year: number
 	techniqueId: string
@@ -63,6 +70,7 @@ export interface Artwork {
 	dimensions?: ArtworkDimensions
 	support?: string
 	description?: string
+	descriptionEn?: string
 }
 
 export interface GalleryImage {
@@ -75,6 +83,7 @@ export interface GalleryImage {
 	height?: number
 	blurHash?: string
 	caption?: string
+	captionEn?: string
 	order?: number
 	uploadedAt?: string | number
 }
@@ -83,7 +92,9 @@ export interface Content {
 	id: string
 	slug: string
 	title: string
+	titleEn?: string
 	body: string
+	bodyEn?: string
 	published: boolean
 	image?: ImageObject
 }

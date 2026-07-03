@@ -5,13 +5,16 @@ import { locales } from '@/i18n/utils'
 import type { Artwork } from '@/lib/types'
 
 export async function getStaticPaths() {
-	const artworks = await getArtworks()
-	return locales.flatMap((locale) =>
-		artworks.map((artwork) => ({
-			params: { locale, slug: artwork.slug },
-			props: { artwork },
-		}))
+	const paths = await Promise.all(
+		locales.map(async (locale) => {
+			const artworks = await getArtworks(locale)
+			return artworks.map((artwork) => ({
+				params: { locale, slug: artwork.slug },
+				props: { artwork },
+			}))
+		})
 	)
+	return paths.flat()
 }
 
 interface Props {

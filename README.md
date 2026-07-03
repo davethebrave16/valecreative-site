@@ -140,6 +140,8 @@ Some page sections can be edited in the backoffice without a code change or rede
 
 Pages fall back to built-in placeholder text when the document is missing or unpublished.
 
+Editorial text on the site (artwork titles/descriptions, technique names/descriptions, category names, `contents` title/body, gallery captions) supports an optional English translation, entered in the backoffice as a sibling field (e.g. `titleEn` next to `title`). The English page silently falls back to the Italian text if no translation has been entered yet — see "Bilingual content fields" in `CLAUDE.md`.
+
 ## SEO & Analytics
 
 ### Google Analytics 4

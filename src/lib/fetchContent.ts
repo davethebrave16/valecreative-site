@@ -10,12 +10,16 @@ import {
 } from 'firebase/firestore'
 import { db } from './firebaseConfig'
 import type { Artwork, Category, GalleryImage, Series, Technique, Content } from './types'
+import { localize, type Locale } from '../i18n/utils'
 
-function docToArtwork(d: { id: string; data: () => Record<string, unknown> }): Artwork {
+function docToArtwork(d: { id: string; data: () => Record<string, unknown> }, locale: Locale): Artwork {
 	const data = d.data()
+	const description = data.description
+		? localize(String(data.description), data.descriptionEn as string | undefined, locale)
+		: undefined
 	return {
 		id: d.id,
-		title: String(data.title ?? ''),
+		title: localize(String(data.title ?? ''), data.titleEn as string | undefined, locale),
 		slug: String(data.slug ?? ''),
 		year: Number(data.year ?? 0),
 		techniqueId: String((data.techniqueId as { id?: string } | null)?.id ?? data.techniqueId ?? ''),
@@ -32,33 +36,33 @@ function docToArtwork(d: { id: string; data: () => Record<string, unknown> }): A
 		featured: Boolean(data.featured),
 		dimensions: data.dimensions as Artwork['dimensions'],
 		support: data.support ? String(data.support) : undefined,
-		description: data.description ? String(data.description) : undefined,
+		description,
 	}
 }
 
-export async function getArtworks(): Promise<Artwork[]> {
+export async function getArtworks(locale: Locale = 'it'): Promise<Artwork[]> {
 	try {
 		const snap = await getDocs(query(collection(db, 'artworks'), orderBy('createdAt', 'desc')))
-		return snap.docs.map(docToArtwork)
+		return snap.docs.map((d) => docToArtwork(d, locale))
 	} catch (err) {
 		console.error('[fetchContent] getArtworks failed:', err)
 		return []
 	}
 }
 
-export async function getArtworkBySlug(slug: string): Promise<Artwork | null> {
+export async function getArtworkBySlug(slug: string, locale: Locale = 'it'): Promise<Artwork | null> {
 	try {
 		const snap = await getDocs(query(collection(db, 'artworks'), where('slug', '==', slug)))
 		if (snap.empty) return null
 		const d = snap.docs[0]
-		return docToArtwork(d)
+		return docToArtwork(d, locale)
 	} catch (err) {
 		console.error('[fetchContent] getArtworkBySlug failed:', err)
 		return null
 	}
 }
 
-export async function getArtworkGallery(artworkId: string): Promise<GalleryImage[]> {
+export async function getArtworkGallery(artworkId: string, locale: Locale = 'it'): Promise<GalleryImage[]> {
 	try {
 		const snap = await getDocs(
 			query(collection(db, `artworks/${artworkId}/gallery`), orderBy('uploadedAt', 'asc')),
@@ -74,7 +78,9 @@ export async function getArtworkGallery(artworkId: string): Promise<GalleryImage
 				width: data.width ? Number(data.width) : undefined,
 				height: data.height ? Number(data.height) : undefined,
 				blurHash: data.blurHash ? String(data.blurHash) : undefined,
-				caption: data.caption ? String(data.caption) : undefined,
+				caption: data.caption
+					? localize(String(data.caption), data.captionEn as string | undefined, locale)
+					: undefined,
 				order: data.order != null ? Number(data.order) : undefined,
 			} satisfies GalleryImage
 		})
@@ -132,16 +138,18 @@ export async function getSeriesBySlug(slug: string): Promise<Series | null> {
 	}
 }
 
-export async function getTechniques(): Promise<Technique[]> {
+export async function getTechniques(locale: Locale = 'it'): Promise<Technique[]> {
 	try {
 		const snap = await getDocs(query(collection(db, 'techniques'), orderBy('name', 'asc')))
 		return snap.docs.map((d) => {
 			const data = d.data()
 			return {
 				id: d.id,
-				name: String(data.name ?? ''),
+				name: localize(String(data.name ?? ''), data.nameEn as string | undefined, locale),
 				slug: String(data.slug ?? ''),
-				description: data.description ? String(data.description) : undefined,
+				description: data.description
+					? localize(String(data.description), data.descriptionEn as string | undefined, locale)
+					: undefined,
 				category: (data.category as Technique['category']) ?? 'other',
 			} satisfies Technique
 		})
@@ -151,7 +159,7 @@ export async function getTechniques(): Promise<Technique[]> {
 	}
 }
 
-export async function getTechniqueBySlug(slug: string): Promise<Technique | null> {
+export async function getTechniqueBySlug(slug: string, locale: Locale = 'it'): Promise<Technique | null> {
 	try {
 		const snap = await getDocs(query(collection(db, 'techniques'), where('slug', '==', slug)))
 		if (snap.empty) return null
@@ -159,9 +167,11 @@ export async function getTechniqueBySlug(slug: string): Promise<Technique | null
 		const data = d.data()
 		return {
 			id: d.id,
-			name: String(data.name ?? ''),
+			name: localize(String(data.name ?? ''), data.nameEn as string | undefined, locale),
 			slug: String(data.slug ?? ''),
-			description: data.description ? String(data.description) : undefined,
+			description: data.description
+				? localize(String(data.description), data.descriptionEn as string | undefined, locale)
+				: undefined,
 			category: (data.category as Technique['category']) ?? 'other',
 		}
 	} catch (err) {
@@ -170,7 +180,7 @@ export async function getTechniqueBySlug(slug: string): Promise<Technique | null
 	}
 }
 
-export async function getPublishedContents(): Promise<Content[]> {
+export async function getPublishedContents(locale: Locale = 'it'): Promise<Content[]> {
 	try {
 		const snap = await getDocs(
 			query(collection(db, 'contents'), where('published', '==', true)),
@@ -180,8 +190,8 @@ export async function getPublishedContents(): Promise<Content[]> {
 			return {
 				id: d.id,
 				slug: String(data.slug ?? ''),
-				title: String(data.title ?? ''),
-				body: String(data.body ?? ''),
+				title: localize(String(data.title ?? ''), data.titleEn as string | undefined, locale),
+				body: localize(String(data.body ?? ''), data.bodyEn as string | undefined, locale),
 				published: Boolean(data.published),
 				image: data.image as Content['image'],
 			} satisfies Content
@@ -192,14 +202,14 @@ export async function getPublishedContents(): Promise<Content[]> {
 	}
 }
 
-export async function getCategories(): Promise<Category[]> {
+export async function getCategories(locale: Locale = 'it'): Promise<Category[]> {
 	try {
 		const snap = await getDocs(query(collection(db, 'categories'), orderBy('name', 'asc')))
 		return snap.docs.map((d) => {
 			const data = d.data()
 			return {
 				id: d.id,
-				name: String(data.name ?? ''),
+				name: localize(String(data.name ?? ''), data.nameEn as string | undefined, locale),
 				slug: String(data.slug ?? ''),
 			} satisfies Category
 		})
@@ -209,7 +219,7 @@ export async function getCategories(): Promise<Category[]> {
 	}
 }
 
-export async function getContentBySlug(slug: string): Promise<Content | null> {
+export async function getContentBySlug(slug: string, locale: Locale = 'it'): Promise<Content | null> {
 	try {
 		const snap = await getDocs(
 			query(collection(db, 'contents'), where('slug', '==', slug), where('published', '==', true)),
@@ -220,8 +230,8 @@ export async function getContentBySlug(slug: string): Promise<Content | null> {
 		return {
 			id: d.id,
 			slug: String(data.slug ?? ''),
-			title: String(data.title ?? ''),
-			body: String(data.body ?? ''),
+			title: localize(String(data.title ?? ''), data.titleEn as string | undefined, locale),
+			body: localize(String(data.body ?? ''), data.bodyEn as string | undefined, locale),
 			published: Boolean(data.published),
 			image: data.image as Content['image'],
 		}
