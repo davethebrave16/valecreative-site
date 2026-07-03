@@ -101,6 +101,11 @@ The site is bilingual using a single set of page bodies plus Astro dynamic routi
 2. Create `src/i18n/{locale}.ts` with all keys from `it.ts` — it's automatically picked up by `locales`/`nonDefaultLocales` in `src/i18n/utils.ts`
 3. Nothing else to do — every file under `src/pages/[locale]/` already generates a route for it via `getStaticPaths()`
 
+### Language detection & switching
+
+- **First-visit redirect**: a client-side script in `BaseLayout.astro` checks the browser's language on first load and redirects once to the matching locale (`/it` or `/en`), remembering the decision in `localStorage['vd-locale']`. The site is fully static, so this is JS-based rather than a server redirect — see `CLAUDE.md` for details.
+- **Manual switcher**: an IT/EN toggle in the header (desktop nav + mobile menu) lets visitors switch locale on any page. A manual switch is remembered the same way and is never overridden by the auto-redirect.
+
 ## Logo
 
 Replace `/public/logo.svg` with the actual logo file. The header and footer both reference it at `/logo.svg`. It should be square (42×42 rendered) with a transparent or dark background for the footer.

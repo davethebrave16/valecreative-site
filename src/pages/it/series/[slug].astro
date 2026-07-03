@@ -1,0 +1,13 @@
+---
+import { getPublishedSeries } from '@/lib/fetchContent'
+
+export async function getStaticPaths() {
+	const series = await getPublishedSeries()
+	return series.map((s) => ({
+		params: { slug: s.slug },
+	}))
+}
+
+const { slug } = Astro.params
+return Astro.redirect(`/series/${slug}`, 301)
+---

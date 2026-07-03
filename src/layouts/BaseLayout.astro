@@ -55,6 +55,11 @@ if (!noAlternate) {
 	}
 }
 
+// Relative (origin-agnostic) counterpart paths for the visible switcher, so it stays on the
+// current host (localhost in dev, the real domain in prod) instead of the absolute SITE used for hreflang.
+const switchItPath = locale === 'it' ? pathname || '/' : pathname.replace(/^\/en/, '') || '/'
+const switchEnPath = locale === 'en' ? pathname : `/en${pathname === '/' ? '' : pathname}`
+
 const resolvedOgImage = ogImage ?? `${SITE}/og-default.jpg`
 const pageTitle = `${title} — Vale Creative`
 ---
@@ -67,6 +72,42 @@ const pageTitle = `${title} — Vale Creative`
 		<meta name="description" content={description} />
 		<meta name="theme-color" content="#2e403a" />
 		<title>{pageTitle}</title>
+
+		<!-- Auto-redirect to the browser's preferred locale on first visit only.
+		     Respects any stored choice (manual switch or a prior auto-decision) so it never loops
+		     or overrides a visitor's explicit pick. See CLAUDE.md "i18n" section. -->
+		<script is:inline define:vars={{ locale }}>
+			(function () {
+				var STORAGE_KEY = 'vd-locale'
+				var stored
+				try {
+					stored = localStorage.getItem(STORAGE_KEY)
+				} catch (e) {}
+				if (stored) return
+
+				var browserLang = ((navigator.language || navigator.userLanguage || '') + '').toLowerCase()
+				var prefersIt = browserLang.indexOf('it') === 0
+				var correctLocale = prefersIt ? 'it' : 'en'
+
+				if (correctLocale !== locale) {
+					try {
+						localStorage.setItem(STORAGE_KEY, correctLocale)
+					} catch (e) {}
+					var path = location.pathname
+					var target
+					if (correctLocale === 'en') {
+						target = '/en' + (path === '/' ? '' : path)
+					} else {
+						target = path.replace(/^\/en/, '') || '/'
+					}
+					location.replace(target + location.search + location.hash)
+				} else {
+					try {
+						localStorage.setItem(STORAGE_KEY, locale)
+					} catch (e) {}
+				}
+			})()
+		</script>
 
 		<!-- Canonical -->
 		<link rel="canonical" href={canonicalUrl} />
@@ -160,6 +201,11 @@ const pageTitle = `${title} — Vale Creative`
 					>
 						{t.nav.contact}
 					</a>
+					<div class="vd-langswitch" aria-label="Language">
+						<a href={switchItPath} class="vd-langswitch-link" data-locale="it" aria-current={locale === 'it' ? 'true' : undefined}>IT</a>
+						<span class="vd-langswitch-sep" aria-hidden="true">/</span>
+						<a href={switchEnPath} class="vd-langswitch-link" data-locale="en" aria-current={locale === 'en' ? 'true' : undefined}>EN</a>
+					</div>
 				</nav>
 
 				<!-- Burger button -->
@@ -193,6 +239,11 @@ const pageTitle = `${title} — Vale Creative`
 				>
 					{t.nav.contact}
 				</a>
+				<div class="vd-langswitch" style="padding:13px 2px" aria-label="Language">
+					<a href={switchItPath} class="vd-langswitch-link" data-locale="it" aria-current={locale === 'it' ? 'true' : undefined}>IT</a>
+					<span class="vd-langswitch-sep" aria-hidden="true">/</span>
+					<a href={switchEnPath} class="vd-langswitch-link" data-locale="en" aria-current={locale === 'en' ? 'true' : undefined}>EN</a>
+				</div>
 			</div>
 		</header>
 
@@ -237,6 +288,18 @@ const pageTitle = `${title} — Vale Creative`
 					burger.setAttribute('aria-expanded', String(!open))
 				})
 			}
+
+			// Remember a manual language choice so the auto-redirect script never overrides it.
+			document.querySelectorAll('.vd-langswitch-link').forEach((link) => {
+				link.addEventListener('click', () => {
+					const targetLocale = link.getAttribute('data-locale')
+					if (targetLocale) {
+						try {
+							localStorage.setItem('vd-locale', targetLocale)
+						} catch (e) {}
+					}
+				})
+			})
 		</script>
 
 	</body>

@@ -168,6 +168,23 @@ Page markup itself is **never duplicated** — each shared component in `src/com
 2. Create `src/i18n/{locale}.ts` with all keys from `src/i18n/it.ts` — it's picked up automatically via `nonDefaultLocales`
 3. Nothing else — every `src/pages/[locale]/*` file already loops over `nonDefaultLocales` in its `getStaticPaths()`
 
+### Explicit `/it` alias
+
+Since `prefixDefaultLocale: false` means Italian is normally only reachable unprefixed (`/`, `/works`, ...), a parallel `src/pages/it/` tree provides an explicit `/it/*` alias for every route (mirroring the routes covered by `src/pages/[locale]/`). Each file is a thin redirect stub — `return Astro.redirect('/target-path', 301)` — never a duplicate render, to avoid duplicate-content SEO issues; `Astro.redirect()` works under `output: 'static'` by emitting a static HTML page with a meta-refresh. Slug pages (`it/works/[slug].astro`, `it/series/[slug].astro`, `it/techniques/[slug].astro`) reuse the same `getStaticPaths()` content fetchers as their canonical counterparts. When adding a new top-level route, add both the canonical page and its `/it/*` redirect stub.
+
+### Browser-language auto-redirect
+
+Because `output: 'static'` means there's no server/middleware to inspect `Accept-Language`, first-visit locale detection is a client-side inline `<script is:inline>` at the top of `<head>` in `BaseLayout.astro`. On each page load it:
+
+1. Reads `localStorage['vd-locale']`. If already set (from a prior auto-decision *or* a manual switcher click), it does nothing — a stored value is the single source of truth and prevents both redirect loops and overriding an explicit user choice.
+2. If unset, compares `navigator.language` against the current page's locale (`document.documentElement.lang`). On a mismatch it `location.replace()`s to the equivalent path in the correct locale (prefixing/stripping `/en` on `location.pathname`) and stores the decision; on a match it just stores the decision without redirecting.
+
+This is symmetric (`it → en` and `en → it`), so it applies to any entry page, not just `/`. Caveats: it's JS-only (no effect for non-JS clients or most crawlers — hreflang tags remain the authoritative signal for search engines), and it only ever fires once per browser (per `localStorage`, not per session).
+
+### Language switcher
+
+`BaseLayout.astro` renders a `.vd-langswitch` IT/EN toggle in both the desktop nav and the mobile menu, reusing the `itUrl`/`enUrl` values already computed for hreflang (falling back to the locale homepage when a page has `noAlternate`). A small inline script (alongside the burger-menu script, bottom of `BaseLayout.astro`) writes `localStorage['vd-locale']` on click so the auto-redirect script above never overrides a manual switch.
+
 ### Using translations in a shared page component
 
 ```astro
