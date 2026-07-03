@@ -1,6 +1,13 @@
 import { useState } from 'react'
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
-import { db } from '@/lib/firebaseConfig'
+import { getFunctions, httpsCallable } from 'firebase/functions'
+import app from '@/lib/firebaseConfig'
+
+// Positional mapping — index must stay aligned with commissions.form.requestTypes in both it.ts and en.ts
+// ['Commissione'/'Commission', 'Doratura'/'Gilding', "Corso d'arte"/'Art course', 'Informazioni'/'Information']
+const REQUEST_TYPE_CANONICAL = ['commission', 'commission', 'course', 'info']
+
+const functions = getFunctions(app, 'europe-west1')
+const submitCommission = httpsCallable(functions, 'submitCommission')
 
 export default function CommissionRequestForm({ labels }) {
 	const form = labels?.form ?? {}
@@ -9,8 +16,11 @@ export default function CommissionRequestForm({ labels }) {
 
 	const [status, setStatus] = useState('idle') // 'idle' | 'pending' | 'success' | 'error'
 	const [serverError, setServerError] = useState('')
-	const [reqType, setReqType] = useState(form.requestTypes?.[0] ?? 'Commissione')
+	const [reqTypeIndex, setReqTypeIndex] = useState(0)
 	const [fieldErrors, setFieldErrors] = useState({})
+
+	// Read from the DOM (set by BaseLayout.astro) rather than import.meta.env, by design
+	const recaptchaSiteKey = typeof document !== 'undefined' ? document.body?.dataset?.recaptchaKey || '' : ''
 
 	const [fields, setFields] = useState({
 		clientName: '',
@@ -50,18 +60,34 @@ export default function CommissionRequestForm({ labels }) {
 		setServerError('')
 		setFieldErrors({})
 
+		let recaptchaToken = ''
 		try {
-			await addDoc(collection(db, 'commissions'), {
+			if (window.grecaptcha && recaptchaSiteKey) {
+				recaptchaToken = await window.grecaptcha.execute(recaptchaSiteKey, { action: 'submit_commission' })
+			}
+		} catch {
+			recaptchaToken = ''
+		}
+
+		try {
+			await submitCommission({
+				type: REQUEST_TYPE_CANONICAL[reqTypeIndex],
 				clientName: fields.clientName.trim(),
 				email: fields.email.trim(),
 				description: fields.description.trim(),
-				requestType: reqType,
-				status: 'new',
-				requestedAt: serverTimestamp(),
+				honeypot: fields.honeypot,
+				recaptchaToken,
 			})
 			setStatus('success')
 		} catch (err) {
-			setServerError(err?.message ?? errorMsg)
+			const code = err?.code ?? ''
+			if (code === 'functions/permission-denied') {
+				setServerError('Verifica di sicurezza non superata. Ricarica la pagina e riprova.')
+			} else if (code === 'functions/invalid-argument') {
+				setServerError('Controlla i dati inseriti e riprova.')
+			} else {
+				setServerError(errorMsg)
+			}
 			setStatus('error')
 		}
 	}
@@ -140,11 +166,11 @@ export default function CommissionRequestForm({ labels }) {
 				<div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
 					<span style={{ fontFamily: "'Spline Sans Mono', monospace", fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--bark)' }}>{form.requestType}</span>
 					<div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-						{reqTypes.map((type) => (
+						{reqTypes.map((type, idx) => (
 							<button
 								key={type}
 								type="button"
-								onClick={() => setReqType(type)}
+								onClick={() => setReqTypeIndex(idx)}
 								style={{
 									fontFamily: "'Hanken Grotesk', sans-serif",
 									fontSize: 13,
@@ -154,9 +180,9 @@ export default function CommissionRequestForm({ labels }) {
 									border: '1px solid var(--line)',
 									cursor: 'pointer',
 									transition: '0.2s ease',
-									background: type === reqType ? 'var(--forest)' : 'transparent',
-									color: type === reqType ? '#fff' : 'var(--ink)',
-									borderColor: type === reqType ? 'var(--forest)' : 'var(--line)',
+									background: idx === reqTypeIndex ? 'var(--forest)' : 'transparent',
+									color: idx === reqTypeIndex ? '#fff' : 'var(--ink)',
+									borderColor: idx === reqTypeIndex ? 'var(--forest)' : 'var(--line)',
 								}}
 							>
 								{type}

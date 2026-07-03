@@ -37,6 +37,7 @@ const year = new Date().getFullYear()
 
 const SITE = 'https://valentinadamiano.it'
 const gaId = import.meta.env.VITE_GA_MEASUREMENT_ID ?? null
+const recaptchaSiteKey = import.meta.env.PUBLIC_RECAPTCHA_SITE_KEY ?? null
 
 const canonicalUrl = `${SITE}${pathname}`
 
@@ -117,10 +118,15 @@ const pageTitle = `${title} — Vale Creative`
 			</>
 		)}
 
+		<!-- Google reCAPTCHA v3 -->
+		{recaptchaSiteKey && (
+			<script async defer src={`https://www.google.com/recaptcha/api.js?render=${recaptchaSiteKey}`}></script>
+		)}
+
 		<!-- Per-page JSON-LD and other head additions -->
 		<slot name="head" />
 	</head>
-	<body>
+	<body data-recaptcha-key={recaptchaSiteKey ?? ''}>
 
 		<header id="vd-header" style="position:sticky;top:0;z-index:40;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);background:rgba(239,231,214,.82);border-bottom:1px solid var(--line)">
 			<div style="max-width:1320px;margin:0 auto;padding:14px clamp(18px,4vw,52px);display:flex;align-items:center;justify-content:space-between;gap:20px">

@@ -26,7 +26,7 @@ Required GitHub secrets: `PUBLIC_FIREBASE_API_KEY`, `PUBLIC_FIREBASE_AUTH_DOMAIN
 
 - **Astro 5** — static site generator (output: 'static'), no server runtime
 - **React 19** — used only for interactive islands (forms, works grid), via `@astrojs/react`
-- **Firebase JS SDK 12** — Firestore (build-time reads + runtime form writes)
+- **Firebase JS SDK 12** — Firestore (build-time reads) + Cloud Functions (runtime commission-form submission via `submitCommission` callable)
 - **blurhash** — BlurHash decode for image placeholders (build-time only)
 - **TypeScript strict** — all source files
 - **Astro i18n** — `defaultLocale: 'it'`, `prefixDefaultLocale: true`, both locales served by one `[locale]` dynamic route tree (see i18n section below)
@@ -115,7 +115,7 @@ src/
 │   │   ├── SeriesIndexPage.astro / SeriesDetailPage.astro
 │   │   └── TechniquesIndexPage.astro / TechniqueDetailPage.astro
 │   ├── WorksGrid.tsx              # React island — filterable masonry artwork grid
-│   ├── CommissionRequestForm.jsx  # React island — writes to Firestore at runtime
+│   ├── CommissionRequestForm.jsx  # React island — calls the submitCommission Cloud Function at runtime (reCAPTCHA v3 verified)
 │   ├── ContactForm.jsx            # React island — stub, see TODO inside
 │   ├── BlurHashImage.astro        # Astro component — decodes BlurHash at build time
 │   ├── ImageLightbox.astro        # Full-size image dialog — click-to-enlarge (see below)
@@ -318,9 +318,14 @@ Schema types used: `WebSite`, `Person`, `VisualArtwork`, `CreativeWorkSeries`, `
 
 ---
 
-## Firestore Rules Note
+## Commission Form — submitCommission Cloud Function
 
-The `commissions` collection allows **unauthenticated creates** (for the public commission form) but restricts reads/updates/deletes to admins. After changing `firestore.rules` in the backoffice repo, deploy with:
+`CommissionRequestForm.jsx` no longer writes to Firestore directly. It calls the `submitCommission` callable Cloud Function (`functions/src/submitCommission.ts` in `valecreative-admin-backoffice`, region `europe-west1`) via `httpsCallable`, passing a reCAPTCHA v3 token (`window.grecaptcha.execute(siteKey, { action: 'submit_commission' })`) alongside the form fields. The function verifies the token server-side, validates/sanitizes input, and writes to the `commissions` collection using the Admin SDK.
+
+- **reCAPTCHA site key**: read from `import.meta.env.PUBLIC_RECAPTCHA_SITE_KEY` in `BaseLayout.astro`, which conditionally injects the `recaptcha/api.js` script and exposes the key to the React island via a `data-recaptcha-key` attribute on `<body>` (the form reads it via `document.body.dataset.recaptchaKey` rather than `import.meta.env` directly, for consistency with the layout-owns-injected-config pattern already used for GA).
+- **Request type mapping**: the form's 4 request-type chips (`Commissione`/`Doratura`/`Corso d'arte`/`Informazioni`, from `src/i18n/{it,en}.ts` → `commissions.form.requestTypes`, a positional array with no canonical keys) map onto the Cloud Function's 3-value `type` enum (`commission | course | info`) via a fixed local array `REQUEST_TYPE_CANONICAL` in `CommissionRequestForm.jsx` — index-aligned with `requestTypes`, not label-text matched. `Doratura`/`Gilding` maps to `commission`.
+- **Error handling**: `httpsCallable` rejections carry `.code` prefixed `functions/` (e.g. `functions/permission-denied`, `functions/invalid-argument`), mapped to Italian-language user-facing messages in the submit handler.
+- **`firestore.rules`** in the backoffice repo blocks direct client creates on `commissions` (`allow create: if false`) — only the Cloud Function's Admin SDK can write. After changing `firestore.rules`, deploy from the backoffice repo:
 
 ```bash
 cd ../valecreative-admin-backoffice && npm run deploy:rules
