@@ -29,7 +29,7 @@ Required GitHub secrets: `PUBLIC_FIREBASE_API_KEY`, `PUBLIC_FIREBASE_AUTH_DOMAIN
 - **Firebase JS SDK 12** — Firestore (build-time reads + runtime form writes)
 - **blurhash** — BlurHash decode for image placeholders (build-time only)
 - **TypeScript strict** — all source files
-- **Astro i18n** — `defaultLocale: 'it'`, `prefixDefaultLocale: false`, plus a manual `[locale]` dynamic route tree for non-default locales (see i18n section below)
+- **Astro i18n** — `defaultLocale: 'it'`, `prefixDefaultLocale: true`, both locales served by one `[locale]` dynamic route tree (see i18n section below)
 
 ## Design System
 
@@ -99,7 +99,7 @@ src/
 ├── i18n/
 │   ├── it.ts                 # Italian UI strings (default locale)
 │   ├── en.ts                 # English UI strings
-│   └── utils.ts              # useTranslations(locale), getLocalePath(locale, path), locales/nonDefaultLocales
+│   └── utils.ts              # useTranslations(locale), getLocalePath(locale, path), locales
 ├── lib/
 │   ├── firebaseConfig.ts     # Firebase init (guarded against double-init)
 │   ├── types.ts              # Firestore schema interfaces — cross-project contract
@@ -120,27 +120,14 @@ src/
 │   ├── BlurHashImage.astro        # Astro component — decodes BlurHash at build time
 │   └── ImageLightbox.astro        # Full-size image dialog — click-to-enlarge (see below)
 ├── pages/
-│   ├── index.astro           # / — thin wrapper: <HomePage locale="it" />
-│   ├── works/
-│   │   ├── index.astro       # /works — thin wrapper: <WorksIndexPage locale="it" />
-│   │   └── [slug].astro      # /works/:slug — getStaticPaths (slug only) + <WorkDetailPage locale="it" .../>
-│   ├── series/
-│   │   ├── index.astro       # /series — thin wrapper
-│   │   └── [slug].astro      # /series/:slug — getStaticPaths (slug only) + shared component
-│   ├── techniques/
-│   │   ├── index.astro       # /techniques — thin wrapper
-│   │   └── [slug].astro      # /techniques/:slug — getStaticPaths (slug only) + shared component
-│   ├── about.astro            # /about — thin wrapper
-│   ├── commissions.astro      # /commissions — thin wrapper
-│   ├── contact.astro          # /contact — thin wrapper
-│   └── [locale]/               # Non-default locales (currently just `en`) — mirrors the tree above
-│       ├── index.astro         # getStaticPaths loops nonDefaultLocales; renders <HomePage locale={locale} />
+│   ├── index.astro            # / — language gateway only, no real content (see i18n section)
+│   └── [locale]/               # The only content tree — getStaticPaths loops `locales` (both `it` and `en`)
+│       ├── index.astro         # renders <HomePage locale={locale} />
 │       ├── about.astro
-│       ├── commissions.astro
 │       ├── contact.astro
 │       ├── works/{index,[slug]}.astro
 │       ├── series/{index,[slug]}.astro
-│       └── techniques/{index,[slug]}.astro   # [slug] files cross nonDefaultLocales × content list in getStaticPaths
+│       └── techniques/{index,[slug]}.astro   # [slug] files cross `locales` × content list in getStaticPaths
 ```
 
 ## i18n
@@ -151,39 +138,39 @@ Astro's i18n config in `astro.config.mjs` sets the default locale and drives `Ba
 i18n: {
   defaultLocale: 'it',
   locales: ['it', 'en'],
-  routing: { prefixDefaultLocale: false },
+  routing: {
+    prefixDefaultLocale: true,
+    redirectToDefaultLocale: false, // see "Root language gateway" below — we replace Astro's own "/" redirect
+  },
 }
 ```
 
-Because `prefixDefaultLocale: false` means the default locale has no URL segment, a single dynamic route can't represent both "no segment" and "/en" — so routing is split in two, both rendering the *same* shared component from `src/components/pages/`:
+Both locales are fully symmetric — `/it/*` and `/en/*` are both real, prefixed, first-class routes served by the single `src/pages/[locale]/` tree. Each file's `getStaticPaths()` loops `locales` (from `src/i18n/utils.ts`, derived from the keys of `src/i18n/it.ts`/`en.ts`) to generate one route per locale. `[slug]` pages under `[locale]/` additionally cross `locales` with the content list in `getStaticPaths` (locale × slug).
 
-- **Default locale (`it`)**: ordinary unprefixed files under `src/pages/` (`index.astro`, `works/index.astro`, ...) that just do `<XPage locale="it" />`.
-- **Non-default locales**: a parallel `src/pages/[locale]/` tree. Each file's `getStaticPaths()` calls `nonDefaultLocales` (from `src/i18n/utils.ts`, derived from the keys of `src/i18n/it.ts`/`en.ts`) to generate one route per locale — currently just `en`, but adding a locale needs no new page files. `[slug]` pages under `[locale]/` additionally cross `nonDefaultLocales` with the content list in `getStaticPaths` (locale × slug).
+Page markup itself is **never duplicated** — each shared component in `src/components/pages/` takes a `locale` prop, calls `useTranslations(locale)`, and builds every internal link with `getLocalePath(locale, path)` (always `/${locale}${path}`) so the same file works for both `/it/works` and `/en/works`.
 
-Page markup itself is **never duplicated** — each shared component in `src/components/pages/` takes a `locale` prop, calls `useTranslations(locale)`, and builds every internal link with `getLocalePath(locale, path)` so the same file works for both `/works` and `/en/works`.
+There is no unprefixed content route — `src/pages/index.astro` is not a page, it's the root language gateway (below), and there is nothing else directly under `src/pages/` besides the `[locale]/` tree.
 
 ### Adding a new locale
 
 1. Add the locale code to `locales` in `astro.config.mjs`
-2. Create `src/i18n/{locale}.ts` with all keys from `src/i18n/it.ts` — it's picked up automatically via `nonDefaultLocales`
-3. Nothing else — every `src/pages/[locale]/*` file already loops over `nonDefaultLocales` in its `getStaticPaths()`
+2. Create `src/i18n/{locale}.ts` with all keys from `src/i18n/it.ts` — it's picked up automatically via `locales`
+3. Nothing else — every `src/pages/[locale]/*` file already loops over `locales` in its `getStaticPaths()`
 
-### Explicit `/it` alias
+### Root language gateway
 
-Since `prefixDefaultLocale: false` means Italian is normally only reachable unprefixed (`/`, `/works`, ...), a parallel `src/pages/it/` tree provides an explicit `/it/*` alias for every route (mirroring the routes covered by `src/pages/[locale]/`). Each file is a thin redirect stub — `return Astro.redirect('/target-path', 301)` — never a duplicate render, to avoid duplicate-content SEO issues; `Astro.redirect()` works under `output: 'static'` by emitting a static HTML page with a meta-refresh. Slug pages (`it/works/[slug].astro`, `it/series/[slug].astro`, `it/techniques/[slug].astro`) reuse the same `getStaticPaths()` content fetchers as their canonical counterparts. When adding a new top-level route, add both the canonical page and its `/it/*` redirect stub.
+`src/pages/index.astro` is the only route outside `[locale]/`. It renders no real content — it exists purely to send a visitor at the bare domain to `/it` or `/en`:
 
-### Browser-language auto-redirect
+- `<meta http-equiv="refresh" content="0;url=/it">` is the no-JS/crawler fallback (defaults to Italian).
+- An inline script checks `localStorage['vd-locale']` first; if unset, it checks `navigator.language` (starts with `it` → `it`, else `en`). Either way it stores the decision and `location.replace()`s to `/it` or `/en`.
 
-Because `output: 'static'` means there's no server/middleware to inspect `Accept-Language`, first-visit locale detection is a client-side inline `<script is:inline>` at the top of `<head>` in `BaseLayout.astro`. On each page load it:
+This has to be a client-side script — `output: 'static'` means there's no server/middleware available to inspect the `Accept-Language` header. Astro's built-in i18n routing would otherwise auto-generate its own unconditional `/` → `/it/` redirect when `prefixDefaultLocale: true` (via `redirectToDefaultLocale`, default `true`) — that's disabled in `astro.config.mjs` specifically so this custom gateway page is used instead.
 
-1. Reads `localStorage['vd-locale']`. If already set (from a prior auto-decision *or* a manual switcher click), it does nothing — a stored value is the single source of truth and prevents both redirect loops and overriding an explicit user choice.
-2. If unset, compares `navigator.language` against the current page's locale (`document.documentElement.lang`). On a mismatch it `location.replace()`s to the equivalent path in the correct locale (prefixing/stripping `/en` on `location.pathname`) and stores the decision; on a match it just stores the decision without redirecting.
-
-This is symmetric (`it → en` and `en → it`), so it applies to any entry page, not just `/`. Caveats: it's JS-only (no effect for non-JS clients or most crawlers — hreflang tags remain the authoritative signal for search engines), and it only ever fires once per browser (per `localStorage`, not per session).
+The gateway page is excluded from the sitemap via the `filter` option passed to `sitemap()` in `astro.config.mjs` (only `/it/*` and `/en/*` URLs are indexable content).
 
 ### Language switcher
 
-`BaseLayout.astro` renders a `.vd-langswitch` IT/EN toggle in both the desktop nav and the mobile menu, reusing the `itUrl`/`enUrl` values already computed for hreflang (falling back to the locale homepage when a page has `noAlternate`). A small inline script (alongside the burger-menu script, bottom of `BaseLayout.astro`) writes `localStorage['vd-locale']` on click so the auto-redirect script above never overrides a manual switch.
+`BaseLayout.astro` renders a `.vd-langswitch` IT/EN toggle in both the desktop nav and the mobile menu. Since routing is symmetric, the counterpart URL is just a prefix swap: `pathname.replace(/^\/(it|en)/, '/' + otherLocale)`. A small inline script (alongside the burger-menu script, bottom of `BaseLayout.astro`) writes `localStorage['vd-locale']` on click, so a manual switch is remembered — it only matters if the visitor later lands on the root gateway again (real `/it/*`/`/en/*` pages never auto-redirect away from themselves).
 
 ### Using translations in a shared page component
 

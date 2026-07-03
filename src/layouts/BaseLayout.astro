@@ -8,7 +8,6 @@ interface Props {
 	lang?: string
 	ogImage?: string
 	ogType?: 'website' | 'article'
-	noAlternate?: boolean
 }
 
 const {
@@ -17,7 +16,6 @@ const {
 	lang,
 	ogImage,
 	ogType = 'website',
-	noAlternate = false,
 } = Astro.props
 
 const locale = lang ?? Astro.currentLocale ?? 'it'
@@ -42,23 +40,16 @@ const gaId = import.meta.env.VITE_GA_MEASUREMENT_ID ?? null
 
 const canonicalUrl = `${SITE}${pathname}`
 
-// Compute hreflang alternates (suppressed for slug-only pages with no EN counterpart)
-let itUrl = ''
-let enUrl = ''
-if (!noAlternate) {
-	if (locale === 'it') {
-		itUrl = canonicalUrl
-		enUrl = `${SITE}/en${pathname === '/' ? '/' : pathname}`
-	} else {
-		enUrl = canonicalUrl
-		itUrl = `${SITE}${pathname.replace(/^\/en/, '') || '/'}`
-	}
-}
+// Both locales are always prefixed (/it/*, /en/*), so the counterpart URL is just a prefix swap.
+const otherLocale = locale === 'it' ? 'en' : 'it'
+const itUrl = `${SITE}${pathname.replace(/^\/(it|en)/, '/it')}`
+const enUrl = `${SITE}${pathname.replace(/^\/(it|en)/, '/en')}`
 
-// Relative (origin-agnostic) counterpart paths for the visible switcher, so it stays on the
-// current host (localhost in dev, the real domain in prod) instead of the absolute SITE used for hreflang.
-const switchItPath = locale === 'it' ? pathname || '/' : pathname.replace(/^\/en/, '') || '/'
-const switchEnPath = locale === 'en' ? pathname : `/en${pathname === '/' ? '' : pathname}`
+// Relative (origin-agnostic) path for the visible switcher, so it stays on the current host
+// (localhost in dev, the real domain in prod) instead of the absolute SITE used for hreflang.
+const switchPath = pathname.replace(/^\/(it|en)/, `/${otherLocale}`)
+const itHref = locale === 'it' ? pathname : switchPath
+const enHref = locale === 'en' ? pathname : switchPath
 
 const resolvedOgImage = ogImage ?? `${SITE}/og-default.jpg`
 const pageTitle = `${title} — Vale Creative`
@@ -73,53 +64,14 @@ const pageTitle = `${title} — Vale Creative`
 		<meta name="theme-color" content="#2e403a" />
 		<title>{pageTitle}</title>
 
-		<!-- Auto-redirect to the browser's preferred locale on first visit only.
-		     Respects any stored choice (manual switch or a prior auto-decision) so it never loops
-		     or overrides a visitor's explicit pick. See CLAUDE.md "i18n" section. -->
-		<script is:inline define:vars={{ locale }}>
-			(function () {
-				var STORAGE_KEY = 'vd-locale'
-				var stored
-				try {
-					stored = localStorage.getItem(STORAGE_KEY)
-				} catch (e) {}
-				if (stored) return
-
-				var browserLang = ((navigator.language || navigator.userLanguage || '') + '').toLowerCase()
-				var prefersIt = browserLang.indexOf('it') === 0
-				var correctLocale = prefersIt ? 'it' : 'en'
-
-				if (correctLocale !== locale) {
-					try {
-						localStorage.setItem(STORAGE_KEY, correctLocale)
-					} catch (e) {}
-					var path = location.pathname
-					var target
-					if (correctLocale === 'en') {
-						target = '/en' + (path === '/' ? '' : path)
-					} else {
-						target = path.replace(/^\/en/, '') || '/'
-					}
-					location.replace(target + location.search + location.hash)
-				} else {
-					try {
-						localStorage.setItem(STORAGE_KEY, locale)
-					} catch (e) {}
-				}
-			})()
-		</script>
-
 		<!-- Canonical -->
 		<link rel="canonical" href={canonicalUrl} />
 
-		<!-- Hreflang alternates -->
-		{!noAlternate && (
-			<>
-				<link rel="alternate" hreflang="it" href={itUrl} />
-				<link rel="alternate" hreflang="en" href={enUrl} />
-				<link rel="alternate" hreflang="x-default" href={itUrl} />
-			</>
-		)}
+		<!-- Hreflang alternates. x-default points at the root language gateway (src/pages/index.astro),
+		     which picks /it or /en for the visitor rather than assuming Italian. -->
+		<link rel="alternate" hreflang="it" href={itUrl} />
+		<link rel="alternate" hreflang="en" href={enUrl} />
+		<link rel="alternate" hreflang="x-default" href={`${SITE}/`} />
 
 		<!-- Open Graph -->
 		<meta property="og:site_name" content="Vale Creative" />
@@ -202,9 +154,9 @@ const pageTitle = `${title} — Vale Creative`
 						{t.nav.contact}
 					</a>
 					<div class="vd-langswitch" aria-label="Language">
-						<a href={switchItPath} class="vd-langswitch-link" data-locale="it" aria-current={locale === 'it' ? 'true' : undefined}>IT</a>
+						<a href={itHref} class="vd-langswitch-link" data-locale="it" aria-current={locale === 'it' ? 'true' : undefined}>IT</a>
 						<span class="vd-langswitch-sep" aria-hidden="true">/</span>
-						<a href={switchEnPath} class="vd-langswitch-link" data-locale="en" aria-current={locale === 'en' ? 'true' : undefined}>EN</a>
+						<a href={enHref} class="vd-langswitch-link" data-locale="en" aria-current={locale === 'en' ? 'true' : undefined}>EN</a>
 					</div>
 				</nav>
 
@@ -240,9 +192,9 @@ const pageTitle = `${title} — Vale Creative`
 					{t.nav.contact}
 				</a>
 				<div class="vd-langswitch" style="padding:13px 2px" aria-label="Language">
-					<a href={switchItPath} class="vd-langswitch-link" data-locale="it" aria-current={locale === 'it' ? 'true' : undefined}>IT</a>
+					<a href={itHref} class="vd-langswitch-link" data-locale="it" aria-current={locale === 'it' ? 'true' : undefined}>IT</a>
 					<span class="vd-langswitch-sep" aria-hidden="true">/</span>
-					<a href={switchEnPath} class="vd-langswitch-link" data-locale="en" aria-current={locale === 'en' ? 'true' : undefined}>EN</a>
+					<a href={enHref} class="vd-langswitch-link" data-locale="en" aria-current={locale === 'en' ? 'true' : undefined}>EN</a>
 				</div>
 			</div>
 		</header>

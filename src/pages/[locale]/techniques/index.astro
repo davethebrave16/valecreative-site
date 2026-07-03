@@ -1,9 +1,9 @@
 ---
 import TechniquesIndexPage from '@/components/pages/TechniquesIndexPage.astro'
-import { nonDefaultLocales } from '@/i18n/utils'
+import { locales } from '@/i18n/utils'
 
 export function getStaticPaths() {
-	return nonDefaultLocales.map((locale) => ({ params: { locale } }))
+	return locales.map((locale) => ({ params: { locale } }))
 }
 
 const { locale } = Astro.params

@@ -12,17 +12,19 @@ export default defineConfig({
 				defaultLocale: 'it',
 				locales: { it: 'it-IT', en: 'en-US' },
 			},
+			// Only the real /it/* and /en/* content pages are indexable — exclude the root
+			// language-gateway page (src/pages/index.astro), which just redirects.
+			filter: (page) => /\/(it|en)(\/|$)/.test(new URL(page).pathname),
 		}),
 	],
 	i18n: {
 		defaultLocale: 'it',
 		locales: ['it', 'en'],
 		routing: {
-			prefixDefaultLocale: false,
+			prefixDefaultLocale: true,
+			// Astro's built-in "/" -> "/it/" redirect always picks the default locale. We replace it
+			// with our own gateway page (src/pages/index.astro) that also checks browser language.
+			redirectToDefaultLocale: false,
 		},
-	},
-	redirects: {
-		'/commissions': '/contact',
-		'/en/commissions': '/en/contact',
 	},
 })

@@ -1,12 +1,12 @@
 ---
 import SeriesDetailPage from '@/components/pages/SeriesDetailPage.astro'
 import { getPublishedSeries } from '@/lib/fetchContent'
-import { nonDefaultLocales } from '@/i18n/utils'
+import { locales } from '@/i18n/utils'
 import type { Series } from '@/lib/types'
 
 export async function getStaticPaths() {
 	const series = await getPublishedSeries()
-	return nonDefaultLocales.flatMap((locale) =>
+	return locales.flatMap((locale) =>
 		series.map((s) => ({
 			params: { locale, slug: s.slug },
 			props: { series: s },

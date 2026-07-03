@@ -1,6 +1,6 @@
 # Vale Creative — Public Site
 
-Public-facing portfolio and contact site for artist Valentina Damiano. Built with Astro (static output) + Firebase. The site is bilingual (Italian default, English at `/en/`) using Astro's i18n config plus a `[locale]` dynamic route tree — see "i18n" below.
+Public-facing portfolio and contact site for artist Valentina Damiano. Built with Astro (static output) + Firebase. The site is bilingual (`/it/` and `/en/`, both first-class) using Astro's i18n config plus a `[locale]` dynamic route tree — see "i18n" below.
 
 ## Prerequisites
 
@@ -70,15 +70,17 @@ Required GitHub repository secrets:
 
 | Route | Page |
 |---|---|
-| `/` | Homepage (Italian) |
-| `/works` | Gallery — all artworks with filter chips |
-| `/works/:slug` | Artwork detail |
-| `/series/:slug` | Series detail (accessible via artwork/series links — not in nav) |
-| `/techniques` | Techniques list |
-| `/techniques/:slug` | Technique detail |
-| `/about` | Studio / bio |
-| `/commissions` | Commission request form |
-| `/en/*` | English versions of all the above (served by `src/pages/[locale]/*`) |
+| `/` | Language gateway — no content, redirects to `/it` or `/en` (browser language, or a remembered choice) |
+| `/it`, `/en` | Homepage |
+| `/it\|en/works` | Gallery — all artworks with filter chips |
+| `/it\|en/works/:slug` | Artwork detail |
+| `/it\|en/series/:slug` | Series detail (accessible via artwork/series links — not in nav) |
+| `/it\|en/techniques` | Techniques list |
+| `/it\|en/techniques/:slug` | Technique detail |
+| `/it\|en/about` | Studio / bio |
+| `/it\|en/contact` | Contact / commission request form |
+
+All content routes are served by `src/pages/[locale]/*` for both locales — see "i18n" below.
 
 ## Design System
 
@@ -88,23 +90,23 @@ Key tokens: `--ink` (text), `--paper` (background), `--verde` (primary action), 
 
 ## i18n
 
-The site is bilingual using a single set of page bodies plus Astro dynamic routing — there is no duplicated page markup per locale:
+The site is bilingual using a single set of page bodies plus Astro dynamic routing — there is no duplicated page markup per locale, and both locales are equally first-class (`/it/*` and `/en/*`, both prefixed):
 
-- Each page's actual content lives once, in a shared component under `src/components/pages/` (e.g. `HomePage.astro`, `WorksIndexPage.astro`), which takes a `locale` prop and builds all internal links via `getLocalePath(locale, path)`.
-- Italian (the default locale) is served by ordinary unprefixed files directly under `src/pages/` (`index.astro`, `works/index.astro`, etc.) that just render the shared component with `locale="it"`.
-- English (and any future non-default locale) is served by a parallel `src/pages/[locale]/` tree, where each file's `getStaticPaths()` loops over `nonDefaultLocales` (exported from `src/i18n/utils.ts`) to generate `/en/...` and any future locale's routes from the same file.
+- Each page's actual content lives once, in a shared component under `src/components/pages/` (e.g. `HomePage.astro`, `WorksIndexPage.astro`), which takes a `locale` prop and builds all internal links via `getLocalePath(locale, path)` (always `/${locale}${path}`).
+- Both locales are served by the single `src/pages/[locale]/` tree, where each file's `getStaticPaths()` loops over `locales` (exported from `src/i18n/utils.ts`) to generate `/it/...` and `/en/...` (and any future locale's) routes from the same file.
 - UI strings live in `src/i18n/it.ts` and `src/i18n/en.ts`.
+- `src/pages/index.astro` (bare `/`) is not content — it's a language gateway that redirects to `/it` or `/en`, see below.
 
 ### Adding a new language
 
 1. Add the locale code to `locales` in `astro.config.mjs`
-2. Create `src/i18n/{locale}.ts` with all keys from `it.ts` — it's automatically picked up by `locales`/`nonDefaultLocales` in `src/i18n/utils.ts`
+2. Create `src/i18n/{locale}.ts` with all keys from `it.ts` — it's automatically picked up by `locales` in `src/i18n/utils.ts`
 3. Nothing else to do — every file under `src/pages/[locale]/` already generates a route for it via `getStaticPaths()`
 
 ### Language detection & switching
 
-- **First-visit redirect**: a client-side script in `BaseLayout.astro` checks the browser's language on first load and redirects once to the matching locale (`/it` or `/en`), remembering the decision in `localStorage['vd-locale']`. The site is fully static, so this is JS-based rather than a server redirect — see `CLAUDE.md` for details.
-- **Manual switcher**: an IT/EN toggle in the header (desktop nav + mobile menu) lets visitors switch locale on any page. A manual switch is remembered the same way and is never overridden by the auto-redirect.
+- **Root gateway**: `src/pages/index.astro` has no content of its own — a client-side script checks `localStorage['vd-locale']`, else the browser's language, and redirects once to `/it` or `/en`, remembering the decision. The site is fully static, so this is JS-based rather than a server redirect (a `<meta http-equiv="refresh">` to `/it` covers no-JS clients/crawlers) — see `CLAUDE.md` for details.
+- **Manual switcher**: an IT/EN toggle in the header (desktop nav + mobile menu) lets visitors switch locale on any page — since routing is symmetric, it just swaps the `/it`/`/en` prefix on the current path. A manual switch is remembered the same way, so it's respected if the visitor later lands back on the root gateway.
 
 ## Logo
 

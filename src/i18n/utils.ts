@@ -12,9 +12,8 @@ export function useTranslations(locale: string | undefined): Translations {
 }
 
 export const locales = Object.keys(translations) as Locale[]
-export const nonDefaultLocales = locales.filter((l) => l !== 'it')
 
 export function getLocalePath(locale: string | undefined, path: string): string {
-	if (!locale || locale === 'it') return path
-	return `/en${path === '/' ? '' : path}`
+	const l = locale ?? 'it'
+	return `/${l}${path === '/' ? '' : path}`
 }
