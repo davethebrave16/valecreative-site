@@ -1,0 +1,40 @@
+---
+// Renders no real content — sends visitors to /it{path} or /en{path} based on a stored
+// preference, falling back to the browser's language. Used by the root gateway and the
+// catch-all legacy-path gateway (see src/pages/index.astro and src/pages/[...path].astro).
+interface Props {
+	path?: string
+}
+
+const { path } = Astro.props
+const suffix = path ? `/${path}` : ''
+---
+
+<!doctype html>
+<html lang="it">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Vale Creative — Valentina Damiano</title>
+		<meta http-equiv="refresh" content={`0;url=/it${suffix}`} />
+		<script is:inline define:vars={{ suffix }}>
+			(function () {
+				var STORAGE_KEY = 'vd-locale'
+				var stored
+				try {
+					stored = localStorage.getItem(STORAGE_KEY)
+				} catch (e) {}
+				var browserLang = ((navigator.language || navigator.userLanguage || '') + '').toLowerCase()
+				var prefersIt = browserLang.indexOf('it') === 0
+				var locale = stored || (prefersIt ? 'it' : 'en')
+				try {
+					localStorage.setItem(STORAGE_KEY, locale)
+				} catch (e) {}
+				location.replace('/' + locale + suffix)
+			})()
+		</script>
+	</head>
+	<body>
+		<p>Redirecting… <a href={`/it${suffix}`}>Italiano</a> · <a href={`/en${suffix}`}>English</a></p>
+	</body>
+</html>

@@ -1,33 +1,5 @@
 ---
-// Language gateway: sends visitors to /it or /en based on a stored preference,
-// falling back to the browser's language. Never renders real content itself.
+import LocaleGateway from '@/components/LocaleGateway.astro'
 ---
 
-<!doctype html>
-<html lang="it">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Vale Creative — Valentina Damiano</title>
-		<meta http-equiv="refresh" content="0;url=/it" />
-		<script is:inline>
-			(function () {
-				var STORAGE_KEY = 'vd-locale'
-				var stored
-				try {
-					stored = localStorage.getItem(STORAGE_KEY)
-				} catch (e) {}
-				var browserLang = ((navigator.language || navigator.userLanguage || '') + '').toLowerCase()
-				var prefersIt = browserLang.indexOf('it') === 0
-				var locale = stored || (prefersIt ? 'it' : 'en')
-				try {
-					localStorage.setItem(STORAGE_KEY, locale)
-				} catch (e) {}
-				location.replace('/' + locale)
-			})()
-		</script>
-	</head>
-	<body>
-		<p>Redirecting… <a href="/it">Italiano</a> · <a href="/en">English</a></p>
-	</body>
-</html>
+<LocaleGateway />

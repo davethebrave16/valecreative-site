@@ -118,9 +118,11 @@ src/
 │   ├── CommissionRequestForm.jsx  # React island — writes to Firestore at runtime
 │   ├── ContactForm.jsx            # React island — stub, see TODO inside
 │   ├── BlurHashImage.astro        # Astro component — decodes BlurHash at build time
-│   └── ImageLightbox.astro        # Full-size image dialog — click-to-enlarge (see below)
+│   ├── ImageLightbox.astro        # Full-size image dialog — click-to-enlarge (see below)
+│   └── LocaleGateway.astro        # Shared redirect-only markup for the gateway pages below
 ├── pages/
 │   ├── index.astro            # / — language gateway only, no real content (see i18n section)
+│   ├── [...path].astro         # legacy unprefixed paths (/works, /about, ...) — gateway, not content
 │   └── [locale]/               # The only content tree — getStaticPaths loops `locales` (both `it` and `en`)
 │       ├── index.astro         # renders <HomePage locale={locale} />
 │       ├── about.astro
@@ -149,7 +151,7 @@ Both locales are fully symmetric — `/it/*` and `/en/*` are both real, prefixed
 
 Page markup itself is **never duplicated** — each shared component in `src/components/pages/` takes a `locale` prop, calls `useTranslations(locale)`, and builds every internal link with `getLocalePath(locale, path)` (always `/${locale}${path}`) so the same file works for both `/it/works` and `/en/works`.
 
-There is no unprefixed content route — `src/pages/index.astro` is not a page, it's the root language gateway (below), and there is nothing else directly under `src/pages/` besides the `[locale]/` tree.
+There is no unprefixed content route — `src/pages/index.astro` and `src/pages/[...path].astro` are gateway pages (below), not content, and there is nothing else directly under `src/pages/` besides the `[locale]/` tree.
 
 ### Adding a new locale
 
@@ -157,16 +159,20 @@ There is no unprefixed content route — `src/pages/index.astro` is not a page, 
 2. Create `src/i18n/{locale}.ts` with all keys from `src/i18n/it.ts` — it's picked up automatically via `locales`
 3. Nothing else — every `src/pages/[locale]/*` file already loops over `locales` in its `getStaticPaths()`
 
-### Root language gateway
+### Language gateway pages
 
-`src/pages/index.astro` is the only route outside `[locale]/`. It renders no real content — it exists purely to send a visitor at the bare domain to `/it` or `/en`:
+Two routes outside `[locale]/` exist purely to redirect, never to render real content — both built on the shared `src/components/LocaleGateway.astro` (takes an optional `path` prop, e.g. `undefined`, `'works'`, `'works/some-slug'`):
 
-- `<meta http-equiv="refresh" content="0;url=/it">` is the no-JS/crawler fallback (defaults to Italian).
-- An inline script checks `localStorage['vd-locale']` first; if unset, it checks `navigator.language` (starts with `it` → `it`, else `en`). Either way it stores the decision and `location.replace()`s to `/it` or `/en`.
+- `src/pages/index.astro` — the bare domain (`/`). `<LocaleGateway />` (no `path`).
+- `src/pages/[...path].astro` — catches every other legacy unprefixed path (`/works`, `/about`, `/contact`, `/series`, `/techniques`, and their slug pages) so a visitor who omits the locale prefix still lands somewhere instead of hitting a 404. Since `output: 'static'` requires concrete paths, its `getStaticPaths()` enumerates the known top-level routes plus slugs from the same fetchers the real content pages use (`getArtworks`, `getPublishedSeries`, `getTechniques` from `src/lib/fetchContent.ts`). No routing conflict with `/it/*`/`/en/*` — this is static output, so `/works` and `/it/works` are simply distinct pre-rendered files, not a runtime dispatch decision.
 
-This has to be a client-side script — `output: 'static'` means there's no server/middleware available to inspect the `Accept-Language` header. Astro's built-in i18n routing would otherwise auto-generate its own unconditional `/` → `/it/` redirect when `prefixDefaultLocale: true` (via `redirectToDefaultLocale`, default `true`) — that's disabled in `astro.config.mjs` specifically so this custom gateway page is used instead.
+`LocaleGateway.astro` itself:
+- `<meta http-equiv="refresh" content="0;url=/it{path}">` is the no-JS/crawler fallback (defaults to Italian).
+- An inline script checks `localStorage['vd-locale']` first; if unset, it checks `navigator.language` (starts with `it` → `it`, else `en`). Either way it stores the decision and `location.replace()`s to `/it{path}` or `/en{path}`.
 
-The gateway page is excluded from the sitemap via the `filter` option passed to `sitemap()` in `astro.config.mjs` (only `/it/*` and `/en/*` URLs are indexable content).
+This has to be a client-side script — `output: 'static'` means there's no server/middleware available to inspect the `Accept-Language` header. Astro's built-in i18n routing would otherwise auto-generate its own unconditional `/` → `/it/` redirect when `prefixDefaultLocale: true` (via `redirectToDefaultLocale`, default `true`) — that's disabled in `astro.config.mjs` specifically so the custom root gateway is used instead.
+
+Both gateway routes are excluded from the sitemap via the `filter` option passed to `sitemap()` in `astro.config.mjs` (only `/it/*` and `/en/*` URLs are indexable content).
 
 ### Language switcher
 
@@ -255,21 +261,12 @@ The interactivity is a plain inline `<script>` (no framework — matches the mob
 
 ## Slug Pages Pattern
 
-Default-locale `[slug].astro` files follow this pattern:
+`src/pages/[locale]/.../[slug].astro` files cross `locales` (both `it` and `en`) with the content list:
 
 ```ts
 export async function getStaticPaths() {
   const items = await getXxx() // always returns [] on empty/error, never throws
-  return items.map(i => ({ params: { slug: i.slug }, props: { item: i } }))
-}
-```
-
-Their `src/pages/[locale]/.../[slug].astro` counterparts cross `nonDefaultLocales` with the same content list:
-
-```ts
-export async function getStaticPaths() {
-  const items = await getXxx()
-  return nonDefaultLocales.flatMap((locale) =>
+  return locales.flatMap((locale) =>
     items.map((i) => ({ params: { locale, slug: i.slug }, props: { item: i } }))
   )
 }
@@ -285,7 +282,6 @@ All SEO signals are centralised in `src/layouts/BaseLayout.astro`. Key props bey
 |---|---|---|---|
 | `ogImage` | `string` (absolute URL) | `https://valentinadamiano.it/og-default.jpg` | Open Graph / Twitter card image |
 | `ogType` | `'website' \| 'article'` | `'website'` | OG content type — use `'article'` for artwork detail pages |
-| `noAlternate` | `boolean` | `false` | Suppresses hreflang links — only needed for a page that genuinely has no counterpart in the other locale |
 
 **Canonical & hreflang** are computed automatically from `Astro.url.pathname` plus the `site` property in `astro.config.mjs`. No manual URL passing needed for static pages.
 

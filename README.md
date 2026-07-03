@@ -80,7 +80,7 @@ Required GitHub repository secrets:
 | `/it\|en/about` | Studio / bio |
 | `/it\|en/contact` | Contact / commission request form |
 
-All content routes are served by `src/pages/[locale]/*` for both locales — see "i18n" below.
+All content routes are served by `src/pages/[locale]/*` for both locales — see "i18n" below. Visiting any of the above paths without the `/it`/`/en` prefix (e.g. `/works`, `/works/:slug`) also works — it redirects to the correct locale via the gateway pages described below, rather than 404ing.
 
 ## Design System
 
@@ -105,7 +105,7 @@ The site is bilingual using a single set of page bodies plus Astro dynamic routi
 
 ### Language detection & switching
 
-- **Root gateway**: `src/pages/index.astro` has no content of its own — a client-side script checks `localStorage['vd-locale']`, else the browser's language, and redirects once to `/it` or `/en`, remembering the decision. The site is fully static, so this is JS-based rather than a server redirect (a `<meta http-equiv="refresh">` to `/it` covers no-JS clients/crawlers) — see `CLAUDE.md` for details.
+- **Language gateway pages**: `src/pages/index.astro` (`/`) and `src/pages/[...path].astro` (any other unprefixed legacy path, e.g. `/works`, `/works/some-slug`) have no content of their own — a client-side script checks `localStorage['vd-locale']`, else the browser's language, and redirects once to the `/it` or `/en` equivalent, remembering the decision. The site is fully static, so this is JS-based rather than a server redirect (a `<meta http-equiv="refresh">` to `/it{path}` covers no-JS clients/crawlers) — see `CLAUDE.md` for details.
 - **Manual switcher**: an IT/EN toggle in the header (desktop nav + mobile menu) lets visitors switch locale on any page — since routing is symmetric, it just swaps the `/it`/`/en` prefix on the current path. A manual switch is remembered the same way, so it's respected if the visitor later lands back on the root gateway.
 
 ## Logo

@@ -1,0 +1,29 @@
+---
+import LocaleGateway from '@/components/LocaleGateway.astro'
+import { getArtworks, getPublishedSeries, getTechniques } from '@/lib/fetchContent'
+
+export async function getStaticPaths() {
+	const [artworks, series, techniques] = await Promise.all([
+		getArtworks(),
+		getPublishedSeries(),
+		getTechniques(),
+	])
+
+	const paths = [
+		'works',
+		'about',
+		'contact',
+		'series',
+		'techniques',
+		...artworks.map((a) => `works/${a.slug}`),
+		...series.map((s) => `series/${s.slug}`),
+		...techniques.map((t) => `techniques/${t.slug}`),
+	]
+
+	return paths.map((path) => ({ params: { path } }))
+}
+
+const { path } = Astro.params
+---
+
+<LocaleGateway path={path} />
