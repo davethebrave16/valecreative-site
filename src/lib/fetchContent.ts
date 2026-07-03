@@ -35,6 +35,7 @@ function docToArtwork(d: { id: string; data: () => Record<string, unknown> }, lo
 		price: data.price != null ? Number(data.price) : undefined,
 		featured: Boolean(data.featured),
 		isHero: Boolean(data.isHero),
+		isIntro: Boolean(data.isIntro),
 		dimensions: data.dimensions as Artwork['dimensions'],
 		support: data.support ? String(data.support) : undefined,
 		description,

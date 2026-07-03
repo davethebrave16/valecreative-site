@@ -68,6 +68,7 @@ export interface Artwork {
 	price?: number
 	featured: boolean
 	isHero: boolean
+	isIntro: boolean
 	dimensions?: ArtworkDimensions
 	support?: string
 	description?: string
