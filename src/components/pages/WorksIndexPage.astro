@@ -3,6 +3,7 @@ import BaseLayout from '@/layouts/BaseLayout.astro'
 import WorksGrid from '@/components/WorksGrid'
 import { getArtworks, getPublishedSeries, getTechniques, getCategories } from '@/lib/fetchContent'
 import { useTranslations, type Locale } from '@/i18n/utils'
+import { sortByPosition } from '@/lib/utils'
 
 interface Props {
 	locale: string
@@ -11,12 +12,16 @@ interface Props {
 const { locale } = Astro.props
 const t = useTranslations(locale)
 
-const [artworks, series, techniques, categories] = await Promise.all([
+const [fetchedArtworks, series, techniques, categories] = await Promise.all([
 	getArtworks(locale as Locale),
 	getPublishedSeries(),
 	getTechniques(locale as Locale),
 	getCategories(locale as Locale),
 ])
+
+// Sorted by galleryPosition so WorksGrid's client-side origin filter (personal/commissioned
+// tabs) preserves the correct per-origin order without needing its own sort.
+const artworks = sortByPosition(fetchedArtworks, 'galleryPosition')
 
 // Build lookup maps
 const seriesById = Object.fromEntries(series.map((s) => [s.id, s.name]))

@@ -11,6 +11,7 @@ import {
 import { db } from './firebaseConfig'
 import type { Artwork, Category, GalleryImage, Series, Technique, Content } from './types'
 import { localize, type Locale } from '../i18n/utils'
+import { sortByPosition } from './utils'
 
 function docToArtwork(d: { id: string; data: () => Record<string, unknown> }, locale: Locale): Artwork {
 	const data = d.data()
@@ -39,6 +40,8 @@ function docToArtwork(d: { id: string; data: () => Record<string, unknown> }, lo
 		dimensions: data.dimensions as Artwork['dimensions'],
 		support: data.support ? String(data.support) : undefined,
 		description,
+		galleryPosition: data.galleryPosition != null ? Number(data.galleryPosition) : undefined,
+		featuredPosition: data.featuredPosition != null ? Number(data.featuredPosition) : undefined,
 	}
 }
 
@@ -69,7 +72,7 @@ export async function getArtworkGallery(artworkId: string, locale: Locale = 'it'
 		const snap = await getDocs(
 			query(collection(db, `artworks/${artworkId}/gallery`), orderBy('uploadedAt', 'asc')),
 		)
-		return snap.docs.map((d) => {
+		const images = snap.docs.map((d) => {
 			const data = d.data()
 			return {
 				id: d.id,
@@ -84,8 +87,10 @@ export async function getArtworkGallery(artworkId: string, locale: Locale = 'it'
 					? localize(String(data.caption), data.captionEn as string | undefined, locale)
 					: undefined,
 				order: data.order != null ? Number(data.order) : undefined,
+				imagePosition: data.imagePosition != null ? Number(data.imagePosition) : undefined,
 			} satisfies GalleryImage
 		})
+		return sortByPosition(images, 'imagePosition')
 	} catch (err) {
 		console.error('[fetchContent] getArtworkGallery failed:', err)
 		return []

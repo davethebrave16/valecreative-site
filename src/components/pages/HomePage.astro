@@ -2,6 +2,7 @@
 import BaseLayout from '@/layouts/BaseLayout.astro'
 import { getArtworks, getPublishedSeries, getContentBySlug, getCategories } from '@/lib/fetchContent'
 import { useTranslations, getLocalePath, type Locale } from '@/i18n/utils'
+import { sortByPosition } from '@/lib/utils'
 
 interface Props {
 	locale: string
@@ -20,7 +21,7 @@ const [allArtworks, series, hero, categories] = await Promise.all([
 ])
 const categoryById = Object.fromEntries(categories.map(c => [c.id, c.name]))
 
-const featuredArtworks = allArtworks.filter((a) => a.featured).slice(0, 5)
+const featuredArtworks = sortByPosition(allArtworks.filter((a) => a.featured), 'featuredPosition')
 const heroArtwork = allArtworks.find((a) => a.isHero) ?? featuredArtworks[0]
 const introArtwork = allArtworks.find((a) => a.isIntro)
 

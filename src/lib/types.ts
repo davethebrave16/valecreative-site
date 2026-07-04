@@ -73,6 +73,8 @@ export interface Artwork {
 	support?: string
 	description?: string
 	descriptionEn?: string
+	galleryPosition?: number
+	featuredPosition?: number
 }
 
 export interface GalleryImage {
@@ -87,6 +89,7 @@ export interface GalleryImage {
 	caption?: string
 	captionEn?: string
 	order?: number
+	imagePosition?: number
 	uploadedAt?: string | number
 }
 
