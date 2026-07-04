@@ -12,12 +12,14 @@ interface Props {
 		next: string
 		previous: string
 	}
+	artworkSlug: string
+	artworkTitle: string
 }
 
-const { items, labels } = Astro.props
+const { items, labels, artworkSlug, artworkTitle } = Astro.props
 ---
 
-<dialog id="vd-lightbox" class="vd-lightbox">
+<dialog id="vd-lightbox" class="vd-lightbox" data-artwork-slug={artworkSlug} data-artwork-title={artworkTitle}>
 	<script type="application/json" id="vd-lightbox-data" set:html={JSON.stringify(items)} />
 
 	<button type="button" id="vd-lightbox-close" class="vd-lightbox-btn vd-lightbox-close" aria-label={labels.close}>×</button>
@@ -31,6 +33,8 @@ const { items, labels } = Astro.props
 </dialog>
 
 <script>
+	import { trackGalleryOpen } from '@/lib/analytics'
+
 	const dialog = document.getElementById('vd-lightbox')
 	const dataEl = document.getElementById('vd-lightbox-data')
 	const imgEl = document.getElementById('vd-lightbox-img')
@@ -61,6 +65,7 @@ const { items, labels } = Astro.props
 			lastTrigger = trigger ?? null
 			show(index)
 			dialog.showModal()
+			trackGalleryOpen(dialog.dataset.artworkSlug ?? '', dialog.dataset.artworkTitle ?? '')
 		}
 
 		document.querySelectorAll('[data-lightbox-index]').forEach((el) => {

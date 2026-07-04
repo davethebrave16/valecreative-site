@@ -5,10 +5,11 @@ interface Props {
 	availability: 'for_sale' | 'sold' | 'not_for_sale'
 	origin: 'personal' | 'commissioned'
 	slug: string
+	title: string
 	locale: string
 }
 
-const { availability, origin, slug, locale } = Astro.props
+const { availability, origin, slug, title, locale } = Astro.props
 const t = useTranslations(locale)
 
 const variant = origin === 'commissioned'
@@ -23,13 +24,29 @@ const ref = encodeURIComponent(slug)
 
 <div style="margin-top:24px">
 	{variant === 'commissioned' && (
-		<a href={contactPath(`type=commission&ref=${ref}`)} class="vd-btn-primary" style="font-size:14.5px;padding:12px 22px">
+		<a
+			href={contactPath(`type=commission&ref=${ref}`)}
+			class="vd-btn-primary"
+			style="font-size:14.5px;padding:12px 22px"
+			data-track-cta
+			data-artwork-slug={slug}
+			data-artwork-title={title}
+			data-cta-type="commissioned"
+		>
 			Richiedi un'opera simile
 		</a>
 	)}
 	{variant === 'for_sale' && (
 		<div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start">
-			<a href={contactPath(`type=info&ref=${ref}`)} class="vd-btn-primary" style="font-size:14.5px;padding:12px 22px">
+			<a
+				href={contactPath(`type=info&ref=${ref}`)}
+				class="vd-btn-primary"
+				style="font-size:14.5px;padding:12px 22px"
+				data-track-cta
+				data-artwork-slug={slug}
+				data-artwork-title={title}
+				data-cta-type="for_sale"
+			>
 				È tua, scrivimi
 			</a>
 			<span style="font-size:13px;color:var(--muted)">
@@ -42,14 +59,42 @@ const ref = encodeURIComponent(slug)
 			<span class="vd-chip" style="cursor:default">
 				{variant === 'sold' ? 'Opera venduta' : 'Opera non in vendita'}
 			</span>
-			<a href={contactPath('type=commission')} style="color:var(--verde);font-weight:600;font-size:14.5px;text-decoration:none">
+			<a
+				href={contactPath('type=commission')}
+				style="color:var(--verde);font-weight:600;font-size:14.5px;text-decoration:none"
+				data-track-cta
+				data-artwork-slug={slug}
+				data-artwork-title={title}
+				data-cta-type={variant}
+			>
 				Vuoi qualcosa di simile? Scrivimi per una commissione →
 			</a>
 		</div>
 	)}
 	{variant === 'fallback' && (
-		<a href={contactPath('type=info')} class="vd-btn-primary" style="font-size:14.5px;padding:12px 22px">
+		<a
+			href={contactPath('type=info')}
+			class="vd-btn-primary"
+			style="font-size:14.5px;padding:12px 22px"
+			data-track-cta
+			data-artwork-slug={slug}
+			data-artwork-title={title}
+			data-cta-type="fallback"
+		>
 			{t.works.requestInfo}
 		</a>
 	)}
 </div>
+
+<script>
+	import { trackCtaClick } from '@/lib/analytics'
+
+	document.querySelectorAll('[data-track-cta]').forEach((el) => {
+		el.addEventListener('click', () => {
+			const slug = (el as HTMLElement).dataset.artworkSlug ?? ''
+			const title = (el as HTMLElement).dataset.artworkTitle ?? ''
+			const ctaType = (el as HTMLElement).dataset.ctaType as Parameters<typeof trackCtaClick>[2]
+			trackCtaClick(slug, title, ctaType)
+		})
+	})
+</script>

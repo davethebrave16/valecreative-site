@@ -186,6 +186,7 @@ const lightboxItems = [
 						availability={artwork.availability}
 						origin={artwork.origin}
 						slug={artwork.slug}
+						title={artwork.title}
 						locale={locale}
 					/>
 				</div>
@@ -229,5 +230,5 @@ const lightboxItems = [
 		</div>
 	</section>
 
-	<ImageLightbox items={lightboxItems} labels={t.lightbox} />
+	<ImageLightbox items={lightboxItems} labels={t.lightbox} artworkSlug={artwork.slug} artworkTitle={artwork.title} />
 </BaseLayout>
