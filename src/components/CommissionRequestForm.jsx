@@ -6,6 +6,9 @@ import app from '@/lib/firebaseConfig'
 // ['Commissione'/'Commission', 'Doratura'/'Gilding', "Corso d'arte"/'Art course', 'Informazioni'/'Information']
 const REQUEST_TYPE_CANONICAL = ['commission', 'commission', 'course', 'info']
 
+// Reverse lookup: canonical string -> first matching index in REQUEST_TYPE_CANONICAL
+const CANONICAL_TO_INDEX = { commission: 0, course: 2, info: 3 }
+
 const functions = getFunctions(app, 'europe-west1')
 const submitCommission = httpsCallable(functions, 'submitCommission')
 
@@ -16,17 +19,26 @@ export default function CommissionRequestForm({ labels }) {
 
 	const [status, setStatus] = useState('idle') // 'idle' | 'pending' | 'success' | 'error'
 	const [serverError, setServerError] = useState('')
-	const [reqTypeIndex, setReqTypeIndex] = useState(0)
+	const [reqTypeIndex, setReqTypeIndex] = useState(() => {
+		if (typeof window === 'undefined') return 0
+		const preType = new URLSearchParams(window.location.search).get('type')
+		return preType && preType in CANONICAL_TO_INDEX ? CANONICAL_TO_INDEX[preType] : 0
+	})
 	const [fieldErrors, setFieldErrors] = useState({})
 
 	// Read from the DOM (set by BaseLayout.astro) rather than import.meta.env, by design
 	const recaptchaSiteKey = typeof document !== 'undefined' ? document.body?.dataset?.recaptchaKey || '' : ''
 
-	const [fields, setFields] = useState({
-		clientName: '',
-		email: '',
-		description: '',
-		honeypot: '',
+	const [fields, setFields] = useState(() => {
+		const base = { clientName: '', email: '', description: '', honeypot: '' }
+		if (typeof window === 'undefined') return base
+		const params = new URLSearchParams(window.location.search)
+		const preType = params.get('type')
+		const preRef = params.get('ref')
+		if (preRef && (preType === 'info' || preType === 'commission')) {
+			base.description = `Ho visto l'opera "${preRef}" e vorrei saperne di più.`
+		}
+		return base
 	})
 
 	const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/

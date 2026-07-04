@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro'
 import ImageLightbox from '@/components/ImageLightbox.astro'
+import ArtworkCTA from '@/components/ArtworkCTA.astro'
 import { getArtworkGallery, getCategories, getPublishedSeries, getTechniques } from '@/lib/fetchContent'
 import { useTranslations, getLocalePath, type Locale } from '@/i18n/utils'
 import type { Artwork } from '@/lib/types'
@@ -181,9 +182,12 @@ const lightboxItems = [
 						)}
 					</div>
 
-					<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:24px">
-						<a href={p('/contact')} class="vd-btn-primary" style="font-size:14.5px;padding:12px 22px">{t.works.requestInfo}</a>
-					</div>
+					<ArtworkCTA
+						availability={artwork.availability}
+						origin={artwork.origin}
+						slug={artwork.slug}
+						locale={locale}
+					/>
 				</div>
 			</div>
 

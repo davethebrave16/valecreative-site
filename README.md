@@ -80,6 +80,8 @@ Required GitHub repository secrets:
 | `/it\|en/about` | Studio / bio |
 | `/it\|en/contact` | Contact / commission request form |
 
+The artwork detail page links into `/contact` with `?type=` and `?ref=` query params to pre-fill the request type and description — see `CLAUDE.md` → "Artwork Detail CTA".
+
 All content routes are served by `src/pages/[locale]/*` for both locales — see "i18n" below. Visiting any of the above paths without the `/it`/`/en` prefix (e.g. `/works`, `/works/:slug`) also works — it redirects to the correct locale via the gateway pages described below, rather than 404ing.
 
 ## Design System
@@ -171,3 +173,4 @@ Place a `1200×630 px` JPEG at `public/og-default.jpg`. This image is used as th
 - BlurHash placeholders are decoded at build time and inlined as BMP data URIs
 - The artwork detail page's cover image and gallery thumbnails open in a full-size click-to-enlarge dialog (`src/components/ImageLightbox.astro`), showing the original-resolution image with prev/next paging, keyboard/backdrop close, and no external dependency
 - Schema types in `src/lib/types.ts` mirror `valecreative-admin-backoffice/src/types/resources.ts` exactly — keep in sync
+- Manual drag-and-drop ordering set in the backoffice (works gallery, homepage featured section, per-artwork gallery images) is respected automatically on the next build via optional `galleryPosition`/`featuredPosition`/`imagePosition` fields, applied as a client-side sort after fetch (never as a Firestore `orderBy`, since Firestore drops documents missing an `orderBy` field entirely). See "Manual Position Ordering" in `CLAUDE.md`.

@@ -1,0 +1,55 @@
+---
+import { useTranslations, getLocalePath } from '@/i18n/utils'
+
+interface Props {
+	availability: 'for_sale' | 'sold' | 'not_for_sale'
+	origin: 'personal' | 'commissioned'
+	slug: string
+	locale: string
+}
+
+const { availability, origin, slug, locale } = Astro.props
+const t = useTranslations(locale)
+
+const variant = origin === 'commissioned'
+	? 'commissioned'
+	: availability === 'for_sale' || availability === 'sold' || availability === 'not_for_sale'
+		? availability
+		: 'fallback'
+
+const contactPath = (query: string) => `${getLocalePath(locale, '/contact')}?${query}`
+const ref = encodeURIComponent(slug)
+---
+
+<div style="margin-top:24px">
+	{variant === 'commissioned' && (
+		<a href={contactPath(`type=commission&ref=${ref}`)} class="vd-btn-primary" style="font-size:14.5px;padding:12px 22px">
+			Richiedi un'opera simile
+		</a>
+	)}
+	{variant === 'for_sale' && (
+		<div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+			<a href={contactPath(`type=info&ref=${ref}`)} class="vd-btn-primary" style="font-size:14.5px;padding:12px 22px">
+				È tua, scrivimi
+			</a>
+			<span style="font-size:13px;color:var(--muted)">
+				Opera originale — unico esemplare disponibile
+			</span>
+		</div>
+	)}
+	{(variant === 'sold' || variant === 'not_for_sale') && (
+		<div style="display:flex;flex-direction:column;gap:10px;align-items:flex-start">
+			<span class="vd-chip" style="cursor:default">
+				{variant === 'sold' ? 'Opera venduta' : 'Opera non in vendita'}
+			</span>
+			<a href={contactPath('type=commission')} style="color:var(--verde);font-weight:600;font-size:14.5px;text-decoration:none">
+				Vuoi qualcosa di simile? Scrivimi per una commissione →
+			</a>
+		</div>
+	)}
+	{variant === 'fallback' && (
+		<a href={contactPath('type=info')} class="vd-btn-primary" style="font-size:14.5px;padding:12px 22px">
+			{t.works.requestInfo}
+		</a>
+	)}
+</div>

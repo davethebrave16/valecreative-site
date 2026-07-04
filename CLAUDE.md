@@ -104,6 +104,7 @@ src/
 │   ├── firebaseConfig.ts     # Firebase init (guarded against double-init)
 │   ├── types.ts              # Firestore schema interfaces — cross-project contract
 │   ├── fetchContent.ts       # Build-time Firestore query functions
+│   ├── utils.ts              # sortByPosition() — shared stable sort for manual ordering fields
 │   └── blurHashUtils.ts      # blurHashToDataUri() — Node.js Buffer, build-time only
 ├── components/
 │   ├── pages/                 # Shared page bodies — one file per page, `locale` prop, used by both route trees below
@@ -115,6 +116,7 @@ src/
 │   │   ├── SeriesIndexPage.astro / SeriesDetailPage.astro
 │   │   └── TechniquesIndexPage.astro / TechniqueDetailPage.astro
 │   ├── WorksGrid.tsx              # React island — filterable masonry artwork grid
+│   ├── ArtworkCTA.astro           # Astro component — availability/origin-driven CTA on the artwork detail page
 │   ├── CommissionRequestForm.jsx  # React island — calls the submitCommission Cloud Function at runtime (reCAPTCHA v3 verified)
 │   ├── ContactForm.jsx            # React island — stub, see TODO inside
 │   ├── BlurHashImage.astro        # Astro component — decodes BlurHash at build time
@@ -227,6 +229,38 @@ All Firebase config uses the `PUBLIC_FIREBASE_*` prefix (Astro convention for br
 - **Do not** change field names or enum values without syncing the backoffice
 - camelCase fields, same enum string values (`'for_sale'`, `'not_for_sale'`, `'sold'`, `'personal'`, `'commissioned'`, etc.)
 - This includes the optional `*En` bilingual fields — see [Bilingual content fields](#bilingual-content-fields) below.
+- This also includes the optional manual-ordering fields (`galleryPosition`, `featuredPosition`, `imagePosition`) — see [Manual Position Ordering](#manual-position-ordering-galleryposition--featuredposition--imageposition) below.
+
+## Manual Position Ordering (`galleryPosition` / `featuredPosition` / `imagePosition`)
+
+The backoffice lets admins manually drag-reorder artworks and gallery images (see its `CLAUDE.md` → "Artwork Ordering" / "Gallery Image Ordering"), writing three optional numeric fields to Firestore:
+
+- `Artwork.galleryPosition` — order within `/works`, scoped by `origin` (personal vs. commissioned share the field name but are numbered independently per the backoffice's Sort modal tabs)
+- `Artwork.featuredPosition` — order within the homepage featured section
+- `GalleryImage.imagePosition` — order within a single artwork's `gallery` subcollection
+
+All three are optional and absent on every document that hasn't been manually reordered yet.
+
+**Critical Firestore constraint**: `orderBy(field)` silently excludes any document that doesn't have that field set — not "sorts it last," *dropped from the result set entirely*. For this reason none of these fields are ever used as a Firestore `orderBy` clause here. Firestore queries keep ordering by a field guaranteed to exist on every document (`createdAt` for artworks, `uploadedAt` for gallery images); the position fields are applied as a **client-side sort after the fetch**, via the shared helper:
+
+```ts
+// src/lib/utils.ts
+export function sortByPosition<T extends Record<string, unknown>>(items: T[], field: keyof T): T[] {
+	return [...items].sort((a, b) => {
+		const aPos = (a[field] as number | undefined) ?? Infinity
+		const bPos = (b[field] as number | undefined) ?? Infinity
+		if (aPos === Infinity && bPos === Infinity) return 0
+		return aPos - bPos
+	})
+}
+```
+
+Documents without the field sort to the end and, among themselves, keep whatever order the Firestore `orderBy` produced (stable sort) — so when no positions are set at all, output is unchanged from before this feature existed.
+
+Applied at three call sites:
+- `getArtworkGallery()` (`src/lib/fetchContent.ts`) — sorts by `imagePosition` after the `orderBy('uploadedAt', 'asc')` fetch, before returning.
+- `WorksIndexPage.astro` — sorts the full `getArtworks()` result by `galleryPosition` before mapping to `workItems` / passing to `WorksGrid.tsx`. `WorksGrid.tsx` itself is untouched: its client-side `origin` filter is stable, so filtering a pre-sorted array naturally preserves the correct order within each origin tab without `WorksGrid.tsx` needing to know about `galleryPosition` at all.
+- `HomePage.astro` — sorts `allArtworks.filter(a => a.featured)` by `featuredPosition` before rendering. There is no cap on the number of featured artworks shown (an earlier `.slice(0, 5)` was removed) — every artwork marked `featured` renders on the homepage, in `featuredPosition` order.
 
 ## Bilingual content fields
 
@@ -318,9 +352,23 @@ Schema types used: `WebSite`, `Person`, `VisualArtwork`, `CreativeWorkSeries`, `
 
 ---
 
+## Artwork Detail CTA (ArtworkCTA.astro)
+
+`WorkDetailPage.astro` renders `<ArtworkCTA availability origin slug locale />` instead of a single hardcoded CTA. `origin === 'commissioned'` takes precedence over `availability` (commissioned works are portfolio examples, not sale items):
+
+| Condition | CTA | Links to |
+|---|---|---|
+| `origin === 'commissioned'` | Button: "Richiedi un'opera simile" | `/contact?type=commission&ref={slug}` |
+| `availability === 'for_sale'` | Button: "È tua, scrivimi" + muted line below | `/contact?type=info&ref={slug}` |
+| `availability === 'sold'` | Chip "Opera venduta" + secondary link | `/contact?type=commission` |
+| `availability === 'not_for_sale'` | Chip "Opera non in vendita" + secondary link | `/contact?type=commission` |
+| unexpected/undefined `availability` | Fallback button (`t.works.requestInfo`) | `/contact?type=info` |
+
+`CommissionRequestForm.jsx` reads `type`/`ref` from `window.location.search` via a lazy `useState` initializer (SSR-safe, no post-mount flash) to pre-select the matching request-type chip and pre-fill the description textarea; both remain freely editable. There is no `/commissions` route — the spec's "commission page" is this repo's existing `/contact` route.
+
 ## Commission Form — submitCommission Cloud Function
 
-`CommissionRequestForm.jsx` no longer writes to Firestore directly. It calls the `submitCommission` callable Cloud Function (`functions/src/submitCommission.ts` in `valecreative-admin-backoffice`, region `europe-west1`) via `httpsCallable`, passing a reCAPTCHA v3 token (`window.grecaptcha.execute(siteKey, { action: 'submit_commission' })`) alongside the form fields. The function verifies the token server-side, validates/sanitizes input, and writes to the `commissions` collection using the Admin SDK.
+`CommissionRequestForm.jsx` no longer writes to Firestore directly. It calls the `submitCommission` callable Cloud Function (`functions/src/submitCommission.ts` in `valecreative-admin-backoffice`, region `europe-west1`) via `httpsCallable`, passing a reCAPTCHA v3 token (`window.grecaptcha.execute(siteKey, { action: 'submit_commission' })`) alongside the form fields. The function verifies the token server-side, validates/sanitizes input, and writes to the `commissions` collection using the Admin SDK. The form also accepts `?type=` and `?ref=` query params (set by `ArtworkCTA.astro` on the artwork detail page) to pre-select a request type and pre-fill the description on load — see "Artwork Detail CTA" above.
 
 - **reCAPTCHA site key**: read from `import.meta.env.PUBLIC_RECAPTCHA_SITE_KEY` in `BaseLayout.astro`, which conditionally injects the `recaptcha/api.js` script and exposes the key to the React island via a `data-recaptcha-key` attribute on `<body>` (the form reads it via `document.body.dataset.recaptchaKey` rather than `import.meta.env` directly, for consistency with the layout-owns-injected-config pattern already used for GA).
 - **Request type mapping**: the form's 4 request-type chips (`Commissione`/`Doratura`/`Corso d'arte`/`Informazioni`, from `src/i18n/{it,en}.ts` → `commissions.form.requestTypes`, a positional array with no canonical keys) map onto the Cloud Function's 3-value `type` enum (`commission | course | info`) via a fixed local array `REQUEST_TYPE_CANONICAL` in `CommissionRequestForm.jsx` — index-aligned with `requestTypes`, not label-text matched. `Doratura`/`Gilding` maps to `commission`.
