@@ -87,6 +87,8 @@ export const en = {
 			painting: 'Painting',
 			engraving: 'Engraving',
 			craft: 'Craft',
+			drawing: 'Drawing',
+			photography: 'Photography',
 			other: 'Other',
 		} as Record<string, string>,
 	},

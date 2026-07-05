@@ -230,6 +230,7 @@ All Firebase config uses the `PUBLIC_FIREBASE_*` prefix (Astro convention for br
 - camelCase fields, same enum string values (`'for_sale'`, `'not_for_sale'`, `'sold'`, `'personal'`, `'commissioned'`, etc.)
 - This includes the optional `*En` bilingual fields — see [Bilingual content fields](#bilingual-content-fields) below.
 - This also includes the optional manual-ordering fields (`galleryPosition`, `featuredPosition`, `imagePosition`) — see [Manual Position Ordering](#manual-position-ordering-galleryposition--featuredposition--imageposition) below.
+- `TechniqueCategory`'s enum values (`painting`, `engraving`, `craft`, `drawing`, `photography`, `other`) are fixed, not admin-editable text, so they're translated via per-locale dictionaries (`src/i18n/it.ts` / `src/i18n/en.ts`, `techniques.category`) rather than the `localize()`/`*En`-field pattern used for free text below. A new category must be added in three places: the backoffice's `TECHNIQUE_CATEGORY_LABELS`, this file's `TechniqueCategory` type, and both locale dictionaries here.
 
 ## Manual Position Ordering (`galleryPosition` / `featuredPosition` / `imagePosition`)
 
@@ -281,6 +282,14 @@ The `categories` collection (`src/lib/fetchContent.ts → getCategories()`) stor
 2. **Category chips** — "Tutte/All" chip (resets filter) + one chip per category that has at least one artwork in the active origin tab
 
 `src/components/pages/WorksIndexPage.astro` (shared by both `/works` and `/en/works`) fetches categories at build time and passes them, plus `locale`, as props to `WorksGrid`. `WorksGrid` uses `locale` with `getLocalePath()` to build correctly-prefixed artwork links. Category chip visibility is computed client-side to avoid showing empty filters.
+
+## Techniques Index — Grouped Accordion
+
+`TechniquesIndexPage.astro` (`/it|en/techniques`) groups techniques by `category` instead of rendering one flat list:
+
+- Frontmatter builds `groupedByCategory` by filtering `techniques` (already fetched alphabetically via `getTechniques()`, `orderBy('name', 'asc')`) against a fixed `CATEGORY_ORDER` array (`['painting', 'engraving', 'craft', 'drawing', 'photography', 'other']` — mirrors the backoffice enum order, see "Types Contract" above). Categories with zero techniques are filtered out entirely, same "skip empty groups" rule `WorksGrid.tsx` applies to category chips.
+- Techniques stay in their existing alphabetical order within each group — no additional client-side sort.
+- Rendered with native `<details>/<summary>` per category (no JS, no React island) — each category expands/collapses independently; opening one does not close another. This is the one page on the site with a scoped `<style>` block (for the `[open]` chevron rotation and hiding the default marker), since `[open]` state can't be expressed via inline `style=""` like the rest of the page.
 
 ## BlurHash Pattern
 

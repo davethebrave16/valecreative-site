@@ -88,6 +88,8 @@ export const it = {
 			painting: 'Pittura',
 			engraving: 'Incisione',
 			craft: 'Artigianato',
+			drawing: 'Disegno',
+			photography: 'Fotografia',
 			other: 'Altro',
 		} as Record<string, string>,
 	},

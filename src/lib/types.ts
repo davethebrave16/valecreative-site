@@ -15,7 +15,7 @@ export interface ImageObject {
 	uploadedAt?: string | number
 }
 
-export type TechniqueCategory = 'painting' | 'engraving' | 'craft' | 'other'
+export type TechniqueCategory = 'painting' | 'engraving' | 'craft' | 'drawing' | 'photography' | 'other'
 
 export interface Technique {
 	id: string
