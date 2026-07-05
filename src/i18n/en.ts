@@ -11,7 +11,7 @@ export const en = {
 
 	// Home page
 	home: {
-		eyebrow: 'Painter · Craftsperson · Teacher',
+		eyebrow: 'Artist · Painter · Craftsperson',
 		heroTitle: 'The forest as mirror of the soul',
 		heroSubtitle:
 			'Dreamlike landscapes woven from Leonardesque glazing, engraved marks, and gold leaf. A painterly inquiry rooted in the Tuscan landscape, between Pisa and Lucca.',

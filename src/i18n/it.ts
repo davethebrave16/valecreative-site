@@ -11,7 +11,7 @@ export const it = {
 
 	// Home page
 	home: {
-		eyebrow: 'Pittrice · Artigiana · Insegnante',
+		eyebrow: 'Artista · Pittrice · Artigiana',
 		heroTitle: 'Il bosco come specchio dell\'anima',
 		heroSubtitle:
 			'Paesaggi onirici tra velature leonardesche, segno inciso e foglia oro. Una ricerca pittorica radicata nella natura toscana, tra Pisa e Lucca.',
