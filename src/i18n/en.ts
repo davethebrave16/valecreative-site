@@ -42,7 +42,6 @@ export const en = {
 		countLabel: (n: number) => `${n} works`,
 		countSuffix: 'works',
 		legendAvailable: 'Available',
-		legendRequest: 'On request',
 		legendSold: 'Sold / unavailable',
 		empty: 'No works published yet.',
 		backLink: '← All works',

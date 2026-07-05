@@ -29,7 +29,6 @@ interface Props {
 		filterCommissioned: string
 		countSuffix: string
 		legendAvailable: string
-		legendRequest: string
 		legendSold: string
 		availability: Record<string, string>
 		orientation: Record<string, string>
@@ -52,8 +51,7 @@ function cellGridStyle(orient: string): React.CSSProperties {
 
 function availabilityColor(availability: string) {
 	if (availability === 'for_sale') return 'var(--verde)'
-	if (availability === 'sold') return '#9a8d77'
-	return '#9a8d77'
+	return 'var(--rose)'
 }
 
 export default function WorksGrid({ artworks, categories, locale, labels }: Props) {
@@ -85,6 +83,18 @@ export default function WorksGrid({ artworks, categories, locale, labels }: Prop
 
 	return (
 		<>
+			{/* Legend */}
+			<div style={{ display: 'flex', flexWrap: 'wrap', gap: 18, margin: '0 0 22px', fontFamily: "'Spline Sans Mono', monospace", fontSize: 11, letterSpacing: '0.08em', color: 'var(--muted)' }}>
+				<span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+					<span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--verde)', display: 'inline-block' }} />
+					{labels.legendAvailable}
+				</span>
+				<span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+					<span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--rose)', display: 'inline-block' }} />
+					{labels.legendSold}
+				</span>
+			</div>
+
 			{/* Origin tabs */}
 			<div style={{ display: 'flex', gap: 6, margin: '30px 0 0', borderBottom: '1px solid var(--line)', paddingBottom: 0 }}>
 				{originTabs.map(({ key, label }) => (
@@ -163,7 +173,10 @@ export default function WorksGrid({ artworks, categories, locale, labels }: Prop
 							<span style={{ position: 'absolute', left: 11, top: 9, fontFamily: "'Spline Sans Mono', monospace", fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,.82)', zIndex: 2 }}>
 								{tag}
 							</span>
-							<span style={{ position: 'absolute', right: 11, top: 11, width: 9, height: 9, borderRadius: '50%', zIndex: 2, background: dotColor, boxShadow: '0 0 0 3px rgba(255,255,255,.35)' }} />
+							<span
+								title={labels.availability[avail] ?? avail}
+								style={{ position: 'absolute', right: 11, top: 11, width: 15, height: 15, borderRadius: '50%', zIndex: 2, background: dotColor, boxShadow: '0 0 0 4px rgba(255,255,255,.35)' }}
+							/>
 							<div className="vd-cap" style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 14, background: 'linear-gradient(180deg,rgba(0,0,0,0) 42%,rgba(18,26,20,.76))', zIndex: 2 }}>
 								<div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 21, fontWeight: 600, color: '#fff', lineHeight: 1.05 }}>{artwork.title}</div>
 								<div style={{ fontFamily: "'Spline Sans Mono', monospace", fontSize: 10, letterSpacing: '0.08em', color: 'rgba(255,255,255,.82)', marginTop: 4 }}>
@@ -173,22 +186,6 @@ export default function WorksGrid({ artworks, categories, locale, labels }: Prop
 						</a>
 					)
 				})}
-			</div>
-
-			{/* Legend */}
-			<div style={{ display: 'flex', flexWrap: 'wrap', gap: 18, marginTop: 26, fontFamily: "'Spline Sans Mono', monospace", fontSize: 11, letterSpacing: '0.08em', color: 'var(--muted)' }}>
-				<span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-					<span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--verde)', display: 'inline-block' }} />
-					{labels.legendAvailable}
-				</span>
-				<span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-					<span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--gold)', display: 'inline-block' }} />
-					{labels.legendRequest}
-				</span>
-				<span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-					<span style={{ width: 8, height: 8, borderRadius: '50%', background: '#9a8d77', display: 'inline-block' }} />
-					{labels.legendSold}
-				</span>
 			</div>
 		</>
 	)

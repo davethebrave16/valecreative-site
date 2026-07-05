@@ -291,6 +291,20 @@ The `categories` collection (`src/lib/fetchContent.ts → getCategories()`) stor
 - Techniques stay in their existing alphabetical order within each group — no additional client-side sort.
 - Rendered with native `<details>/<summary>` per category (no JS, no React island) — each category expands/collapses independently; opening one does not close another. This is the one page on the site with a scoped `<style>` block (for the `[open]` chevron rotation and hiding the default marker), since `[open]` state can't be expressed via inline `style=""` like the rest of the page.
 
+## Availability Indicator (dot)
+
+Artwork thumbnails in `WorksGrid.tsx` (top-right corner of each grid cell, 15×15px) and the adjacent-labeled dot on `WorkDetailPage.astro` both color-code `artwork.availability` into just **two** visual states, not three:
+- `for_sale` → `var(--verde)` (green)
+- `sold` and `not_for_sale` → `var(--rose)` (both map to the same red/rose — the site never visually distinguishes "sold" from "not for sale" by color, only through the tooltip/label text)
+
+`--rose` (`src/styles/global.css`) is the same token used for form validation errors elsewhere (`CommissionRequestForm.jsx`) — reused here rather than introducing a new red.
+
+The grid dot also carries a native `title="..."` tooltip sourced from `labels.availability` (the localized `{for_sale, sold, not_for_sale}` dictionary, passed in from `WorksIndexPage.astro`), so the exact status is still recoverable per-artwork even though the color itself is binary.
+
+The legend (`WorksGrid.tsx`) renders **above** the origin tabs/grid, not below, and has exactly two entries (`legendAvailable`, `legendSold`) matching the two colors above — there is no third "on request" legend entry (a stale `legendRequest` key existed briefly and was removed; it described a state the color logic never actually produced).
+
+**Not shared code** — `WorksGrid.tsx`'s `availabilityColor()` and `WorkDetailPage.astro`'s inline `availColor` ternary independently implement the same mapping. If the color scheme or the set of availability values changes, both must be updated together. The homepage's featured-artworks section (`HomePage.astro`) intentionally shows no availability indicator at all.
+
 ## BlurHash Pattern
 
 `blurHashUtils.ts` → `blurHashToDataUri(hash, w, h)`:

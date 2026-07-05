@@ -33,11 +33,7 @@ const categoryNames = (artwork.categoryIds ?? [])
 	.map((id) => categoryById[id])
 	.filter((name): name is string => Boolean(name))
 
-const availColor = artwork.availability === 'for_sale'
-	? 'var(--verde)'
-	: artwork.availability === 'sold'
-	? '#9a8d77'
-	: '#9a8d77'
+const availColor = artwork.availability === 'for_sale' ? 'var(--verde)' : 'var(--rose)'
 
 const availLabel = t.works.availability[artwork.availability] ?? artwork.availability
 
