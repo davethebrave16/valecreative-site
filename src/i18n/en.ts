@@ -144,7 +144,7 @@ export const en = {
 
 	// Footer
 	footer: {
-		tagline: 'Creations · Pisa · Lucca',
+		tagline: 'Art · Creation · Personalisation',
 		copyright: (year: number) => `© ${year} Valentina Damiano — All rights reserved`,
 	},
 
