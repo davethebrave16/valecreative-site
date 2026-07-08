@@ -125,7 +125,7 @@ export const en = {
 			email: 'Email',
 			emailPlaceholder: 'name@email.com',
 			requestType: 'Request type',
-			requestTypes: ['Commission', 'Gilding', 'Art course', 'Information'],
+			requestTypes: ['Commission', 'Art course', 'Information'],
 			message: 'Message',
 			messagePlaceholder: 'Describe your idea, subject, dimensions, timeline…',
 			submit: 'Send request',

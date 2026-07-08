@@ -3,11 +3,11 @@ import { getFunctions, httpsCallable } from 'firebase/functions'
 import app from '@/lib/firebaseConfig'
 
 // Positional mapping — index must stay aligned with commissions.form.requestTypes in both it.ts and en.ts
-// ['Commissione'/'Commission', 'Doratura'/'Gilding', "Corso d'arte"/'Art course', 'Informazioni'/'Information']
-const REQUEST_TYPE_CANONICAL = ['commission', 'commission', 'course', 'info']
+// ['Commissione'/'Commission', "Corso d'arte"/'Art course', 'Informazioni'/'Information']
+const REQUEST_TYPE_CANONICAL = ['commission', 'course', 'info']
 
 // Reverse lookup: canonical string -> first matching index in REQUEST_TYPE_CANONICAL
-const CANONICAL_TO_INDEX = { commission: 0, course: 2, info: 3 }
+const CANONICAL_TO_INDEX = { commission: 0, course: 1, info: 2 }
 
 const functions = getFunctions(app, 'europe-west1')
 const submitCommission = httpsCallable(functions, 'submitCommission')

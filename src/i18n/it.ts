@@ -126,7 +126,7 @@ export const it = {
 			email: 'Email',
 			emailPlaceholder: 'nome@email.it',
 			requestType: 'Tipo di richiesta',
-			requestTypes: ['Commissione', 'Doratura', 'Corso d\'arte', 'Informazioni'],
+			requestTypes: ['Commissione', 'Corso d\'arte', 'Informazioni'],
 			message: 'Messaggio',
 			messagePlaceholder: 'Descrivi la tua idea, soggetto, dimensioni, tempi…',
 			submit: 'Invia la richiesta',
