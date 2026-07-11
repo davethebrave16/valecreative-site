@@ -218,6 +218,7 @@ export async function getCategories(locale: Locale = 'it'): Promise<Category[]> 
 				id: d.id,
 				name: localize(String(data.name ?? ''), data.nameEn as string | undefined, locale),
 				slug: String(data.slug ?? ''),
+				featuredArtworkId: data.featuredArtworkId ? String(data.featuredArtworkId) : undefined,
 			} satisfies Category
 		})
 	} catch (err) {

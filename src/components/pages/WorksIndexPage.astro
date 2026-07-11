@@ -26,6 +26,13 @@ const artworks = sortByPosition(fetchedArtworks, 'galleryPosition')
 // Build lookup maps
 const seriesById = Object.fromEntries(series.map((s) => [s.id, s.name]))
 const techniqueById = Object.fromEntries(techniques.map((t) => [t.id, t.name]))
+const artworksById = Object.fromEntries(artworks.map((a) => [a.id, a]))
+
+// Resolve each category's featured artwork cover image for the category tile grid
+const categoriesWithCover = categories.map((c) => ({
+	...c,
+	coverImage: c.featuredArtworkId ? artworksById[c.featuredArtworkId]?.coverImage : undefined,
+}))
 
 // Enrich artworks for the client component
 const workItems = artworks.map((a) => ({
@@ -58,15 +65,15 @@ const pageTitle = locale === 'it' ? 'Opere — Galleria di Pittura' : 'Works —
 				<WorksGrid
 					client:visible
 					artworks={workItems}
-					categories={categories}
+					categories={categoriesWithCover}
 					locale={locale}
 					labels={{
-						filterAll: t.works.filterAll,
 						filterPersonal: t.works.filterPersonal,
 						filterCommissioned: t.works.filterCommissioned,
 						countSuffix: t.works.countSuffix,
 						legendAvailable: t.works.legendAvailable,
 						legendSold: t.works.legendSold,
+						selectCategoryHint: t.works.selectCategoryHint,
 						availability: t.works.availability,
 						orientation: t.works.orientation,
 					}}
