@@ -35,24 +35,49 @@ const heroBg = heroArtwork?.coverImage?.original
 	? `url('${heroArtwork.coverImage.medium ?? heroArtwork.coverImage.original}') center/cover no-repeat`
 	: 'radial-gradient(130% 120% at 30% 14%,#d9b25e 0%,#6b4f37 44%,#243029 100%)'
 
-const fallbackDescription = locale === 'it'
-	? `Categoria ${category.name} — Valentina Damiano`
-	: `${category.name} category — Valentina Damiano`
+const pageDescription = locale === 'it'
+	? `${category.name} — ${artworks.length} opere di Valentina Damiano.`
+	: `${category.name} — ${artworks.length} artworks by Valentina Damiano.`
+
+const pageUrl = `${SITE}${p(`/works/category/${category.slug}`)}`
+const heroImageUrl = heroArtwork?.coverImage?.original
 ---
 
 <BaseLayout
 	title={category.name}
 	lang={locale}
-	description={fallbackDescription}
+	description={pageDescription}
 	ogImage={heroArtwork?.coverImage?.medium ?? heroArtwork?.coverImage?.original}
 >
 	<script slot="head" type="application/ld+json" set:html={JSON.stringify({
 		'@context': 'https://schema.org',
-		'@type': 'BreadcrumbList',
-		itemListElement: [
-			{ '@type': 'ListItem', position: 1, name: 'Home', item: SITE },
-			{ '@type': 'ListItem', position: 2, name: t.nav.works, item: `${SITE}${p('/works')}` },
-			{ '@type': 'ListItem', position: 3, name: category.name },
+		'@graph': [
+			{
+				'@type': 'CollectionPage',
+				name: category.name,
+				description: pageDescription,
+				url: pageUrl,
+				...(heroImageUrl ? { image: heroImageUrl } : {}),
+				isPartOf: { '@type': 'WebSite', name: 'Vale Creative', url: SITE },
+				mainEntity: {
+					'@type': 'ItemList',
+					numberOfItems: artworks.length,
+					itemListElement: artworks.map((a, i) => ({
+						'@type': 'ListItem',
+						position: i + 1,
+						url: `${SITE}${p(`/works/${a.slug}`)}`,
+						name: a.title,
+					})),
+				},
+			},
+			{
+				'@type': 'BreadcrumbList',
+				itemListElement: [
+					{ '@type': 'ListItem', position: 1, name: 'Home', item: SITE },
+					{ '@type': 'ListItem', position: 2, name: t.nav.works, item: `${SITE}${p('/works')}` },
+					{ '@type': 'ListItem', position: 3, name: category.name },
+				],
+			},
 		],
 	})} />
 
