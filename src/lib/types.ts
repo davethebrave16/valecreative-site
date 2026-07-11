@@ -70,6 +70,7 @@ export interface Artwork {
 	featured: boolean
 	isHero: boolean
 	isIntro: boolean
+	showOnAboutPage: boolean
 	dimensions?: ArtworkDimensions
 	support?: string
 	description?: string
