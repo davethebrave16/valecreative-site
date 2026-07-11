@@ -1,9 +1,7 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro'
-import WorksGrid from '@/components/WorksGrid'
-import { getArtworks, getPublishedSeries, getTechniques, getCategories } from '@/lib/fetchContent'
-import { useTranslations, type Locale } from '@/i18n/utils'
-import { sortByPosition } from '@/lib/utils'
+import { getArtworks, getCategories } from '@/lib/fetchContent'
+import { useTranslations, getLocalePath, type Locale } from '@/i18n/utils'
 
 interface Props {
 	locale: string
@@ -11,43 +9,37 @@ interface Props {
 
 const { locale } = Astro.props
 const t = useTranslations(locale)
+const p = (path: string) => getLocalePath(locale, path)
 
-const [fetchedArtworks, series, techniques, categories] = await Promise.all([
+const [allArtworks, categories] = await Promise.all([
 	getArtworks(locale as Locale),
-	getPublishedSeries(),
-	getTechniques(locale as Locale),
 	getCategories(locale as Locale),
 ])
 
-// Sorted by galleryPosition so WorksGrid's client-side origin filter (personal/commissioned
-// tabs) preserves the correct per-origin order without needing its own sort.
-const artworks = sortByPosition(fetchedArtworks, 'galleryPosition')
+const artworksById = Object.fromEntries(allArtworks.map((a) => [a.id, a]))
 
-// Build lookup maps
-const seriesById = Object.fromEntries(series.map((s) => [s.id, s.name]))
-const techniqueById = Object.fromEntries(techniques.map((t) => [t.id, t.name]))
-const artworksById = Object.fromEntries(artworks.map((a) => [a.id, a]))
+const countById: Record<string, number> = {}
+for (const a of allArtworks) {
+	for (const catId of a.categoryIds ?? []) {
+		countById[catId] = (countById[catId] ?? 0) + 1
+	}
+}
 
-// Resolve each category's featured artwork cover image for the category tile grid
-const categoriesWithCover = categories.map((c) => ({
-	...c,
-	coverImage: c.featuredArtworkId ? artworksById[c.featuredArtworkId]?.coverImage : undefined,
-}))
+// Only show categories that actually have at least one linked artwork
+const visibleCategories = categories
+	.map((c) => ({
+		...c,
+		count: countById[c.id] ?? 0,
+		coverImage: c.featuredArtworkId ? artworksById[c.featuredArtworkId]?.coverImage : undefined,
+	}))
+	.filter((c) => c.count > 0)
 
-// Enrich artworks for the client component
-const workItems = artworks.map((a) => ({
-	id: a.id,
-	title: a.title,
-	slug: a.slug,
-	year: a.year,
-	availability: a.availability,
-	origin: a.origin,
-	categoryIds: a.categoryIds,
-	dimensions: a.dimensions,
-	coverImage: a.coverImage,
-	seriesName: a.seriesId ? seriesById[a.seriesId] : undefined,
-	techniqueName: a.techniqueId ? techniqueById[a.techniqueId] : undefined,
-}))
+const GRADS = [
+	'linear-gradient(155deg,#33473b 0%,#5d6b4d 40%,#b68a3c 100%)',
+	'radial-gradient(120% 110% at 72% 18%,#c98f5a 0%,#4a5640 50%,#20281f 100%)',
+	'linear-gradient(160deg,#2e403a 0%,#7d8a6a 54%,#e3c277 100%)',
+	'radial-gradient(120% 120% at 40% 82%,#b68a3c 0%,#5a4632 42%,#232e26 100%)',
+]
 
 const pageTitle = locale === 'it' ? 'Opere — Galleria di Pittura' : 'Works — Painting Gallery'
 ---
@@ -59,25 +51,33 @@ const pageTitle = locale === 'it' ? 'Opere — Galleria di Pittura' : 'Works —
 			<h1 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(34px,5.5vw,62px);margin:10px 0 0;color:var(--ink)">{t.works.title}</h1>
 			<p style="max-width:58ch;margin:14px 0 0;font-size:16px;line-height:1.65;color:#52564c">{t.works.subtitle}</p>
 
-			{artworks.length === 0 ? (
+			{visibleCategories.length === 0 ? (
 				<p style="color:var(--muted);margin-top:2rem">{t.works.empty}</p>
 			) : (
-				<WorksGrid
-					client:visible
-					artworks={workItems}
-					categories={categoriesWithCover}
-					locale={locale}
-					labels={{
-						filterPersonal: t.works.filterPersonal,
-						filterCommissioned: t.works.filterCommissioned,
-						countSuffix: t.works.countSuffix,
-						legendAvailable: t.works.legendAvailable,
-						legendSold: t.works.legendSold,
-						selectCategoryHint: t.works.selectCategoryHint,
-						availability: t.works.availability,
-						orientation: t.works.orientation,
-					}}
-				/>
+				<div class="vd-cards" style="margin-top:clamp(28px,4vw,44px)">
+					{visibleCategories.map((cat, i) => {
+						const imgSrc = cat.coverImage?.thumb ?? cat.coverImage?.medium ?? cat.coverImage?.original
+						return (
+							<a
+								href={p(`/works/category/${cat.slug}`)}
+								style="text-align:left;border:1px solid var(--line);background:var(--parchment);border-radius:5px;overflow:hidden;display:block;text-decoration:none;transition:border-color .25s"
+								onmouseover="this.style.borderColor='var(--gold)'"
+								onmouseout="this.style.borderColor='var(--line)'"
+							>
+								{imgSrc ? (
+									<img src={imgSrc} alt={cat.coverImage?.alt ?? cat.name} loading="lazy" style="width:100%;height:210px;object-fit:cover" />
+								) : (
+									<div style={`height:210px;background:${GRADS[i % GRADS.length]}`}></div>
+								)}
+								<div style="padding:20px">
+									<div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--bark)">{t.works.categoryCount(cat.count)}</div>
+									<div style="font-family:'Cormorant Garamond',serif;font-size:27px;font-weight:600;color:var(--ink);margin-top:6px">{cat.name}</div>
+									<span style="display:inline-block;margin-top:14px;font-weight:600;font-size:14px;color:var(--verde)">{t.works.openCategory}</span>
+								</div>
+							</a>
+						)
+					})}
+				</div>
 			)}
 		</div>
 	</section>

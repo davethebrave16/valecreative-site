@@ -1,0 +1,60 @@
+---
+import { getLocalePath } from '@/i18n/utils'
+import type { Artwork } from '@/lib/types'
+
+interface Props {
+	locale: string
+	artworks: Artwork[]
+	availabilityLabels: Record<string, string>
+	id?: string
+	hidden?: boolean
+}
+
+const { locale, artworks, availabilityLabels, id, hidden = false } = Astro.props
+const p = (path: string) => getLocalePath(locale, path)
+
+function getOrientation(dims?: { width?: number; height?: number }) {
+	if (!dims?.width || !dims?.height) return 'square'
+	const r = dims.width / dims.height
+	if (r < 0.85) return 'portrait'
+	if (r > 1.2) return 'landscape'
+	return 'square'
+}
+
+function cellGridStyle(orient: string) {
+	if (orient === 'portrait') return 'grid-row:span 3'
+	if (orient === 'landscape') return 'grid-row:span 2;grid-column:span 2'
+	return 'grid-row:span 2'
+}
+
+function availabilityColor(availability: string) {
+	if (availability === 'for_sale') return 'var(--verde)'
+	return 'var(--rose)'
+}
+---
+
+<div id={id} class="vd-grid" style={`display:${hidden ? 'none' : 'grid'}`}>
+	{artworks.map((artwork) => {
+		const orient = getOrientation(artwork.dimensions)
+		const imgSrc = artwork.coverImage?.thumb ?? artwork.coverImage?.medium ?? artwork.coverImage?.original
+		const avail = artwork.availability
+		const dotColor = availabilityColor(avail)
+		return (
+			<a href={p(`/works/${artwork.slug}`)} class="vd-cell" style={cellGridStyle(orient)}>
+				{imgSrc ? (
+					<img src={imgSrc} alt={artwork.coverImage?.alt ?? artwork.title} loading="lazy" class="vd-img" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" />
+				) : (
+					<div class="vd-img" style="position:absolute;inset:0;background:linear-gradient(155deg,#33473b 0%,#5d6b4d 40%,#b68a3c 100%)"></div>
+				)}
+				<span
+					title={availabilityLabels[avail] ?? avail}
+					style={`position:absolute;right:11px;top:11px;width:15px;height:15px;border-radius:50%;z-index:2;background:${dotColor};box-shadow:0 0 0 4px rgba(255,255,255,.35)`}
+				></span>
+				<div class="vd-cap" style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:14px;background:linear-gradient(180deg,rgba(0,0,0,0) 42%,rgba(18,26,20,.76));z-index:2">
+					<div style="font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:600;color:#fff;line-height:1.05">{artwork.title}</div>
+					<div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:.08em;color:rgba(255,255,255,.82);margin-top:4px">{artwork.year}</div>
+				</div>
+			</a>
+		)
+	})}
+</div>

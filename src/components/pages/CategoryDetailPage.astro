@@ -1,0 +1,155 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro'
+import CategoryArtworkGrid from '@/components/CategoryArtworkGrid.astro'
+import { getArtworks } from '@/lib/fetchContent'
+import { useTranslations, getLocalePath, type Locale } from '@/i18n/utils'
+import { sortByPosition } from '@/lib/utils'
+import type { Category } from '@/lib/types'
+
+interface Props {
+	locale: string
+	category: Category
+}
+
+const { locale, category } = Astro.props
+const t = useTranslations(locale)
+const p = (path: string) => getLocalePath(locale, path)
+const SITE = 'https://valentinadamiano.it'
+
+const allArtworks = await getArtworks(locale as Locale)
+const artworks = sortByPosition(
+	allArtworks.filter((a) => a.categoryIds?.includes(category.id)),
+	'galleryPosition'
+)
+
+const personal = artworks.filter((a) => a.origin === 'personal')
+const commissioned = artworks.filter((a) => a.origin === 'commissioned')
+const showTabs = personal.length > 0 && commissioned.length > 0
+const soloItems = personal.length > 0 ? personal : commissioned
+
+const heroArtwork = category.featuredArtworkId
+	? artworks.find((a) => a.id === category.featuredArtworkId)
+	: undefined
+
+const heroBg = heroArtwork?.coverImage?.original
+	? `url('${heroArtwork.coverImage.medium ?? heroArtwork.coverImage.original}') center/cover no-repeat`
+	: 'radial-gradient(130% 120% at 30% 14%,#d9b25e 0%,#6b4f37 44%,#243029 100%)'
+
+const fallbackDescription = locale === 'it'
+	? `Categoria ${category.name} — Valentina Damiano`
+	: `${category.name} category — Valentina Damiano`
+---
+
+<BaseLayout
+	title={category.name}
+	lang={locale}
+	description={fallbackDescription}
+	ogImage={heroArtwork?.coverImage?.medium ?? heroArtwork?.coverImage?.original}
+>
+	<script slot="head" type="application/ld+json" set:html={JSON.stringify({
+		'@context': 'https://schema.org',
+		'@type': 'BreadcrumbList',
+		itemListElement: [
+			{ '@type': 'ListItem', position: 1, name: 'Home', item: SITE },
+			{ '@type': 'ListItem', position: 2, name: t.nav.works, item: `${SITE}${p('/works')}` },
+			{ '@type': 'ListItem', position: 3, name: category.name },
+		],
+	})} />
+
+	<section class="vd-rise">
+		<!-- Hero banner -->
+		<div style={`position:relative;overflow:hidden;background:${heroBg}`}>
+			<div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,28,22,.18),rgba(20,28,22,.62))"></div>
+			<div class="container" style="position:relative;padding-block:clamp(46px,7vw,110px)">
+				<a href={p('/works')} style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.85);display:inline-block;margin-bottom:16px">{t.works.backLink}</a>
+				<h1 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(38px,6vw,76px);margin:0;color:#fff">{category.name}</h1>
+			</div>
+		</div>
+
+		<!-- Artworks -->
+		<div class="container" style="padding-block:clamp(34px,4vw,56px) clamp(50px,6vw,90px)">
+			{artworks.length === 0 ? (
+				<p style="color:var(--muted)">{t.works.noWorksInCategory}</p>
+			) : (
+				<>
+					<!-- Legend -->
+					<div style="display:flex;flex-wrap:wrap;gap:18px;margin:0 0 22px;font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.08em;color:var(--muted)">
+						<span style="display:flex;align-items:center;gap:7px">
+							<span style="width:8px;height:8px;border-radius:50%;background:var(--verde);display:inline-block"></span>
+							{t.works.legendAvailable}
+						</span>
+						<span style="display:flex;align-items:center;gap:7px">
+							<span style="width:8px;height:8px;border-radius:50%;background:var(--rose);display:inline-block"></span>
+							{t.works.legendSold}
+						</span>
+					</div>
+
+					{showTabs ? (
+						<>
+							<div style="display:flex;gap:6px;margin:0 0 22px;border-bottom:1px solid var(--line)">
+								<button
+									id="cd-tab-personal"
+									style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;padding:8px 18px;border:none;background:none;cursor:pointer;color:var(--forest);border-bottom:2px solid var(--forest);margin-bottom:-1px"
+								>
+									{t.works.filterPersonal}
+								</button>
+								<button
+									id="cd-tab-commissioned"
+									style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;padding:8px 18px;border:none;background:none;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px"
+								>
+									{t.works.filterCommissioned}
+								</button>
+							</div>
+
+							<CategoryArtworkGrid
+								locale={locale}
+								artworks={personal}
+								availabilityLabels={t.works.availability}
+								id="cd-panel-personal"
+							/>
+							<CategoryArtworkGrid
+								locale={locale}
+								artworks={commissioned}
+								availabilityLabels={t.works.availability}
+								id="cd-panel-commissioned"
+								hidden
+							/>
+						</>
+					) : (
+						<CategoryArtworkGrid
+							locale={locale}
+							artworks={soloItems}
+							availabilityLabels={t.works.availability}
+						/>
+					)}
+				</>
+			)}
+		</div>
+	</section>
+
+	{showTabs && (
+		<script>
+			const personalTab = document.getElementById('cd-tab-personal')
+			const commissionedTab = document.getElementById('cd-tab-commissioned')
+			const personalPanel = document.getElementById('cd-panel-personal')
+			const commissionedPanel = document.getElementById('cd-panel-commissioned')
+
+			function activate(origin: 'personal' | 'commissioned') {
+				const isPersonal = origin === 'personal'
+				if (personalPanel) personalPanel.style.display = isPersonal ? 'grid' : 'none'
+				if (commissionedPanel) commissionedPanel.style.display = isPersonal ? 'none' : 'grid'
+				if (personalTab) {
+					personalTab.style.color = isPersonal ? 'var(--forest)' : 'var(--muted)'
+					personalTab.style.borderBottom = isPersonal ? '2px solid var(--forest)' : '2px solid transparent'
+				}
+				if (commissionedTab) {
+					commissionedTab.style.color = isPersonal ? 'var(--muted)' : 'var(--forest)'
+					commissionedTab.style.borderBottom = isPersonal ? '2px solid transparent' : '2px solid var(--forest)'
+				}
+			}
+
+			personalTab?.addEventListener('click', () => activate('personal'))
+			commissionedTab?.addEventListener('click', () => activate('commissioned'))
+		</script>
+	)}
+</BaseLayout>

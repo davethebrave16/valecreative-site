@@ -1,0 +1,28 @@
+---
+import CategoryDetailPage from '@/components/pages/CategoryDetailPage.astro'
+import { getCategories } from '@/lib/fetchContent'
+import { locales } from '@/i18n/utils'
+import type { Category } from '@/lib/types'
+
+export async function getStaticPaths() {
+	const paths = await Promise.all(
+		locales.map(async (locale) => {
+			const categories = await getCategories(locale)
+			return categories.map((c) => ({
+				params: { locale, slug: c.slug },
+				props: { category: c },
+			}))
+		})
+	)
+	return paths.flat()
+}
+
+interface Props {
+	category: Category
+}
+
+const { locale } = Astro.params
+const { category } = Astro.props
+---
+
+<CategoryDetailPage locale={locale} category={category} />
