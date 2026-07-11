@@ -86,7 +86,7 @@ const heroImageUrl = heroArtwork?.coverImage?.original
 		<div style={`position:relative;overflow:hidden;background:${heroBg}`}>
 			<div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,28,22,.18),rgba(20,28,22,.62))"></div>
 			<div class="container" style="position:relative;padding-block:clamp(46px,7vw,110px)">
-				<a href={p('/works')} style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.85);display:inline-block;margin-bottom:16px">{t.works.backLink}</a>
+				<a href={p('/works')} data-back-link style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.85);display:inline-block;margin-bottom:16px">{t.works.backLink}</a>
 				<h1 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(38px,6vw,76px);margin:0;color:#fff">{category.name}</h1>
 			</div>
 		</div>

@@ -247,6 +247,19 @@ const pageTitle = `${title} — Vale Creative`
 				})
 			}
 
+			// "Back" breadcrumb links (e.g. "← All works") should return to wherever the visitor
+			// actually came from (a category page, a search result, etc.) rather than always
+			// resetting to the fixed href. Falls back to the href for direct loads/new tabs/crawlers,
+			// where there's no in-app history to go back to.
+			document.querySelectorAll('[data-back-link]').forEach((link) => {
+				link.addEventListener('click', (e) => {
+					if (window.history.length > 1) {
+						e.preventDefault()
+						window.history.back()
+					}
+				})
+			})
+
 			// Remember a manual language choice so the auto-redirect script never overrides it.
 			document.querySelectorAll('.vd-langswitch-link').forEach((link) => {
 				link.addEventListener('click', () => {
