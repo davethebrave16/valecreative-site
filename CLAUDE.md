@@ -112,10 +112,11 @@ src/
 │   │   ├── AboutPage.astro
 │   │   ├── CommissionsPage.astro
 │   │   ├── ContactPage.astro
-│   │   ├── WorksIndexPage.astro / WorkDetailPage.astro
+│   │   ├── WorksIndexPage.astro / WorkDetailPage.astro   # WorksIndexPage now renders a categories grid, not artworks — see "Categories" below
+│   │   ├── CategoryDetailPage.astro                      # one category's artworks, Personal/Commissioned tabs
 │   │   ├── SeriesIndexPage.astro / SeriesDetailPage.astro
 │   │   └── TechniquesIndexPage.astro / TechniqueDetailPage.astro
-│   ├── WorksGrid.tsx              # React island — filterable masonry artwork grid
+│   ├── CategoryArtworkGrid.astro  # Astro component — `.vd-grid` of artwork cells for one origin, used (up to twice) by CategoryDetailPage
 │   ├── ArtworkCTA.astro           # Astro component — availability/origin-driven CTA on the artwork detail page
 │   ├── CommissionRequestForm.jsx  # React island — calls the submitCommission Cloud Function at runtime (reCAPTCHA v3 verified)
 │   ├── ContactForm.jsx            # React island — stub, see TODO inside
@@ -130,6 +131,7 @@ src/
 │       ├── about.astro
 │       ├── contact.astro
 │       ├── works/{index,[slug]}.astro
+│       ├── works/category/[slug].astro   # per-category artwork gallery — see "Categories" below
 │       ├── series/{index,[slug]}.astro
 │       └── techniques/{index,[slug]}.astro   # [slug] files cross `locales` × content list in getStaticPaths
 ```
@@ -205,7 +207,7 @@ The `.vd-grid` uses `grid-auto-flow: dense` with variable row/column spans based
 | > 1.2 | landscape | `grid-row: span 2; grid-column: span 2` |
 | else | square | `grid-row: span 2` |
 
-Use the `getOrientation(dims)` helper defined locally in each Astro page and in `WorksGrid.tsx`.
+Use the `getOrientation(dims)` helper — defined locally (duplicated intentionally, not shared via a util, consistent with this codebase's preference for small local helpers over cross-file utils for ~10-line snippets) in each of `WorkDetailPage.astro`, `SeriesDetailPage.astro`, `TechniqueDetailPage.astro`, and `CategoryArtworkGrid.astro`.
 
 ## Critical Split: Build-time vs Runtime Firebase
 
@@ -216,8 +218,9 @@ Use the `getOrientation(dims)` helper defined locally in each Astro page and in 
 - All functions must handle empty collections / bad config without throwing
 
 **Runtime** (React islands with `client:visible`):
-- `CommissionRequestForm.jsx` and `WorksGrid.tsx` only
+- `CommissionRequestForm.jsx` only (rendered from `ContactPage.astro`)
 - Only `PUBLIC_` prefixed env vars are available in the browser
+- The Works section has **no** client-side React island anymore — category selection is a real page navigation (`/works` → `/works/category/:slug`), and the Personal/Commissioned toggle on a category page is a small inline `<script>` (same pattern as the mobile-nav burger in `BaseLayout.astro`), not a component. `WorksGrid.tsx` (the previous `client:visible` in-page category-chip filter) was deleted — see "Categories" below.
 
 ## Environment Variables
 
@@ -260,7 +263,7 @@ Documents without the field sort to the end and, among themselves, keep whatever
 
 Applied at three call sites:
 - `getArtworkGallery()` (`src/lib/fetchContent.ts`) — sorts by `imagePosition` after the `orderBy('uploadedAt', 'asc')` fetch, before returning.
-- `WorksIndexPage.astro` — sorts the full `getArtworks()` result by `galleryPosition` before mapping to `workItems` / passing to `WorksGrid.tsx`. `WorksGrid.tsx` itself is untouched: its client-side `origin` filter is stable, so filtering a pre-sorted array naturally preserves the correct order within each origin tab without `WorksGrid.tsx` needing to know about `galleryPosition` at all.
+- `CategoryDetailPage.astro` — sorts that category's filtered artworks by `galleryPosition` before splitting into Personal/Commissioned panels, so both tabs on a category page respect the same manual order as the rest of the site.
 - `HomePage.astro` — sorts `allArtworks.filter(a => a.featured)` by `featuredPosition` before rendering. There is no cap on the number of featured artworks shown (an earlier `.slice(0, 5)` was removed) — every artwork marked `featured` renders on the homepage, in `featuredPosition` order.
 
 ## Bilingual content fields
@@ -273,37 +276,43 @@ Applied at three call sites:
 - `[slug]` pages (`works/[slug].astro`, `techniques/[slug].astro`) fetch the full list **once per locale** inside `getStaticPaths()` (`locales.map(async (locale) => getXxx(locale))`, then `.flat()`) rather than fetching once and reusing across both locale routes — otherwise the `props.item` passed to the detail page would always be the Italian-only data even on `/en/*`.
 - `getPublishedSeries`/`getSeriesBySlug` are unchanged (no `locale` param) since `series` is out of scope for this feature.
 
-## Categories & WorksGrid Filtering
+## Categories — index grid + dedicated gallery pages
 
-The `categories` collection (`src/lib/fetchContent.ts → getCategories()`) stores artwork taxonomy labels. Each `Artwork` document carries `categoryIds: string[]` — an array of plain category document IDs.
+The `categories` collection (`src/lib/fetchContent.ts → getCategories()`) stores artwork taxonomy labels, plus an optional `featuredArtworkId` (set in the backoffice via `FeaturedArtworkPicker.tsx` — see the backoffice's `CLAUDE.md` → "Categories — featured artwork") pointing at one representative `artworks` document. Each `Artwork` document carries `categoryIds: string[]` — an array of plain category document IDs.
 
-`WorksGrid.tsx` (`client:visible` React island) implements a two-level filter:
-1. **Origin tabs** — Personal / Commissioned (no "All" tab)
-2. **Category chips** — "Tutte/All" chip (resets filter) + one chip per category that has at least one artwork in the active origin tab
+This used to be a single-page, client-side filterable gallery (`WorksGrid.tsx`, a `client:visible` React island with category chips + a scroll-into-view hack for mobile). After user feedback that in-page filtering wasn't mobile-friendly even with that workaround, it was replaced with a plain two-level static drill-down — no client-side filtering, no React island, just page navigation:
 
-`src/components/pages/WorksIndexPage.astro` (shared by both `/works` and `/en/works`) fetches categories at build time and passes them, plus `locale`, as props to `WorksGrid`. `WorksGrid` uses `locale` with `getLocalePath()` to build correctly-prefixed artwork links. Category chip visibility is computed client-side to avoid showing empty filters.
+1. **`/works` (`WorksIndexPage.astro`)** — a `.vd-cards` grid of category cards (same card style/size as the Series index page — deliberately bigger than the old filter chips so cover images read clearly). Only categories with **at least one** linked artwork are shown (`countById` tally over `getArtworks()`, mirroring `SeriesIndexPage.astro`'s pattern). Each card's image is the category's `featuredArtworkId` resolved to that artwork's `coverImage` (falls back to one of 4 rotating gradients, same `GRADS` array as `SeriesIndexPage.astro`, if unset or the artwork/image is missing). Clicking a card is a real navigation to `/works/category/{slug}`.
+
+2. **`/works/category/[slug]` (`src/pages/[locale]/works/category/[slug].astro` → `CategoryDetailPage.astro`)** — the `getStaticPaths` route follows the exact same locale × content-list shape as `techniques/[slug].astro` (see "Slug Pages Pattern" below), fetching `getCategories(locale)` per locale and passing the matched `category` as a prop.
+   - `CategoryDetailPage.astro` fetches all artworks, filters to `a.categoryIds?.includes(category.id)`, sorts via `sortByPosition(..., 'galleryPosition')`.
+   - **Hero banner** reuses the same `featuredArtworkId` end-to-end: it resolves to that artwork's `coverImage` and uses it as the hero background (same treatment/fallback gradient as `SeriesDetailPage.astro`'s `series.coverImage` hero) — no extra fetch needed, since the artwork is already in the filtered list.
+   - **Personal/Commissioned split**: if *both* origins have ≥1 artwork in this category, renders a two-tab toggle + two panels (`CategoryArtworkGrid` instances, one hidden via inline `style`) switched by a small vanilla `<script>` (`getElementById`/`addEventListener`, the same lightweight pattern as the mobile burger menu in `BaseLayout.astro` — not a React island). If only **one** origin has artworks, that grid renders directly with no dead/empty tab.
+   - `src/components/CategoryArtworkGrid.astro` is the extracted `.vd-grid` artwork-cell renderer (cover image, availability dot, title, year) — a small reusable sub-component so the same ~40 lines of cell markup isn't tripled across the two tab panels + the no-tabs case.
+
+Both `WorksIndexPage.astro` and `CategoryDetailPage.astro` use `locale`/`getLocalePath()` the same way every other shared page component does — see "Using translations in a shared page component" above.
 
 ## Techniques Index — Grouped Accordion
 
 `TechniquesIndexPage.astro` (`/it|en/techniques`) groups techniques by `category` instead of rendering one flat list:
 
-- Frontmatter builds `groupedByCategory` by filtering `techniques` (already fetched alphabetically via `getTechniques()`, `orderBy('name', 'asc')`) against a fixed `CATEGORY_ORDER` array (`['painting', 'engraving', 'craft', 'drawing', 'photography', 'other']` — mirrors the backoffice enum order, see "Types Contract" above). Categories with zero techniques are filtered out entirely, same "skip empty groups" rule `WorksGrid.tsx` applies to category chips.
+- Frontmatter builds `groupedByCategory` by filtering `techniques` (already fetched alphabetically via `getTechniques()`, `orderBy('name', 'asc')`) against a fixed `CATEGORY_ORDER` array (`['painting', 'engraving', 'craft', 'drawing', 'photography', 'other']` — mirrors the backoffice enum order, see "Types Contract" above). Categories with zero techniques are filtered out entirely, same "skip empty groups" rule `WorksIndexPage.astro` applies to the artwork-category grid (only categories with ≥1 linked artwork get a card).
 - Techniques stay in their existing alphabetical order within each group — no additional client-side sort.
 - Rendered with native `<details>/<summary>` per category (no JS, no React island) — each category expands/collapses independently; opening one does not close another. This is the one page on the site with a scoped `<style>` block (for the `[open]` chevron rotation and hiding the default marker), since `[open]` state can't be expressed via inline `style=""` like the rest of the page.
 
 ## Availability Indicator (dot)
 
-Artwork thumbnails in `WorksGrid.tsx` (top-right corner of each grid cell, 15×15px) and the adjacent-labeled dot on `WorkDetailPage.astro` both color-code `artwork.availability` into just **two** visual states, not three:
+Artwork thumbnails in `CategoryArtworkGrid.astro` (top-right corner of each grid cell, 15×15px) and the adjacent-labeled dot on `WorkDetailPage.astro` both color-code `artwork.availability` into just **two** visual states, not three:
 - `for_sale` → `var(--verde)` (green)
 - `sold` and `not_for_sale` → `var(--rose)` (both map to the same red/rose — the site never visually distinguishes "sold" from "not for sale" by color, only through the tooltip/label text)
 
 `--rose` (`src/styles/global.css`) is the same token used for form validation errors elsewhere (`CommissionRequestForm.jsx`) — reused here rather than introducing a new red.
 
-The grid dot also carries a native `title="..."` tooltip sourced from `labels.availability` (the localized `{for_sale, sold, not_for_sale}` dictionary, passed in from `WorksIndexPage.astro`), so the exact status is still recoverable per-artwork even though the color itself is binary.
+The grid dot also carries a native `title="..."` tooltip sourced from `availabilityLabels` (the localized `{for_sale, sold, not_for_sale}` dictionary, passed into `CategoryArtworkGrid` from `CategoryDetailPage.astro` as `t.works.availability`), so the exact status is still recoverable per-artwork even though the color itself is binary.
 
-The legend (`WorksGrid.tsx`) renders **above** the origin tabs/grid, not below, and has exactly two entries (`legendAvailable`, `legendSold`) matching the two colors above — there is no third "on request" legend entry (a stale `legendRequest` key existed briefly and was removed; it described a state the color logic never actually produced).
+The legend (rendered in `CategoryDetailPage.astro`, above the origin tabs/grid) has exactly two entries (`legendAvailable`, `legendSold`) matching the two colors above — there is no third "on request" legend entry (a stale `legendRequest` key existed briefly and was removed; it described a state the color logic never actually produced).
 
-**Not shared code** — `WorksGrid.tsx`'s `availabilityColor()` and `WorkDetailPage.astro`'s inline `availColor` ternary independently implement the same mapping. If the color scheme or the set of availability values changes, both must be updated together. The homepage's featured-artworks section (`HomePage.astro`) intentionally shows no availability indicator at all.
+**Not shared code** — `CategoryArtworkGrid.astro`'s `availabilityColor()` and `WorkDetailPage.astro`'s inline `availColor` ternary independently implement the same mapping. If the color scheme or the set of availability values changes, both must be updated together. The homepage's featured-artworks section (`HomePage.astro`) intentionally shows no availability indicator at all.
 
 ## BlurHash Pattern
 
@@ -365,13 +374,34 @@ All SEO signals are centralised in `src/layouts/BaseLayout.astro`. Key props bey
   <!-- page content -->
 </BaseLayout>
 ```
-Schema types used: `WebSite`, `Person`, `VisualArtwork`, `CreativeWorkSeries`, `BreadcrumbList`.
+Schema types used: `WebSite`, `Person`, `VisualArtwork`, `CreativeWorkSeries`, `CollectionPage` + `ItemList`, `BreadcrumbList`.
 
-**Meta descriptions** live in `src/i18n/it.ts` and `src/i18n/en.ts` under the `meta` key (`meta.homeDescription`, `meta.worksDescription`, etc.). Always add a `meta.*Description` entry in both i18n files when adding a new page, rather than hardcoding the string in the `.astro` file.
+`CategoryDetailPage.astro` is the `CollectionPage`/`ItemList` example: its JSON-LD `@graph` has a `CollectionPage` node (`name`/`description`/`url`/`image` for the category itself) whose `mainEntity` is an `ItemList` enumerating every artwork in that category (`position`, `url`, `name`), plus a `BreadcrumbList` node. Its meta `description` is generated per-category (not a static template) — `"{name} — {count} opere/artworks di/by Valentina Damiano."`, `count` being the real number of artworks currently in that category — so every category page has a genuinely unique description rather than the same boilerplate with only the name swapped in.
 
-**Sitemap** is auto-generated by `@astrojs/sitemap` on every `npm run build` — output at `/sitemap-index.xml`. No manual maintenance needed; new pages appear automatically.
+**Meta descriptions** live in `src/i18n/it.ts` and `src/i18n/en.ts` under the `meta` key (`meta.homeDescription`, `meta.worksDescription`, etc.). Always add a `meta.*Description` entry in both i18n files when adding a new page, rather than hardcoding the string in the `.astro` file. (Per-category/per-artwork descriptions are the exception — those are generated per-record, not translated static copy, since they need to embed record-specific data.)
+
+**Sitemap** is auto-generated by `@astrojs/sitemap` on every `npm run build` — output at `/sitemap-index.xml`. No manual maintenance needed; new pages (including every `/works/category/:slug`) appear automatically.
 
 **Analytics** — GA4 measurement ID is read from `VITE_GA_MEASUREMENT_ID` in `.env`. The tracking script is injected in `BaseLayout.astro` only when the variable is set and non-empty.
+
+**`public/robots.txt`** currently contains `Disallow: /`, blocking all crawlers from the entire site — presumably a pre-launch guard. All of the above (meta tags, JSON-LD, sitemap) is moot for actual search visibility until this is lifted (e.g. to `Allow: /` + a `Sitemap:` line pointing at `/sitemap-index.xml`). Check with the site owner before changing it — it may be intentional pre-launch.
+
+## Back Navigation (`data-back-link`)
+
+The "← back" breadcrumb link at the top of every detail page (`WorkDetailPage.astro`, `CategoryDetailPage.astro`, `SeriesDetailPage.astro`, `TechniqueDetailPage.astro`) is a real `<a href="...">` pointing at that section's index (`/works`, `/series`, `/techniques`) **and** carries a `data-back-link` attribute. A single site-wide script in `BaseLayout.astro` (alongside the burger-menu script) intercepts clicks on any `[data-back-link]` element and calls `window.history.back()` instead when `window.history.length > 1`:
+
+```js
+document.querySelectorAll('[data-back-link]').forEach((link) => {
+	link.addEventListener('click', (e) => {
+		if (window.history.length > 1) {
+			e.preventDefault()
+			window.history.back()
+		}
+	})
+})
+```
+
+This makes the link behave like a real "back" button — e.g. `/works` → a category page → an artwork page → click back lands on that *category* page (with its scroll position, via the browser's normal bfcache), not always back at the fixed `/works` index. The static `href` is kept as the fallback for direct loads, new tabs, and no-JS/crawler contexts (`window.history.length === 1` in those cases, so the default navigation proceeds normally) — this also means the link stays fully crawlable for SEO purposes (see "SEO Architecture" above). Add `data-back-link` to any future "back" breadcrumb the same way rather than inventing a new pattern.
 
 ---
 
