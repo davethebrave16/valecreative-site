@@ -322,7 +322,7 @@ The legend (rendered in `CategoryDetailPage.astro`, above the origin tabs/grid) 
 
 ## Image Lightbox
 
-`src/components/ImageLightbox.astro` renders a native `<dialog>`-based click-to-enlarge viewer, currently wired into `WorkDetailPage.astro` for the cover image + gallery.
+`src/components/ImageLightbox.astro` renders a native `<dialog>`-based click-to-enlarge viewer with zoom/pan, currently wired into `WorkDetailPage.astro` for the cover image + gallery.
 
 Usage:
 ```astro
@@ -333,6 +333,10 @@ where `items` is an ordered `{ src, alt?, caption? }[]` (use `.original`, not `.
 Any element elsewhere on the page becomes a trigger by adding `data-lightbox-index={n}` matching that item's index in the array — see the `<button class="vd-zoom-trigger" data-lightbox-index="0">` wrapping the cover `<img>` in `WorkDetailPage.astro`. One `<ImageLightbox>` per page is enough; wrap every enlargeable image's triggers into a single shared `items` array (as `WorkDetailPage.astro` does by concatenating cover + gallery) so prev/next paging cycles through all of them.
 
 The interactivity is a plain inline `<script>` (no framework — matches the mobile-nav-burger pattern in `BaseLayout.astro`), using `dialog.showModal()`/`.close()`, `Escape`/backdrop-click/arrow-key handling, and focus restoration to the trigger on close.
+
+**Zoom/pan** — also implemented in that same inline `<script>`, no new dependency: scroll-wheel zoom centered on the cursor, click-drag panning once zoomed in, double-click/double-tap toggling between fit-to-screen and ~2.2x zoom (anchored at the click/tap point), and touch pinch-to-zoom + single-finger pan via the Pointer Events API (one set of handlers serves mouse-drag, touch-pan, and pinch). Zoom is clamped to 1x–4x and pan is clamped so the image can't be dragged fully off-screen, both measured against the image's fitted (unscaled) rendered box captured in `show()`.
+
+**Gotcha (zoom state)**: zoom/pan state (`scale`/`tx`/`ty`) must only ever be reset via `resetZoom()`, and `resetZoom()` must only be called from the two funnel points that are guaranteed to run on every navigation/close path: the top of `show(index)` (covers prev/next, arrow keys, and initial open) and the dialog's `close` listener (covers Escape, backdrop click, and the close button). Resetting anywhere else risks missing a path and leaking zoom state into the next image or the next time the dialog opens.
 
 **Gotcha**: `<dialog>` is hidden by default via the *user-agent* stylesheet rule `dialog:not([open]) { display: none }`. Any author CSS that sets `display` on the dialog (e.g. `.vd-lightbox { display: flex }`, needed to center its contents while open) permanently overrides that UA rule — author styles always beat UA styles regardless of specificity — so the dialog stays visible (and, being `position: fixed`, blocks clicks on the whole page) even when closed. Always pair a `display` declaration on a `<dialog>` with an explicit `.your-dialog:not([open]) { display: none; }` rule (see `global.css`).
 

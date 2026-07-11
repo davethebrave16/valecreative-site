@@ -26,7 +26,7 @@ const { items, labels, artworkSlug, artworkTitle } = Astro.props
 	<button type="button" id="vd-lightbox-prev" class="vd-lightbox-btn vd-lightbox-nav vd-lightbox-prev" aria-label={labels.previous}>‹</button>
 	<button type="button" id="vd-lightbox-next" class="vd-lightbox-btn vd-lightbox-nav vd-lightbox-next" aria-label={labels.next}>›</button>
 
-	<figure class="vd-lightbox-figure">
+	<figure id="vd-lightbox-figure" class="vd-lightbox-figure">
 		<img id="vd-lightbox-img" class="vd-lightbox-img" src="" alt="" />
 		<figcaption id="vd-lightbox-caption" class="vd-lightbox-caption"></figcaption>
 	</figure>
@@ -42,16 +42,113 @@ const { items, labels, artworkSlug, artworkTitle } = Astro.props
 	const closeBtn = document.getElementById('vd-lightbox-close')
 	const prevBtn = document.getElementById('vd-lightbox-prev')
 	const nextBtn = document.getElementById('vd-lightbox-next')
+	const figureEl = document.getElementById('vd-lightbox-figure')
 
-	if (dialog && dataEl && imgEl && capEl && closeBtn && prevBtn && nextBtn) {
+	if (dialog && dataEl && imgEl && capEl && closeBtn && prevBtn && nextBtn && figureEl) {
 		const items = JSON.parse(dataEl.textContent || '[]')
 		let currentIndex = 0
 		let lastTrigger = null
+
+		// ─── Zoom/pan state ────────────────────────────────────────────────
+		const MIN_SCALE = 1
+		const MAX_SCALE = 4
+		const DBLCLICK_SCALE = 2.2
+
+		let scale = 1
+		let tx = 0
+		let ty = 0
+		let baseW = 0
+		let baseH = 0
+
+		let isPanning = false
+		let panPointerId = null
+		let panStartX = 0
+		let panStartY = 0
+		let panOriginTx = 0
+		let panOriginTy = 0
+
+		const activePointers = new Map()
+		let pinchStartDist = 0
+		let pinchStartScale = 1
+		let pinchStartMidpoint = { x: 0, y: 0 }
+		let pinchStartTx = 0
+		let pinchStartTy = 0
+
+		let lastTapTime = 0
+		let lastTapX = 0
+		let lastTapY = 0
+
+		function applyTransform() {
+			imgEl.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`
+		}
+
+		function updateCursorAndZoomState() {
+			const zoomed = scale > 1.001
+			imgEl.classList.toggle('is-zoomed', zoomed)
+			figureEl.classList.toggle('is-zoomed', zoomed)
+		}
+
+		function resetZoom() {
+			scale = 1
+			tx = 0
+			ty = 0
+			imgEl.classList.remove('is-transitioning')
+			applyTransform()
+			updateCursorAndZoomState()
+			imgEl.classList.remove('is-panning')
+		}
+
+		function clampTranslate(nextTx, nextTy, s) {
+			const scaledW = baseW * s
+			const scaledH = baseH * s
+			const overflowX = Math.max(0, (scaledW - baseW) / 2)
+			const overflowY = Math.max(0, (scaledH - baseH) / 2)
+			return {
+				x: Math.min(overflowX, Math.max(-overflowX, nextTx)),
+				y: Math.min(overflowY, Math.max(-overflowY, nextTy)),
+			}
+		}
+
+		function captureBaseSize() {
+			const rect = imgEl.getBoundingClientRect()
+			if (rect.width && rect.height) {
+				baseW = rect.width
+				baseH = rect.height
+			}
+		}
+
+		imgEl.addEventListener('load', captureBaseSize)
+
+		function toggleZoomAt(clientX, clientY) {
+			const rect = imgEl.getBoundingClientRect()
+			const cx = clientX - rect.left - rect.width / 2
+			const cy = clientY - rect.top - rect.height / 2
+
+			imgEl.classList.add('is-transitioning')
+			if (scale > 1) {
+				scale = 1
+				tx = 0
+				ty = 0
+			} else {
+				const nextScale = DBLCLICK_SCALE
+				const ratio = nextScale / scale
+				const nextTx = cx - (cx - tx) * ratio
+				const nextTy = cy - (cy - ty) * ratio
+				scale = nextScale
+				const clamped = clampTranslate(nextTx, nextTy, scale)
+				tx = clamped.x
+				ty = clamped.y
+			}
+			applyTransform()
+			updateCursorAndZoomState()
+			window.setTimeout(() => imgEl.classList.remove('is-transitioning'), 260)
+		}
 
 		function show(index) {
 			const item = items[index]
 			if (!item) return
 			currentIndex = index
+			resetZoom()
 			imgEl.src = item.src
 			imgEl.alt = item.alt || ''
 			capEl.textContent = item.caption || ''
@@ -59,6 +156,7 @@ const { items, labels, artworkSlug, artworkTitle } = Astro.props
 			const multi = items.length > 1
 			prevBtn.style.display = multi ? 'flex' : 'none'
 			nextBtn.style.display = multi ? 'flex' : 'none'
+			requestAnimationFrame(captureBaseSize)
 		}
 
 		function openAt(index, trigger) {
@@ -88,7 +186,134 @@ const { items, labels, artworkSlug, artworkTitle } = Astro.props
 		})
 
 		dialog.addEventListener('close', () => {
+			resetZoom()
 			if (lastTrigger) lastTrigger.focus()
+		})
+
+		window.addEventListener('resize', () => {
+			if (dialog.open) resetZoom()
+		})
+
+		// ─── Wheel zoom, centered on cursor ────────────────────────────────
+		figureEl.addEventListener('wheel', (event) => {
+			event.preventDefault()
+			const rect = imgEl.getBoundingClientRect()
+			const cx = event.clientX - rect.left - rect.width / 2
+			const cy = event.clientY - rect.top - rect.height / 2
+
+			const zoomFactor = Math.exp(-event.deltaY * 0.0018)
+			const nextScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale * zoomFactor))
+			if (nextScale === scale) return
+
+			const ratio = nextScale / scale
+			const nextTx = cx - (cx - tx) * ratio
+			const nextTy = cy - (cy - ty) * ratio
+
+			scale = nextScale
+			const clamped = clampTranslate(nextTx, nextTy, scale)
+			tx = clamped.x
+			ty = clamped.y
+			applyTransform()
+			updateCursorAndZoomState()
+		}, { passive: false })
+
+		// ─── Pan + pinch (Pointer Events, unified) ─────────────────────────
+		function endPointer(event) {
+			activePointers.delete(event.pointerId)
+			if (event.pointerId === panPointerId) {
+				isPanning = false
+				panPointerId = null
+				imgEl.classList.remove('is-panning')
+			}
+			if (activePointers.size < 2) pinchStartDist = 0
+		}
+
+		imgEl.addEventListener('pointerdown', (event) => {
+			activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY })
+
+			if (activePointers.size === 1 && scale > 1) {
+				isPanning = true
+				panPointerId = event.pointerId
+				panStartX = event.clientX
+				panStartY = event.clientY
+				panOriginTx = tx
+				panOriginTy = ty
+				imgEl.setPointerCapture(event.pointerId)
+				imgEl.classList.add('is-panning')
+			}
+
+			if (activePointers.size === 2) {
+				isPanning = false
+				const pts = [...activePointers.values()]
+				pinchStartDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y)
+				pinchStartScale = scale
+				pinchStartMidpoint = {
+					x: (pts[0].x + pts[1].x) / 2,
+					y: (pts[0].y + pts[1].y) / 2,
+				}
+				pinchStartTx = tx
+				pinchStartTy = ty
+			}
+		})
+
+		imgEl.addEventListener('pointermove', (event) => {
+			if (!activePointers.has(event.pointerId)) return
+			activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY })
+
+			if (activePointers.size === 2 && pinchStartDist > 0) {
+				const pts = [...activePointers.values()]
+				const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y)
+				const midpoint = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 }
+				const nextScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, pinchStartScale * (dist / pinchStartDist)))
+				const scaleDelta = nextScale / pinchStartScale
+
+				const nextTx = pinchStartTx + (midpoint.x - pinchStartMidpoint.x) + pinchStartTx * (scaleDelta - 1)
+				const nextTy = pinchStartTy + (midpoint.y - pinchStartMidpoint.y) + pinchStartTy * (scaleDelta - 1)
+
+				scale = nextScale
+				const clamped = clampTranslate(nextTx, nextTy, scale)
+				tx = clamped.x
+				ty = clamped.y
+				applyTransform()
+				updateCursorAndZoomState()
+				return
+			}
+
+			if (isPanning && event.pointerId === panPointerId) {
+				const dx = event.clientX - panStartX
+				const dy = event.clientY - panStartY
+				const clamped = clampTranslate(panOriginTx + dx, panOriginTy + dy, scale)
+				tx = clamped.x
+				ty = clamped.y
+				applyTransform()
+			}
+		})
+
+		imgEl.addEventListener('pointerup', (event) => {
+			if (event.pointerType === 'touch') {
+				const now = Date.now()
+				const dx = Math.abs(event.clientX - lastTapX)
+				const dy = Math.abs(event.clientY - lastTapY)
+				if (now - lastTapTime < 300 && dx < 30 && dy < 30) {
+					toggleZoomAt(event.clientX, event.clientY)
+					lastTapTime = 0
+				} else {
+					lastTapTime = now
+					lastTapX = event.clientX
+					lastTapY = event.clientY
+				}
+			}
+			endPointer(event)
+		})
+		imgEl.addEventListener('pointercancel', endPointer)
+		imgEl.addEventListener('pointerleave', (event) => {
+			if (event.pointerId === panPointerId && !imgEl.hasPointerCapture(event.pointerId)) endPointer(event)
+		})
+
+		// ─── Double-click toggle (mouse) ───────────────────────────────────
+		imgEl.addEventListener('dblclick', (event) => {
+			event.preventDefault()
+			toggleZoomAt(event.clientX, event.clientY)
 		})
 	}
 </script>
