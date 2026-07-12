@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro'
-import { useTranslations } from '@/i18n/utils'
+import { useTranslations, getLocalePath } from '@/i18n/utils'
 
 interface Props {
 	locale: string
@@ -8,6 +8,7 @@ interface Props {
 
 const { locale } = Astro.props
 const t = useTranslations(locale)
+const p = (path: string) => getLocalePath(locale, path)
 
 const pageTitle = locale === 'it' ? 'Privacy e cookie — Valentina Damiano' : 'Privacy & cookies — Valentina Damiano'
 const s = t.privacy.sections
@@ -27,7 +28,29 @@ const s = t.privacy.sections
 			</div>
 
 			<h2 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:24px;margin:0 0 10px;color:var(--ink)">{s.controllerTitle}</h2>
-			<p style="font-size:15.5px;line-height:1.75;color:#52564c;margin:0 0 30px">{s.controllerBody}</p>
+			<p style="font-size:15.5px;line-height:1.75;color:#52564c;margin:0 0 30px">
+				{s.controllerBody}
+				{' '}
+				<a href={p('/contact')} style="color:var(--verde)">{s.controllerLinkLabel}</a>.
+			</p>
+
+			<h2 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:24px;margin:0 0 10px;color:var(--ink)">{s.purposesTitle}</h2>
+			<p style="font-size:15.5px;line-height:1.75;color:#52564c;margin:0 0 16px">{s.purposesIntro}</p>
+
+			<div style="border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:14px;background:var(--parchment)">
+				<div style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--bark);margin-bottom:6px">{s.purposeFormsLabel}</div>
+				<p style="margin:0;font-size:14.5px;line-height:1.7;color:#52564c">{s.purposeFormsBody}</p>
+			</div>
+
+			<div style="border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:14px;background:var(--parchment)">
+				<div style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--bark);margin-bottom:6px">{s.purposeAnalyticsLabel}</div>
+				<p style="margin:0;font-size:14.5px;line-height:1.7;color:#52564c">{s.purposeAnalyticsBody}</p>
+			</div>
+
+			<div style="border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:30px;background:var(--parchment)">
+				<div style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--bark);margin-bottom:6px">{s.purposeRecaptchaLabel}</div>
+				<p style="margin:0;font-size:14.5px;line-height:1.7;color:#52564c">{s.purposeRecaptchaBody}</p>
+			</div>
 
 			<h2 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:24px;margin:0 0 10px;color:var(--ink)">{s.cookiesTitle}</h2>
 			<p style="font-size:15.5px;line-height:1.75;color:#52564c;margin:0 0 16px">{s.cookiesIntro}</p>
@@ -42,16 +65,98 @@ const s = t.privacy.sections
 				<p style="margin:0;font-size:14.5px;line-height:1.7;color:#52564c">{s.cookiesAnalyticsBody}</p>
 			</div>
 
+			<h3 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:19px;margin:0 0 8px;color:var(--ink)">{s.cookieTableTitle}</h3>
+			<p style="font-size:14.5px;line-height:1.7;color:#52564c;margin:0 0 14px">{s.cookieTableIntro}</p>
+
+			<div style="overflow-x:auto;margin-bottom:14px">
+				<table style="width:100%;border-collapse:collapse;font-size:13.5px;line-height:1.6">
+					<thead>
+						<tr>
+							<th style="text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);font-family:'Spline Sans Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--bark)">{s.cookieTableColName}</th>
+							<th style="text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);font-family:'Spline Sans Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--bark)">{s.cookieTableColProvider}</th>
+							<th style="text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);font-family:'Spline Sans Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--bark)">{s.cookieTableColPurpose}</th>
+							<th style="text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);font-family:'Spline Sans Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--bark)">{s.cookieTableColDuration}</th>
+							<th style="text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);font-family:'Spline Sans Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--bark)">{s.cookieTableColConsent}</th>
+						</tr>
+					</thead>
+					<tbody style="color:#52564c">
+						<tr>
+							<td style="padding:10px 12px;border-bottom:1px solid var(--line)">_ga</td>
+							<td style="padding:10px 12px;border-bottom:1px solid var(--line)">Google</td>
+							<td style="padding:10px 12px;border-bottom:1px solid var(--line)">{s.cookieTableGaPurpose}</td>
+							<td style="padding:10px 12px;border-bottom:1px solid var(--line)">{s.cookieTableGaDuration}</td>
+							<td style="padding:10px 12px;border-bottom:1px solid var(--line)">{s.cookieTableConsentRequired}</td>
+						</tr>
+						<tr>
+							<td style="padding:10px 12px;border-bottom:1px solid var(--line)">_ga_&lt;container-id&gt;</td>
+							<td style="padding:10px 12px;border-bottom:1px solid var(--line)">Google</td>
+							<td style="padding:10px 12px;border-bottom:1px solid var(--line)">{s.cookieTableGaPurpose}</td>
+							<td style="padding:10px 12px;border-bottom:1px solid var(--line)">{s.cookieTableGaDuration}</td>
+							<td style="padding:10px 12px;border-bottom:1px solid var(--line)">{s.cookieTableConsentRequired}</td>
+						</tr>
+						<tr>
+							<td style="padding:10px 12px">{s.cookieTableRecaptchaName}</td>
+							<td style="padding:10px 12px">Google</td>
+							<td style="padding:10px 12px">{s.cookieTableRecaptchaPurpose}</td>
+							<td style="padding:10px 12px">{s.cookieTableRecaptchaDuration}</td>
+							<td style="padding:10px 12px">{s.cookieTableConsentNotRequired}</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<p style="font-size:13.5px;line-height:1.7;color:#7c7567;margin:0 0 30px">{s.cookieTableNote}</p>
+
+			<h2 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:24px;margin:0 0 10px;color:var(--ink)">{s.retentionTitle}</h2>
+			<div style="border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:14px;background:var(--parchment)">
+				<div style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--bark);margin-bottom:6px">{s.retentionFormsLabel}</div>
+				<p style="margin:0;font-size:14.5px;line-height:1.7;color:#52564c">{s.retentionFormsBody}</p>
+			</div>
+			<div style="border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:30px;background:var(--parchment)">
+				<div style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--bark);margin-bottom:6px">{s.retentionAnalyticsLabel}</div>
+				<p style="margin:0;font-size:14.5px;line-height:1.7;color:#52564c">{s.retentionAnalyticsBody}</p>
+			</div>
+
+			<h2 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:24px;margin:0 0 10px;color:var(--ink)">{s.transferTitle}</h2>
+			<p style="font-size:15.5px;line-height:1.75;color:#52564c;margin:0 0 30px">{s.transferBody}</p>
+
+			<h2 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:24px;margin:0 0 10px;color:var(--ink)">{s.rightsTitle}</h2>
+			<p style="font-size:15.5px;line-height:1.75;color:#52564c;margin:0 0 12px">{s.rightsIntro}</p>
+			<ul style="margin:0 0 12px;padding-left:20px;font-size:14.5px;line-height:1.85;color:#52564c">
+				{s.rightsList.map((right) => <li>{right}</li>)}
+			</ul>
+			<p style="font-size:15.5px;line-height:1.75;color:#52564c;margin:0 0 30px">
+				{s.rightsOutro}
+				{' '}
+				<a href={p('/contact')} style="color:var(--verde)">{s.rightsLinkLabel}</a>.
+			</p>
+
+			<h2 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:24px;margin:0 0 10px;color:var(--ink)">{s.complaintTitle}</h2>
+			<p style="font-size:15.5px;line-height:1.75;color:#52564c;margin:0 0 30px">
+				{s.complaintBody}
+				{' '}
+				<a href="https://www.garanteprivacy.it" target="_blank" rel="noopener noreferrer" style="color:var(--verde)">{s.complaintLinkLabel}</a>.
+			</p>
+
 			<h2 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:24px;margin:0 0 10px;color:var(--ink)">{s.manageTitle}</h2>
 			<p style="font-size:15.5px;line-height:1.75;color:#52564c;margin:0 0 16px">{s.manageBody}</p>
 			<button type="button" data-manage-cookie-consent class="vd-btn-outline" style="margin-bottom:30px">{s.manageButton}</button>
 
 			<h2 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:24px;margin:0 0 10px;color:var(--ink)">{s.externalTitle}</h2>
-			<p style="font-size:15.5px;line-height:1.75;color:#52564c;margin:0">
+			<p style="font-size:15.5px;line-height:1.75;color:#52564c;margin:0 0 30px">
 				{s.externalBody}
 				{' '}
 				<a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" style="color:var(--verde)">{s.externalLink}</a>.
 			</p>
+
+			<div class="vd-divider" style="margin:32px 0 24px">
+				<span class="vd-divider-line"></span>
+				<span class="vd-divider-diamond"></span>
+				<span class="vd-divider-line"></span>
+			</div>
+
+			<h2 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:20px;margin:0 0 10px;color:var(--ink)">{s.updatedTitle}</h2>
+			<p style="font-size:14.5px;line-height:1.75;color:#52564c;margin:0 0 10px">{s.updatedBody}</p>
+			<p style="font-family:'Spline Sans Mono',monospace;font-size:12px;letter-spacing:.06em;color:#7c7567;margin:0">{s.lastUpdatedLabel}: {s.lastUpdatedValue}</p>
 		</div>
 	</section>
 </BaseLayout>
