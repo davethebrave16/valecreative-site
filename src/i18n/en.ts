@@ -7,6 +7,7 @@ export const en = {
 		techniques: 'Techniques',
 		about: 'Studio',
 		contact: 'Contact',
+		privacy: 'Privacy & cookies',
 	},
 
 	// Home page
@@ -157,6 +158,7 @@ export const en = {
 		techniquesDescription: 'Artistic techniques by Valentina Damiano: oil glazing, copper engraving, gold-leaf gilding, watercolour, and creative craft.',
 		aboutDescription: 'Painter, engraver and art teacher trained at the Istituto Russoli and the Accademia di Belle Arti di Firenze. Discover Valentina Damiano\'s artistic journey in Pisa and Lucca, Tuscany.',
 		contactDescription: 'Get in touch with Valentina Damiano for questions, bespoke artwork commissions, gold-leaf gilding, or personalised art courses. Studio in Pisa and Lucca, Tuscany.',
+		privacyDescription: 'Privacy and cookie policy for Valentina Damiano\'s website: which data is processed and which analytics cookies are used.',
 	},
 
 	// Artwork detail meta labels
@@ -176,5 +178,36 @@ export const en = {
 		next: 'Next image',
 		previous: 'Previous image',
 		open: 'Enlarge image',
+	},
+
+	// Cookie consent banner
+	cookieConsent: {
+		text: 'We use analytics cookies (Google Analytics) to understand how the site is used. You are free to accept or decline them.',
+		learnMore: 'Learn more',
+		accept: 'Accept',
+		reject: 'Reject',
+	},
+
+	// Privacy / cookie policy page
+	privacy: {
+		eyebrow: 'Legal notice',
+		title: 'Privacy & cookies',
+		intro: 'This page describes how personal data is handled and which cookies are used while browsing this site.',
+		sections: {
+			controllerTitle: 'Data controller',
+			controllerBody: 'Valentina Damiano is the data controller for information collected through this site. For any privacy-related request, please get in touch via the contact page.',
+			cookiesTitle: 'Cookies used',
+			cookiesIntro: 'This site uses the following categories of cookies:',
+			cookiesNecessaryLabel: 'Necessary',
+			cookiesNecessaryBody: 'Google reCAPTCHA v3, used to protect the contact form from spam. Always active — no consent is required as it is strictly necessary for the form to function.',
+			cookiesAnalyticsLabel: 'Analytics (optional)',
+			cookiesAnalyticsBody: 'Google Analytics 4, used in aggregated form to understand how visitors use the site. It is only activated after consent is given via the cookie banner.',
+			manageTitle: 'Manage your preferences',
+			manageBody: 'You can change your choice at any time and bring back the cookie banner.',
+			manageButton: 'Manage cookie preferences',
+			externalTitle: 'Third-party notices',
+			externalBody: 'For more details on data handled by Google, see the',
+			externalLink: 'Google Privacy Policy',
+		},
 	},
 } as const

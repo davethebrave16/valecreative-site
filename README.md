@@ -80,6 +80,7 @@ Required GitHub repository secrets:
 | `/it\|en/techniques/:slug` | Technique detail |
 | `/it\|en/about` | Studio / bio |
 | `/it\|en/contact` | Contact / commission request form |
+| `/it\|en/privacy` | Privacy & cookie policy |
 
 The artwork detail page links into `/contact` with `?type=` and `?ref=` query params to pre-fill the request type and description — see `CLAUDE.md` → "Artwork Detail CTA".
 
@@ -150,6 +151,12 @@ Add your GA4 Measurement ID to `.env`:
 VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 ```
 To get a Measurement ID: Google Analytics → Admin → Data Streams → Web stream → copy the `G-...` value. The tracking script is injected only when this variable is set — omitting it disables analytics without affecting the build.
+
+### Cookie consent
+
+GA4 requires visitor opt-in before it collects any data — required for EU/Italian visitors under GDPR/ePrivacy. A cookie consent banner (`src/components/CookieConsentBanner.astro`) shows on first visit when `VITE_GA_MEASUREMENT_ID` is set; GA stays disabled (via Google's `ga-disable-<id>` flag) until the visitor clicks Accept. Their choice is remembered in `localStorage` and can be changed later from the `/privacy` page. reCAPTCHA v3 is not gated — it's treated as strictly necessary for spam protection on the commission form, not analytics. See `CLAUDE.md` → "Cookie Consent" for the full implementation.
+
+**Before launch**: the `/privacy` page's copy is a reasonable starting point but has not been reviewed by a lawyer — have it reviewed before the site goes live.
 
 ### Google Search Console
 

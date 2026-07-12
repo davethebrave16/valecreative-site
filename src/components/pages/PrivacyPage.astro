@@ -1,0 +1,57 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro'
+import { useTranslations } from '@/i18n/utils'
+
+interface Props {
+	locale: string
+}
+
+const { locale } = Astro.props
+const t = useTranslations(locale)
+
+const pageTitle = locale === 'it' ? 'Privacy e cookie — Valentina Damiano' : 'Privacy & cookies — Valentina Damiano'
+const s = t.privacy.sections
+---
+
+<BaseLayout title={pageTitle} lang={locale} description={t.meta.privacyDescription}>
+	<section class="vd-rise" style="padding:clamp(34px,5vw,64px) 0 clamp(50px,6vw,90px)">
+		<div class="container" style="max-width:760px">
+			<div class="vd-eyebrow">{t.privacy.eyebrow}</div>
+			<h1 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(30px,4.5vw,48px);margin:10px 0 0;color:var(--ink)">{t.privacy.title}</h1>
+			<p style="max-width:60ch;margin:14px 0 8px;font-size:16px;line-height:1.7;color:#52564c">{t.privacy.intro}</p>
+
+			<div class="vd-divider" style="margin:32px 0">
+				<span class="vd-divider-line"></span>
+				<span class="vd-divider-diamond"></span>
+				<span class="vd-divider-line"></span>
+			</div>
+
+			<h2 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:24px;margin:0 0 10px;color:var(--ink)">{s.controllerTitle}</h2>
+			<p style="font-size:15.5px;line-height:1.75;color:#52564c;margin:0 0 30px">{s.controllerBody}</p>
+
+			<h2 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:24px;margin:0 0 10px;color:var(--ink)">{s.cookiesTitle}</h2>
+			<p style="font-size:15.5px;line-height:1.75;color:#52564c;margin:0 0 16px">{s.cookiesIntro}</p>
+
+			<div style="border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:14px;background:var(--parchment)">
+				<div style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--bark);margin-bottom:6px">{s.cookiesNecessaryLabel}</div>
+				<p style="margin:0;font-size:14.5px;line-height:1.7;color:#52564c">{s.cookiesNecessaryBody}</p>
+			</div>
+
+			<div style="border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:30px;background:var(--parchment)">
+				<div style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--bark);margin-bottom:6px">{s.cookiesAnalyticsLabel}</div>
+				<p style="margin:0;font-size:14.5px;line-height:1.7;color:#52564c">{s.cookiesAnalyticsBody}</p>
+			</div>
+
+			<h2 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:24px;margin:0 0 10px;color:var(--ink)">{s.manageTitle}</h2>
+			<p style="font-size:15.5px;line-height:1.75;color:#52564c;margin:0 0 16px">{s.manageBody}</p>
+			<button type="button" data-manage-cookie-consent class="vd-btn-outline" style="margin-bottom:30px">{s.manageButton}</button>
+
+			<h2 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:24px;margin:0 0 10px;color:var(--ink)">{s.externalTitle}</h2>
+			<p style="font-size:15.5px;line-height:1.75;color:#52564c;margin:0">
+				{s.externalBody}
+				{' '}
+				<a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" style="color:var(--verde)">{s.externalLink}</a>.
+			</p>
+		</div>
+	</section>
+</BaseLayout>

@@ -1,0 +1,92 @@
+---
+import { getLocalePath } from '@/i18n/utils'
+
+interface Props {
+	locale: string
+	gaId: string
+	t: {
+		cookieConsent: {
+			text: string
+			learnMore: string
+			accept: string
+			reject: string
+		}
+	}
+}
+
+const { locale, gaId, t } = Astro.props
+const privacyHref = getLocalePath(locale, '/privacy')
+---
+
+<div
+	id="vd-cookie-banner"
+	data-ga-id={gaId}
+	style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--forest);border-top:1px solid rgba(255,255,255,.12);padding:16px clamp(18px,4vw,52px);"
+>
+	<div style="max-width:1320px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:14px 24px;justify-content:space-between">
+		<p style="margin:0;flex:1 1 320px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;line-height:1.6;color:#f3ecdc">
+			{t.cookieConsent.text}
+			{' '}
+			<a href={privacyHref} style="color:var(--gold-soft);text-decoration:underline">{t.cookieConsent.learnMore}</a>
+		</p>
+		<div style="display:flex;gap:10px;flex:none">
+			<button type="button" id="vd-cookie-reject" class="vd-btn-outline" style="border-color:rgba(255,255,255,.3);color:#f3ecdc;padding:10px 18px;font-size:13.5px">
+				{t.cookieConsent.reject}
+			</button>
+			<button type="button" id="vd-cookie-accept" class="vd-btn-primary" style="padding:10px 20px;font-size:13.5px">
+				{t.cookieConsent.accept}
+			</button>
+		</div>
+	</div>
+</div>
+
+<script>
+	const CONSENT_KEY = 'vd-cookie-consent'
+
+	const banner = document.getElementById('vd-cookie-banner')
+	const gaId = banner?.dataset.gaId
+
+	function enableGa(id: string) {
+		;(window as Window & { [key: string]: unknown })[`ga-disable-${id}`] = false
+		const gtag = (window as Window & { gtag?: Function }).gtag
+		if (typeof gtag === 'function') gtag('config', id)
+	}
+
+	function disableGa(id: string) {
+		;(window as Window & { [key: string]: unknown })[`ga-disable-${id}`] = true
+	}
+
+	if (banner && gaId) {
+		const consent = localStorage.getItem(CONSENT_KEY)
+
+		if (consent === 'accepted') {
+			enableGa(gaId)
+		} else if (consent === 'rejected') {
+			disableGa(gaId)
+		} else {
+			disableGa(gaId)
+			banner.style.display = 'block'
+		}
+
+		document.getElementById('vd-cookie-accept')?.addEventListener('click', () => {
+			localStorage.setItem(CONSENT_KEY, 'accepted')
+			enableGa(gaId)
+			banner.style.display = 'none'
+		})
+
+		document.getElementById('vd-cookie-reject')?.addEventListener('click', () => {
+			localStorage.setItem(CONSENT_KEY, 'rejected')
+			disableGa(gaId)
+			banner.style.display = 'none'
+		})
+	}
+
+	// Re-shown by the "manage cookie preferences" control on the privacy page.
+	document.querySelectorAll('[data-manage-cookie-consent]').forEach((el) => {
+		el.addEventListener('click', () => {
+			localStorage.removeItem(CONSENT_KEY)
+			if (gaId) disableGa(gaId)
+			if (banner) banner.style.display = 'block'
+		})
+	})
+</script>

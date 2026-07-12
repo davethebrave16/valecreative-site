@@ -7,6 +7,7 @@ export const it = {
 		techniques: 'Tecniche',
 		about: 'Chi sono',
 		contact: 'Contattami',
+		privacy: 'Privacy e cookie',
 	},
 
 	// Home page
@@ -158,6 +159,7 @@ export const it = {
 		techniquesDescription: 'Le tecniche artistiche di Valentina Damiano: pittura a olio con velature, incisione su rame, doratura a foglia oro, acquerello e artigianato creativo.',
 		aboutDescription: 'Pittrice, incisore e insegnante d\'arte formata all\'Istituto Russoli e all\'Accademia di Belle Arti di Firenze. Scopri il percorso artistico di Valentina Damiano a Pisa e Lucca.',
 		contactDescription: 'Mettiti in contatto con Valentina Damiano per domande, commissioni pittoriche su misura, doratura a foglia oro o corsi d\'arte personalizzati. Studio a Pisa e Lucca.',
+		privacyDescription: 'Informativa privacy e cookie del sito di Valentina Damiano: quali dati vengono trattati e quali cookie di analisi vengono utilizzati.',
 	},
 
 	// Artwork detail meta labels
@@ -177,5 +179,36 @@ export const it = {
 		next: 'Immagine successiva',
 		previous: 'Immagine precedente',
 		open: 'Ingrandisci immagine',
+	},
+
+	// Cookie consent banner
+	cookieConsent: {
+		text: 'Utilizziamo cookie di analisi (Google Analytics) per capire come viene usato il sito. Puoi accettarli o rifiutarli liberamente.',
+		learnMore: 'Scopri di più',
+		accept: 'Accetta',
+		reject: 'Rifiuta',
+	},
+
+	// Privacy / cookie policy page
+	privacy: {
+		eyebrow: 'Informativa',
+		title: 'Privacy e cookie',
+		intro: 'Questa pagina descrive come vengono trattati i dati personali e quali cookie sono utilizzati durante la navigazione su questo sito.',
+		sections: {
+			controllerTitle: 'Titolare del trattamento',
+			controllerBody: 'Valentina Damiano è titolare del trattamento dei dati raccolti tramite questo sito. Per qualsiasi richiesta relativa alla privacy è possibile scrivere tramite la pagina di contatto.',
+			cookiesTitle: 'Cookie utilizzati',
+			cookiesIntro: 'Questo sito utilizza le seguenti categorie di cookie:',
+			cookiesNecessaryLabel: 'Necessari',
+			cookiesNecessaryBody: 'Google reCAPTCHA v3, usato per proteggere il modulo di contatto dallo spam. Sempre attivo: non richiede consenso in quanto strettamente necessario al funzionamento del modulo.',
+			cookiesAnalyticsLabel: 'Analitici (facoltativi)',
+			cookiesAnalyticsBody: 'Google Analytics 4, usato in forma aggregata per capire come i visitatori usano il sito. Viene attivato solo dopo aver espresso il consenso tramite il banner cookie.',
+			manageTitle: 'Gestisci le tue preferenze',
+			manageBody: 'Puoi modificare la tua scelta in qualsiasi momento e far ricomparire il banner dei cookie.',
+			manageButton: 'Gestisci preferenze cookie',
+			externalTitle: 'Informative di terze parti',
+			externalBody: 'Per maggiori dettagli sui dati trattati da Google, consulta la',
+			externalLink: 'Informativa privacy di Google',
+		},
 	},
 } as const
