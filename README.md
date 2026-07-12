@@ -176,7 +176,7 @@ Place a `1200×630 px` JPEG at `public/og-default.jpg`. This image is used as th
 
 ### robots.txt
 
-`public/robots.txt` currently contains `Disallow: /`, blocking **all** crawlers from the entire site — check this before relying on any of the above (it's presumably a pre-launch guard; lift it, e.g. to `Allow: /` plus a `Sitemap:` line, once the site is ready to be indexed).
+`public/robots.txt` allows crawling of the real content routes (`/it/*`, `/en/*`) and references the sitemap. The non-locale redirect stubs (`/works`, `/about`, `/contact`, `/privacy`, `/series`, `/techniques` — see "Language detection & switching" above) are explicitly disallowed since they only redirect into the locale versions and add no unique content.
 
 ---
 

@@ -396,7 +396,7 @@ Schema types used: `WebSite`, `Person`, `VisualArtwork`, `CreativeWorkSeries`, `
 
 **Analytics** — GA4 measurement ID is read from `VITE_GA_MEASUREMENT_ID` in `.env`. The tracking script is injected in `BaseLayout.astro` only when the variable is set and non-empty, and is consent-gated — see "Cookie Consent" below. `src/lib/analytics.ts` (`trackEvent`/`trackGalleryOpen`/`trackCtaClick`, called from `ImageLightbox.astro` and `ArtworkCTA.astro`) fires `window.gtag('event', ...)` calls that are automatically suppressed by the same consent gate, since they all go through the same `gaId`.
 
-**`public/robots.txt`** currently contains `Disallow: /`, blocking all crawlers from the entire site — presumably a pre-launch guard. All of the above (meta tags, JSON-LD, sitemap) is moot for actual search visibility until this is lifted (e.g. to `Allow: /` + a `Sitemap:` line pointing at `/sitemap-index.xml`). Check with the site owner before changing it — it may be intentional pre-launch.
+**`public/robots.txt`** allows crawling of the real content routes (`/it/*`, `/en/*`) and points crawlers at the sitemap (`Sitemap: https://valentinadamiano.it/sitemap-index.xml`). It explicitly `Disallow`s the non-locale redirect stubs (`/works`, `/about`, `/contact`, `/privacy`, `/series`, `/techniques` — see "Language gateway pages" above) so crawlers don't spend budget on pages that only 30x-redirect into the locale versions.
 
 ## Cookie Consent
 
