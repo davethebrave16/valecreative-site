@@ -116,6 +116,10 @@ The site is bilingual using a single set of page bodies plus Astro dynamic routi
 
 Replace `/public/logo.svg` with the actual logo file. The header and footer both reference it at `/logo.svg`. It should be square (42×42 rendered) with a transparent or dark background for the footer.
 
+## Social Links
+
+Il footer mostra i link ai profili social di Valentina (Instagram, Facebook, Pinterest), definiti come SVG inline in `src/layouts/BaseLayout.astro` (riga ~237). Per aggiornare un URL, modificare direttamente l'`href` del link corrispondente in quel file — non c'è configurazione centralizzata.
+
 ## Commission form — submitCommission Cloud Function
 
 The commission form no longer writes to Firestore directly. It calls the `submitCommission` callable Cloud Function (deployed from `valecreative-admin-backoffice`, region `europe-west1`), which verifies a reCAPTCHA v3 token server-side before writing to the `commissions` collection. Direct client writes are blocked in `firestore.rules`:

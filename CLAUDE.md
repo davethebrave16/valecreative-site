@@ -136,6 +136,14 @@ src/
 │       └── techniques/{index,[slug]}.astro   # [slug] files cross `locales` × content list in getStaticPaths
 ```
 
+## Footer Social Links
+
+The footer (`src/layouts/BaseLayout.astro`, in the bottom flex row alongside the copyright `<span>`, ~line 237) renders three hard-coded social links (Instagram, Facebook, Pinterest) as inline `<a>` elements with `target="_blank" rel="noopener noreferrer"` and a fixed `aria-label` (platform names are proper nouns, identical in IT/EN, so they are not routed through `t.footer.*` like the rest of the footer text). Each icon is a hand-written inline `<svg fill="currentColor">` using the brand's official glyph path (Simple Icons) — no icon library is installed in this project (`package.json` has none), so this is the lightest option consistent with the repo's minimal-dependency style. Icon color inherits from the link's `color` via `currentColor`, so the existing `onmouseover`/`onmouseout` hover pattern (used everywhere else in the footer instead of CSS `:hover`) recolors the icon too.
+
+To change a URL, edit the `href` on the corresponding `<a>` directly in `BaseLayout.astro` — there is no CMS field or config file involved. To add another social network, follow the same pattern: inline SVG (`viewBox="0 0 24 24"`, `fill="currentColor"`, `aria-hidden="true"`) wrapped in an `<a>` with `aria-label` set to the platform name.
+
+Note: the Instagram handle here (`vale_creat1ve`) must stay in sync with the `sameAs` JSON-LD entries in `AboutPage.astro` and `HomePage.astro` (SEO structured data) — both were aligned to the same handle when this feature shipped.
+
 ## i18n
 
 Astro's i18n config in `astro.config.mjs` sets the default locale and drives `BaseLayout`'s hreflang computation:
