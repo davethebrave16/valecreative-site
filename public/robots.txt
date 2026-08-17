@@ -1,9 +1,4 @@
 User-agent: *
-Disallow: /works
-Disallow: /about
-Disallow: /contact
-Disallow: /privacy
-Disallow: /series
-Disallow: /techniques
+Allow: /
 
 Sitemap: https://valentinadamiano.it/sitemap-index.xml
