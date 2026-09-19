@@ -30,7 +30,7 @@ const suffix = path ? `/${path}` : ''
 				try {
 					localStorage.setItem(STORAGE_KEY, locale)
 				} catch (e) {}
-				location.replace('/' + locale + suffix)
+				location.replace('/' + locale + suffix + location.search + location.hash)
 			})()
 		</script>
 	</head>
