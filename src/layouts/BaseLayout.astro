@@ -253,6 +253,8 @@ const pageTitle = `${title} — Vale Creative`
 		</footer>
 
 		<script>
+			import { trackLanguageSwitch } from '@/lib/analytics'
+
 			const burger = document.getElementById('vd-burger')
 			const menu = document.getElementById('vd-menu')
 			if (burger && menu) {
@@ -284,6 +286,7 @@ const pageTitle = `${title} — Vale Creative`
 						try {
 							localStorage.setItem('vd-locale', targetLocale)
 						} catch (e) {}
+						trackLanguageSwitch(targetLocale)
 					}
 				})
 			})

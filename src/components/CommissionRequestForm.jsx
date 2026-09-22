@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { getFunctions, httpsCallable } from 'firebase/functions'
 import app from '@/lib/firebaseConfig'
+import { trackCommissionFormSubmit } from '@/lib/analytics'
 
 // Positional mapping — index must stay aligned with commissions.form.requestTypes in both it.ts and en.ts
 // ['Commissione'/'Commission', "Corso d'arte"/'Art course', 'Informazioni'/'Information']
@@ -91,16 +92,21 @@ export default function CommissionRequestForm({ labels }) {
 				recaptchaToken,
 			})
 			setStatus('success')
+			trackCommissionFormSubmit('success', REQUEST_TYPE_CANONICAL[reqTypeIndex])
 		} catch (err) {
 			const code = err?.code ?? ''
+			let errorReason = 'generic'
 			if (code === 'functions/permission-denied') {
+				errorReason = 'recaptcha'
 				setServerError('Verifica di sicurezza non superata. Ricarica la pagina e riprova.')
 			} else if (code === 'functions/invalid-argument') {
+				errorReason = 'validation'
 				setServerError('Controlla i dati inseriti e riprova.')
 			} else {
 				setServerError(errorMsg)
 			}
 			setStatus('error')
+			trackCommissionFormSubmit('error', REQUEST_TYPE_CANONICAL[reqTypeIndex], errorReason)
 		}
 	}
 

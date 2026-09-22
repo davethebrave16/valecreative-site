@@ -30,3 +30,28 @@ export function trackCtaClick(
 		cta_type: ctaType,
 	})
 }
+
+export function trackCommissionFormSubmit(
+	status: 'success' | 'error',
+	requestType: 'commission' | 'course' | 'info',
+	errorReason?: 'recaptcha' | 'validation' | 'generic'
+): void {
+	trackEvent('commission_form_submit', {
+		status,
+		request_type: requestType,
+		...(errorReason ? { error_reason: errorReason } : {}),
+	})
+}
+
+export function trackCategoryTabToggle(categorySlug: string, origin: 'personal' | 'commissioned'): void {
+	trackEvent('category_tab_toggle', {
+		category_slug: categorySlug,
+		origin,
+	})
+}
+
+export function trackLanguageSwitch(targetLocale: string): void {
+	trackEvent('language_switch', {
+		target_locale: targetLocale,
+	})
+}

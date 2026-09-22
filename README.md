@@ -156,6 +156,20 @@ VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 ```
 To get a Measurement ID: Google Analytics → Admin → Data Streams → Web stream → copy the `G-...` value. The tracking script is injected only when this variable is set — omitting it disables analytics without affecting the build.
 
+### Custom events
+
+Five custom GA4 events are fired from the site, all defined in `src/lib/analytics.ts` (`trackEvent` wraps `window.gtag('event', ...)` and no-ops if `gtag` isn't loaded, e.g. consent not yet given). This is the complete list — nothing else in the codebase calls `trackEvent`.
+
+| Event | Params | Triggered by |
+|-------|--------|--------------|
+| `view_artwork_gallery` | `artwork_slug`, `artwork_title` | Visitor opens an artwork's image lightbox (`src/components/ImageLightbox.astro`) — clicking any thumbnail with `data-lightbox-index` calls `openAt()`, which fires the event every time the lightbox dialog opens, including re-opens on the same page. |
+| `artwork_cta_click` | `artwork_slug`, `artwork_title`, `cta_type` (`for_sale` \| `commissioned` \| `sold` \| `not_for_sale` \| `fallback`) | Visitor clicks the call-to-action link/button on an artwork detail page (`src/components/ArtworkCTA.astro`), which routes them to `/contact` with `type`/`ref` query params. `cta_type` mirrors which CTA variant was shown, derived from the artwork's `origin` and `availability` fields (see `CLAUDE.md` → "Artworks — origin & availability fields"). |
+| `commission_form_submit` | `status` (`success` \| `error`), `request_type` (`commission` \| `course` \| `info`), `error_reason` (`recaptcha` \| `validation` \| `generic`, only present when `status === 'error'`) | Visitor submits the commission/contact form on `/contact` (`src/components/CommissionRequestForm.jsx`) and the `submitCommission` Cloud Function call resolves or rejects. Only fires on an actual server round-trip — client-side validation failures caught before the request is sent are not tracked. |
+| `category_tab_toggle` | `category_slug`, `origin` (`personal` \| `commissioned`) | Visitor switches the Personal/Commissioned tab on a category page (`/works/category/[slug]`, `src/components/pages/CategoryDetailPage.astro`) — only rendered when a category has artworks in both origins. |
+| `language_switch` | `target_locale` | Visitor clicks the IT/EN language switcher in the header or mobile menu (`src/layouts/BaseLayout.astro`). |
+
+Both events are subject to the same consent gating as pageviews — see "Cookie consent" below.
+
 ### Cookie consent
 
 GA4 requires visitor opt-in before it collects any data — required for EU/Italian visitors under GDPR/ePrivacy. A cookie consent banner (`src/components/CookieConsentBanner.astro`) shows on first visit when `VITE_GA_MEASUREMENT_ID` is set; GA stays disabled (via Google's `ga-disable-<id>` flag) until the visitor clicks Accept. Their choice is remembered in `localStorage` and can be changed later from the `/privacy` page. reCAPTCHA v3 is not gated — it's treated as strictly necessary for spam protection on the commission form, not analytics. See `CLAUDE.md` → "Cookie Consent" for the full implementation.

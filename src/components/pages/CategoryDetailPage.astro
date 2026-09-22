@@ -111,7 +111,7 @@ const heroImageUrl = heroArtwork?.coverImage?.original
 
 					{showTabs ? (
 						<>
-							<div style="display:flex;gap:6px;margin:0 0 22px;border-bottom:1px solid var(--line)">
+							<div style="display:flex;gap:6px;margin:0 0 22px;border-bottom:1px solid var(--line)" data-category-slug={category.slug}>
 								<button
 									id="cd-tab-personal"
 									style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;padding:8px 18px;border:none;background:none;cursor:pointer;color:var(--forest);border-bottom:2px solid var(--forest);margin-bottom:-1px"
@@ -154,10 +154,13 @@ const heroImageUrl = heroArtwork?.coverImage?.original
 
 	{showTabs && (
 		<script>
+			import { trackCategoryTabToggle } from '@/lib/analytics'
+
 			const personalTab = document.getElementById('cd-tab-personal')
 			const commissionedTab = document.getElementById('cd-tab-commissioned')
 			const personalPanel = document.getElementById('cd-panel-personal')
 			const commissionedPanel = document.getElementById('cd-panel-commissioned')
+			const categorySlug = personalTab?.closest('[data-category-slug]')?.getAttribute('data-category-slug') ?? ''
 
 			function activate(origin: 'personal' | 'commissioned') {
 				const isPersonal = origin === 'personal'
@@ -171,6 +174,7 @@ const heroImageUrl = heroArtwork?.coverImage?.original
 					commissionedTab.style.color = isPersonal ? 'var(--muted)' : 'var(--forest)'
 					commissionedTab.style.borderBottom = isPersonal ? '2px solid transparent' : '2px solid var(--forest)'
 				}
+				trackCategoryTabToggle(categorySlug, origin)
 			}
 
 			personalTab?.addEventListener('click', () => activate('personal'))
