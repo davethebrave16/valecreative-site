@@ -27,6 +27,8 @@ interface Props {
 	description?: string
 	lang?: string
 	ogImage?: string
+	ogImageWidth?: number
+	ogImageHeight?: number
 	ogType?: 'website' | 'article'
 }
 
@@ -35,6 +37,8 @@ const {
 	description = 'Vale Creative — il portfolio di Valentina Damiano',
 	lang,
 	ogImage,
+	ogImageWidth = 1200,
+	ogImageHeight = 630,
 	ogType = 'website',
 } = Astro.props
 
@@ -103,8 +107,8 @@ const pageTitle = `${title} — Vale Creative`
 		<meta property="og:title" content={pageTitle} />
 		<meta property="og:description" content={description} />
 		<meta property="og:image" content={resolvedOgImage} />
-		<meta property="og:image:width" content="1200" />
-		<meta property="og:image:height" content="630" />
+		<meta property="og:image:width" content={String(ogImage ? ogImageWidth : 1200)} />
+		<meta property="og:image:height" content={String(ogImage ? ogImageHeight : 630)} />
 		<meta property="og:locale" content={locale === 'it' ? 'it_IT' : 'en_US'} />
 
 		<!-- Twitter Card -->

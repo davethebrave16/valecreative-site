@@ -13,6 +13,19 @@ import type { Artwork, Category, GalleryImage, Series, Technique, Content } from
 import { localize, type Locale } from '../i18n/utils'
 import { sortByPosition } from './utils'
 
+// Slugs build the public URLs (/works/{slug}, /series/{slug}, …) and the site's lookups. Two documents
+// with the same slug would silently produce a single page, so the build fails instead. Deliberately
+// called OUTSIDE the try/catch of the getters below, which otherwise swallow errors and return [].
+export function assertUniqueSlugs(collection: string, items: { id: string; slug: string }[]): void {
+	const bySlug = new Map<string, string[]>()
+	for (const { id, slug } of items) bySlug.set(slug, [...(bySlug.get(slug) ?? []), id])
+	const duplicates = [...bySlug].filter(([, ids]) => ids.length > 1)
+	if (duplicates.length > 0) {
+		const detail = duplicates.map(([slug, ids]) => `  ${collection}: slug "${slug}" used by ${ids.join(', ')}`).join('\n')
+		throw new Error(`[fetchContent] Duplicate slugs — fix them in the backoffice (each slug must be unique):\n${detail}`)
+	}
+}
+
 function docToArtwork(d: { id: string; data: () => Record<string, unknown> }, locale: Locale): Artwork {
 	const data = d.data()
 	const description = data.description
@@ -47,13 +60,16 @@ function docToArtwork(d: { id: string; data: () => Record<string, unknown> }, lo
 }
 
 export async function getArtworks(locale: Locale = 'it'): Promise<Artwork[]> {
+	let artworks: Artwork[]
 	try {
 		const snap = await getDocs(query(collection(db, 'artworks'), orderBy('createdAt', 'desc')))
-		return snap.docs.map((d) => docToArtwork(d, locale))
+		artworks = snap.docs.map((d) => docToArtwork(d, locale))
 	} catch (err) {
 		console.error('[fetchContent] getArtworks failed:', err)
 		return []
 	}
+	assertUniqueSlugs('artworks', artworks)
+	return artworks
 }
 
 export async function getArtworkBySlug(slug: string, locale: Locale = 'it'): Promise<Artwork | null> {
@@ -99,6 +115,7 @@ export async function getArtworkGallery(artworkId: string, locale: Locale = 'it'
 }
 
 export async function getPublishedSeries(): Promise<Series[]> {
+	let items: Series[]
 	try {
 		const snap = await getDocs(
 			query(
@@ -107,7 +124,7 @@ export async function getPublishedSeries(): Promise<Series[]> {
 				orderBy('order', 'asc'),
 			),
 		)
-		return snap.docs.map((d) => {
+		items = snap.docs.map((d) => {
 			const data = d.data()
 			return {
 				id: d.id,
@@ -123,6 +140,8 @@ export async function getPublishedSeries(): Promise<Series[]> {
 		console.error('[fetchContent] getPublishedSeries failed:', err)
 		return []
 	}
+	assertUniqueSlugs('series', items)
+	return items
 }
 
 export async function getSeriesBySlug(slug: string): Promise<Series | null> {
@@ -147,9 +166,10 @@ export async function getSeriesBySlug(slug: string): Promise<Series | null> {
 }
 
 export async function getTechniques(locale: Locale = 'it'): Promise<Technique[]> {
+	let items: Technique[]
 	try {
 		const snap = await getDocs(query(collection(db, 'techniques'), orderBy('name', 'asc')))
-		return snap.docs.map((d) => {
+		items = snap.docs.map((d) => {
 			const data = d.data()
 			return {
 				id: d.id,
@@ -165,6 +185,8 @@ export async function getTechniques(locale: Locale = 'it'): Promise<Technique[]>
 		console.error('[fetchContent] getTechniques failed:', err)
 		return []
 	}
+	assertUniqueSlugs('techniques', items)
+	return items
 }
 
 export async function getTechniqueBySlug(slug: string, locale: Locale = 'it'): Promise<Technique | null> {
@@ -189,11 +211,12 @@ export async function getTechniqueBySlug(slug: string, locale: Locale = 'it'): P
 }
 
 export async function getPublishedContents(locale: Locale = 'it'): Promise<Content[]> {
+	let items: Content[]
 	try {
 		const snap = await getDocs(
 			query(collection(db, 'contents'), where('published', '==', true)),
 		)
-		return snap.docs.map((d) => {
+		items = snap.docs.map((d) => {
 			const data = d.data()
 			return {
 				id: d.id,
@@ -208,12 +231,15 @@ export async function getPublishedContents(locale: Locale = 'it'): Promise<Conte
 		console.error('[fetchContent] getPublishedContents failed:', err)
 		return []
 	}
+	assertUniqueSlugs('contents', items)
+	return items
 }
 
 export async function getCategories(locale: Locale = 'it'): Promise<Category[]> {
+	let items: Category[]
 	try {
 		const snap = await getDocs(query(collection(db, 'categories'), orderBy('name', 'asc')))
-		return snap.docs.map((d) => {
+		items = snap.docs.map((d) => {
 			const data = d.data()
 			return {
 				id: d.id,
@@ -226,6 +252,8 @@ export async function getCategories(locale: Locale = 'it'): Promise<Category[]> 
 		console.error('[fetchContent] getCategories failed:', err)
 		return []
 	}
+	assertUniqueSlugs('categories', items)
+	return items
 }
 
 export async function getContentBySlug(slug: string, locale: Locale = 'it'): Promise<Content | null> {

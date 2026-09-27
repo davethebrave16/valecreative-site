@@ -10,3 +10,9 @@ export function sortByPosition<T extends Record<string, unknown>>(items: T[], fi
 		return aPos - bPos
 	})
 }
+
+// Homepage hero: the artwork flagged `isHero`, otherwise the first featured one (by featuredPosition).
+// Shared by the homepage and the /og-default.jpg endpoint so both always show the same artwork.
+export function pickHeroArtwork<T extends { isHero: boolean; featured: boolean; featuredPosition?: number }>(artworks: T[]): T | undefined {
+	return artworks.find((a) => a.isHero) ?? sortByPosition(artworks.filter((a) => a.featured), 'featuredPosition')[0]
+}

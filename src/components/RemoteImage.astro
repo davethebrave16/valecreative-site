@@ -12,11 +12,13 @@ interface Props {
 	alt?: string
 	// LCP element: eager + high fetch priority. Everything else lazy-loads.
 	priority?: boolean
+	// Crop to this width/height ratio when the box uses object-fit: cover (see IMAGE_ASPECTS).
+	aspect?: number
 	class?: string
 	style?: string
 }
 
-const { image, sizes, alt, priority = false, class: className, style = '' } = Astro.props
+const { image, sizes, alt, priority = false, aspect, class: className, style = '' } = Astro.props
 
 // Tiny (8×6) BlurHash backdrop, painted until the real image arrives.
 const placeholder = image.blurHash ? blurHashToDataUri(image.blurHash, 8, 6) : ''
@@ -26,7 +28,7 @@ const imgStyle = placeholder
 ---
 
 <Picture
-	{...remoteImageOptions(image)}
+	{...remoteImageOptions(image, aspect)}
 	formats={['avif']}
 	fallbackFormat="webp"
 	sizes={sizes}

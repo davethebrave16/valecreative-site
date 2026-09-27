@@ -4,6 +4,13 @@
 		"public": "dist",
 		"ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
 		"cleanUrls": true,
+		"redirects": [
+			{ "regex": "^/(?P<locale>it|en)/works/Sovrani/?$", "destination": "/:locale/works/sovrani/", "type": 301 },
+			{ "regex": "^/(?P<locale>it|en)/works/(?:Padre e figlio|Padre%20e%20figlio)/?$", "destination": "/:locale/works/padre-e-figlio/", "type": 301 },
+			{ "regex": "^/(?P<locale>it|en)/works/diana---sottobosco/?$", "destination": "/:locale/works/diana-sottobosco/", "type": 301 },
+			{ "regex": "^/(?P<locale>it|en)/works/asia---lana---betty/?$", "destination": "/:locale/works/asia-lana-betty/", "type": 301 },
+			{ "regex": "^/(?P<locale>it|en)/works/(?:Coppia di fidanzati|Coppia%20di%20fidanzati)/?$", "destination": "/:locale/works/coppia-di-fidanzati/", "type": 301 }
+		],
 		"headers": [
 			{
 				"source": "**",

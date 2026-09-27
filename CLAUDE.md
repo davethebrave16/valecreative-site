@@ -346,7 +346,11 @@ The backoffice stores only `ImageObject.original` in Firestore — `thumb`/`medi
 - The homepage hero is also preloaded with `<link rel="preload" as="image" type="image/avif" imagesrcset>` from `getRemoteSrcset()`, which shares `remoteImageOptions()` with the component so the URLs match.
 - CSS background heroes (series/category detail pages) use `getRemoteBackground()` → `--vd-bg-sm`/`--vd-bg-lg` inline vars consumed by `.vd-bg-hero` in `global.css` (800px WebP below 800px viewport, 1600px above).
 - Colour: sharp converts embedded ICC profiles (Display P3 iPhone photos) to sRGB and strips the profile — verified to match an explicit colour-managed conversion.
-- The lightbox and `og:image` still use `original`.
+- **Crop to the box** (`aspect` prop / `IMAGE_ASPECTS`): boxes that use `object-fit: cover` get variants cropped at build time to their ratio (`fit: 'cover'`, same centre crop as the browser). Grid cells go through `gridImageProps(orient)` (sizes + aspect per orientation: landscape 2.2, square 1.07, portrait 0.7 — cell ratios are near-constant across breakpoints). `IMAGE_SIZES` values were calibrated on widths measured in Chrome at 412/600/1000/1440px; re-measure if the grid/container CSS changes.
+- **Open Graph**: `getOgImage(image)` → 1200×630 JPEG crop, quality 72 (< 300 KB), absolute URL + real size (largest 1.91:1 crop that fits when the original is smaller). Used by home, artwork, series, category, technique (first related artwork) and about pages. Fallback `/og-default.jpg` is an endpoint (`src/pages/og-default.jpg.ts`, sharp) generated from the homepage hero (`pickHeroArtwork` in `src/lib/utils.ts`, shared with `HomePage.astro`).
+- **Lightbox**: `getLightboxSrc(image)` → WebP with the long side capped at 2400px (never upscaled); only the URL is in the lightbox JSON, fetched when the dialog opens. JSON-LD `image` fields still point to the Storage original (full resolution for search engines).
+- **Unique slugs**: `assertUniqueSlugs()` in `fetchContent.ts` makes the build fail with collection, slug and document ids if two artworks/series/techniques/categories/contents share a slug (called outside the getters' try/catch on purpose).
+- **Redirects**: renamed slugs get 301s in `firebase.json` → `hosting.redirects`, as one `regex` rule per slug covering both locales, optional trailing slash and URL-encoded spaces, pointing to the canonical URL with trailing slash (`^/(?P<locale>it|en)/works/Old/?$` → `/:locale/works/new/`). Verified with `firebase emulators:start --only hosting` (a case-only change like `Sovrani` → `sovrani` does not loop).
 - Logos are imported from `src/assets/logo.png` / `logo-white.png` and rendered with `<Image width={…} densities={[1, 2]}>`; `public/` holds only favicons and `apple-touch-icon.png`.
 
 ## Image Lightbox
@@ -357,7 +361,7 @@ Usage:
 ```astro
 <ImageLightbox items={lightboxItems} labels={t.lightbox} />
 ```
-where `items` is an ordered `{ src, alt?, caption? }[]` (use `.original`, not `.medium`/`.thumb`, so the dialog shows full resolution) and `labels` is `t.lightbox` (`close`/`next`/`previous`, plus `open` used directly for trigger `aria-label`s).
+where `items` is an ordered `{ src, alt?, caption? }[]` (use `await getLightboxSrc(image)` — a 2400px WebP — not the Storage `.original`) and `labels` is `t.lightbox` (`close`/`next`/`previous`, plus `open` used directly for trigger `aria-label`s).
 
 Any element elsewhere on the page becomes a trigger by adding `data-lightbox-index={n}` matching that item's index in the array — see the `<button class="vd-zoom-trigger" data-lightbox-index="0">` wrapping the cover `<img>` in `WorkDetailPage.astro`. One `<ImageLightbox>` per page is enough; wrap every enlargeable image's triggers into a single shared `items` array (as `WorkDetailPage.astro` does by concatenating cover + gallery) so prev/next paging cycles through all of them.
 
@@ -395,7 +399,8 @@ All SEO signals are centralised in `src/layouts/BaseLayout.astro`. Key props bey
 
 | Prop | Type | Default | Purpose |
 |---|---|---|---|
-| `ogImage` | `string` (absolute URL) | `https://valentinadamiano.it/og-default.jpg` | Open Graph / Twitter card image |
+| `ogImage` | `string` (absolute URL) | `https://valentinadamiano.it/og-default.jpg` | Open Graph / Twitter card image — pass `getOgImage(image)?.url` for Storage images |
+| `ogImageWidth` / `ogImageHeight` | `number` | `1200` / `630` | Real size of `ogImage` (`getOgImage` returns it; smaller when the original is smaller than 1200×630) |
 | `ogType` | `'website' \| 'article'` | `'website'` | OG content type — use `'article'` for artwork detail pages |
 
 **Canonical & hreflang** are computed automatically from `Astro.url.pathname` plus the `site` property in `astro.config.mjs`. No manual URL passing needed for static pages.

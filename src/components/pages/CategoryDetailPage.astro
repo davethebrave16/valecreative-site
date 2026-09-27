@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro'
-import { getRemoteBackground } from '@/lib/remoteImage'
+import { getRemoteBackground, getOgImage } from '@/lib/remoteImage'
 import CategoryArtworkGrid from '@/components/CategoryArtworkGrid.astro'
 import { getArtworks } from '@/lib/fetchContent'
 import { useTranslations, getLocalePath, type Locale } from '@/i18n/utils'
@@ -34,6 +34,7 @@ const heroArtwork = category.featuredArtworkId
 
 // Optimized WebP backgrounds (800px on mobile, 1600px above) — see .vd-bg-hero in global.css
 const heroBgImages = heroArtwork?.coverImage?.original ? await getRemoteBackground(heroArtwork.coverImage) : null
+const ogImage = await getOgImage(heroArtwork?.coverImage)
 const heroBgStyle = heroBgImages
 	? `--vd-bg-sm:url('${heroBgImages.small}');--vd-bg-lg:url('${heroBgImages.large}')`
 	: 'background:radial-gradient(130% 120% at 30% 14%,#d9b25e 0%,#6b4f37 44%,#243029 100%)'
@@ -50,7 +51,9 @@ const heroImageUrl = heroArtwork?.coverImage?.original
 	title={category.name}
 	lang={locale}
 	description={pageDescription}
-	ogImage={heroArtwork?.coverImage?.medium ?? heroArtwork?.coverImage?.original}
+	ogImage={ogImage?.url}
+	ogImageWidth={ogImage?.width}
+	ogImageHeight={ogImage?.height}
 >
 	<script slot="head" type="application/ld+json" set:html={JSON.stringify({
 		'@context': 'https://schema.org',

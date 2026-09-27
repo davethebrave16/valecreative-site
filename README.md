@@ -198,7 +198,7 @@ Verify domain ownership via the DNS TXT record method (recommended for Firebase 
 
 ### OG Social Card
 
-Place a `1200×630 px` JPEG at `public/og-default.jpg`. This image is used as the fallback Open Graph image when a page has no specific cover image. Artwork and series detail pages automatically use their own cover image. The `/process` page uses its own opening image (`src/assets/process/processo-apertura.png`), cropped to 1200×630 JPEG at build time.
+`/og-default.jpg` (the fallback Open Graph image for pages without an image of their own) is generated at build time by `src/pages/og-default.jpg.ts` from the homepage hero artwork (1200×630 JPEG, < 300 KB), so it follows the hero chosen in the backoffice — there is no file to maintain in `public/`. The homepage, artwork, series, category, technique and about pages use a 1200×630 crop of their own image (`getOgImage()` in `src/lib/remoteImage.ts`). The `/process` page uses its own opening image (`src/assets/process/processo-apertura.png`), cropped to 1200×630 JPEG at build time.
 
 ### robots.txt
 

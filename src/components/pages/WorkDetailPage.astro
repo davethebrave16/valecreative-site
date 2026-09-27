@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro'
 import RemoteImage from '@/components/RemoteImage.astro'
-import { IMAGE_SIZES } from '@/lib/remoteImage'
+import { IMAGE_SIZES, IMAGE_ASPECTS, getLightboxSrc, getOgImage } from '@/lib/remoteImage'
 import ImageLightbox from '@/components/ImageLightbox.astro'
 import ArtworkCTA from '@/components/ArtworkCTA.astro'
 import { getArtworkGallery, getCategories, getPublishedSeries, getTechniques } from '@/lib/fetchContent'
@@ -44,26 +44,31 @@ const formatDim = (d?: { width?: number; height?: number; unit?: string }) =>
 
 const dimStr = formatDim(artwork.dimensions)
 
+// Lightbox: WebP capped at 2400px on the long side (not the Storage original); fetched only when opened.
 const lightboxItems = [
 	...(artwork.coverImage?.original
 		? [{
-			src: artwork.coverImage.original,
+			src: await getLightboxSrc(artwork.coverImage),
 			alt: artwork.coverImage.alt ?? artwork.title,
 		}]
 		: []),
-	...gallery.map((img) => ({
-		src: img.original,
+	...(await Promise.all(gallery.map(async (img) => ({
+		src: await getLightboxSrc(img),
 		alt: img.alt ?? artwork.title,
 		caption: img.caption,
-	})),
+	})))),
 ]
+
+const ogImage = await getOgImage(artwork.coverImage)
 ---
 
 <BaseLayout
 	title={artwork.title}
 	lang={locale}
 	description={artwork.description ?? `${artwork.title} · ${artwork.year}${techniqueName ? ` · ${techniqueName}` : ''} — Valentina Damiano`}
-	ogImage={artwork.coverImage?.medium ?? artwork.coverImage?.original}
+	ogImage={ogImage?.url}
+	ogImageWidth={ogImage?.width}
+	ogImageHeight={ogImage?.height}
 	ogType="article"
 >
 	<script slot="head" type="application/ld+json" set:html={JSON.stringify({
@@ -210,6 +215,7 @@ const lightboxItems = [
 										image={img}
 										alt={img.alt ?? ''}
 										sizes={IMAGE_SIZES.cards}
+										aspect={IMAGE_ASPECTS.galleryCard}
 										style="width:100%;aspect-ratio:4/3;object-fit:cover;display:block"
 									/>
 									<span class="vd-zoom-icon" aria-hidden="true">⤢</span>

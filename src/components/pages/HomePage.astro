@@ -2,10 +2,10 @@
 import BaseLayout from '@/layouts/BaseLayout.astro'
 import { getArtworks, getPublishedSeries, getContentBySlug, getCategories } from '@/lib/fetchContent'
 import { useTranslations, getLocalePath, type Locale } from '@/i18n/utils'
-import { sortByPosition } from '@/lib/utils'
+import { sortByPosition, pickHeroArtwork } from '@/lib/utils'
 import { Picture, Image } from 'astro:assets'
 import RemoteImage from '@/components/RemoteImage.astro'
-import { IMAGE_SIZES, getRemoteSrcset } from '@/lib/remoteImage'
+import { IMAGE_SIZES, IMAGE_ASPECTS, gridImageProps, getRemoteSrcset, getOgImage } from '@/lib/remoteImage'
 import logoWhite from '@/assets/logo-white.png'
 import { processImages, stepImageKeys } from '@/lib/processImages'
 
@@ -27,7 +27,7 @@ const [allArtworks, series, hero, categories] = await Promise.all([
 const categoryById = Object.fromEntries(categories.map(c => [c.id, c.name]))
 
 const featuredArtworks = sortByPosition(allArtworks.filter((a) => a.featured), 'featuredPosition')
-const heroArtwork = allArtworks.find((a) => a.isHero) ?? featuredArtworks[0]
+const heroArtwork = pickHeroArtwork(allArtworks)
 const introArtwork = allArtworks.find((a) => a.isIntro)
 
 // Count artworks per series for the series teaser
@@ -52,7 +52,8 @@ function cellGridStyle(orient: string) {
 
 // Preload the LCP hero with the same AVIF srcset <RemoteImage> renders (identical transform options).
 const heroImage = heroArtwork?.coverImage?.original ? heroArtwork.coverImage : undefined
-const heroPreloadSrcset = heroImage ? await getRemoteSrcset(heroImage, 'avif') : ''
+const heroPreloadSrcset = heroImage ? await getRemoteSrcset(heroImage, 'avif', IMAGE_ASPECTS.homeHero) : ''
+const ogImage = await getOgImage(heroImage)
 
 const heroTitle = hero?.title ?? t.home.heroTitle
 const heroBody = hero?.body
@@ -68,7 +69,9 @@ const region = locale === 'it' ? 'Toscana' : 'Tuscany'
 	title={pageTitle}
 	lang={locale}
 	description={t.meta.homeDescription}
-	ogImage={heroArtwork?.coverImage?.medium ?? heroArtwork?.coverImage?.original}
+	ogImage={ogImage?.url}
+	ogImageWidth={ogImage?.width}
+	ogImageHeight={ogImage?.height}
 >
 	{heroPreloadSrcset && (
 		<link slot="head" rel="preload" as="image" type="image/avif" imagesrcset={heroPreloadSrcset} imagesizes={IMAGE_SIZES.homeHero} fetchpriority="high" />
@@ -136,6 +139,7 @@ const region = locale === 'it' ? 'Toscana' : 'Tuscany'
 								image={heroImage}
 								alt={heroImage.alt ?? heroArtwork!.title}
 								sizes={IMAGE_SIZES.homeHero}
+								aspect={IMAGE_ASPECTS.homeHero}
 								priority
 								style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"
 							/>
@@ -190,7 +194,7 @@ const region = locale === 'it' ? 'Toscana' : 'Tuscany'
 									<RemoteImage
 										image={cover}
 										alt={cover.alt ?? artwork.title}
-										sizes={orient === 'landscape' ? IMAGE_SIZES.gridWide : IMAGE_SIZES.grid}
+										{...gridImageProps(orient)}
 										class="vd-img"
 										style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"
 									/>
@@ -310,7 +314,7 @@ const region = locale === 'it' ? 'Toscana' : 'Tuscany'
 								onmouseout="this.style.borderColor='var(--line)'"
 							>
 								{cover ? (
-									<RemoteImage image={cover} alt={cover.alt ?? s.name} sizes={IMAGE_SIZES.cards} style="width:100%;height:150px;object-fit:cover;display:block" />
+									<RemoteImage image={cover} alt={cover.alt ?? s.name} sizes={IMAGE_SIZES.cards} aspect={IMAGE_ASPECTS.card} style="width:100%;height:150px;object-fit:cover;display:block" />
 								) : (
 									<div style="height:150px;background:linear-gradient(155deg,#33473b 0%,#5d6b4d 40%,#b68a3c 100%)"></div>
 								)}
