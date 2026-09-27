@@ -22,6 +22,8 @@ npm run preview    # Preview the production build locally
 
 The workflow caches Astro's `cacheDir` (`.astro-cache/`, set in `astro.config.mjs` outside `node_modules` because `npm ci` wipes it) with `actions/cache`, restored after `npm ci`. It holds the downloaded Storage originals and the generated image variants, so only the first build after a cache miss re-encodes everything.
 
+Hosting cache headers (`firebase.json`): `/_astro/**` (hashed build assets: CSS/JS, fonts, generated images) → `public, max-age=31536000, immutable`; other static files in `public/` → 7 days; everything else (HTML) → `no-cache`, so a "Pubblica" from the backoffice is visible immediately.
+
 Required GitHub secrets: `PUBLIC_FIREBASE_API_KEY`, `PUBLIC_FIREBASE_AUTH_DOMAIN`, `PUBLIC_FIREBASE_PROJECT_ID`, `PUBLIC_FIREBASE_STORAGE_BUCKET`, `PUBLIC_FIREBASE_MESSAGING_SENDER_ID`, `PUBLIC_FIREBASE_APP_ID`, `VITE_GA_MEASUREMENT_ID`, `FIREBASE_SERVICE_ACCOUNT`.
 
 ## Tech Stack
@@ -52,7 +54,7 @@ Defined in `src/styles/global.css`:
 --verde: #2c7466     /* primary action color (links, buttons) */
 --verde-deep: #205c52/* hover state for verde */
 --line: rgba(31,42,34,.14) /* border / divider color */
---muted: #7c7567     /* secondary text */
+--muted: #6b6558     /* secondary text — darkened from #7c7567 for ≥4.5:1 on paper */
 ```
 
 ### Typography
@@ -61,11 +63,11 @@ Defined in `src/styles/global.css`:
 - **Hanken Grotesk** — body text, UI labels, nav
 - **Spline Sans Mono** — eyebrow labels, metadata, monospaced accents
 
-Google Fonts loaded in `BaseLayout.astro` `<head>`.
+Self-hosted via `@fontsource/*` (latin subset only, `font-display: swap`), imported per weight at the top of `BaseLayout.astro` — no Google Fonts requests. Only the weights actually used are imported: Cormorant 500/600 + 400/600 italic, Hanken 400/500/600 + 700 (browser-default `<strong>` weight in CMS rich text rendered in `.prose`, e.g. the `bio` content block), Spline Sans Mono 400/500/600. If you use a new weight/style, add its `latin-<weight>[-italic].css` import there, otherwise the browser synthesizes it. Cormorant 600 (homepage hero h1) is preloaded. `build.inlineStylesheets: 'always'` (astro.config.mjs) inlines the global CSS, so pages have no render-blocking stylesheet request.
 
 ### Utility classes (`vd-*`)
 
-All layout and animation utilities are prefixed `vd-`:
+All layout and animation utilities are prefixed `vd-`. `.vd-rise` fades in from `opacity: 0`; the homepage hero columns use `.vd-rise-move` instead (transform only) so the LCP image and h1 are visible from the first paint — use it for any above-the-fold LCP content. A global `prefers-reduced-motion: reduce` block at the end of `global.css` disables all animations and transitions.
 
 | Class | Purpose |
 |---|---|

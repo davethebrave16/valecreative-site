@@ -107,7 +107,8 @@ const region = locale === 'it' ? 'Toscana' : 'Tuscany'
 		<div style="position:absolute;inset:0;background:radial-gradient(130% 90% at 78% 8%,rgba(216,185,106,.42),rgba(239,231,214,0) 46%),radial-gradient(120% 100% at 8% 100%,rgba(46,64,58,.34),rgba(239,231,214,0) 50%);pointer-events:none"></div>
 		<div class="container" style="padding-block:clamp(40px,6vw,92px) clamp(34px,4vw,64px);position:relative">
 			<div class="vd-hero">
-				<div class="vd-rise">
+				<!-- Hero columns use vd-rise-move (transform only): the h1 and the LCP image are visible from the first paint -->
+				<div class="vd-rise-move">
 					<div style="display:flex;align-items:center;gap:12px;margin-bottom:22px">
 						<span style="width:30px;height:1px;background:var(--gold)"></span>
 						<span style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--bark)">{t.home.eyebrow}</span>
@@ -128,7 +129,7 @@ const region = locale === 'it' ? 'Toscana' : 'Tuscany'
 				</div>
 
 				<!-- Hero image: first featured artwork or gradient placeholder -->
-				<div class="vd-rise" style="position:relative">
+				<div class="vd-rise-move" style="position:relative">
 					<div style="position:relative;aspect-ratio:4/5;border-radius:4px;overflow:hidden;border:1px solid var(--line);box-shadow:0 30px 70px -36px rgba(31,42,34,.6)">
 						{heroImage ? (
 							<RemoteImage
@@ -173,7 +174,7 @@ const region = locale === 'it' ? 'Toscana' : 'Tuscany'
 						<div class="vd-eyebrow">{t.home.featuredEyebrow}</div>
 						<h2 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(28px,4vw,44px);margin:8px 0 0;color:var(--ink)">{t.home.featuredTitle}</h2>
 					</div>
-					<a href={p('/works')} style="font-weight:600;font-size:14px;color:var(--verde);white-space:nowrap;transition:color .2s" onmouseover="this.style.color='var(--verde-deep)'" onmouseout="this.style.color='var(--verde)'">{t.home.featuredLink}</a>
+					<a href={p('/works')} style="font-weight:600;font-size:14px;color:var(--verde-deep);white-space:nowrap;transition:color .2s" onmouseover="this.style.color='var(--ink)'" onmouseout="this.style.color='var(--verde-deep)'">{t.home.featuredLink}</a>
 				</div>
 				<div class="vd-grid">
 					{featuredArtworks.map((artwork) => {
@@ -197,7 +198,11 @@ const region = locale === 'it' ? 'Toscana' : 'Tuscany'
 									<div class="vd-img" style={`position:absolute;inset:0;background:radial-gradient(130% 120% at 30% 14%,#d9b25e 0%,#6b4f37 44%,#243029 100%)`}></div>
 								)}
 								{artwork.categoryIds?.[0] && categoryById[artwork.categoryIds[0]] && (
-									<span style="position:absolute;left:11px;top:9px;font-family:'Spline Sans Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.82);z-index:2">[ {categoryById[artwork.categoryIds[0]]} ]</span>
+									<>
+										<!-- Dark scrim behind the category label: keeps it ≥4.5:1 even over a white artwork -->
+										<div aria-hidden="true" style="position:absolute;inset:0 0 auto 0;height:45%;background:linear-gradient(180deg,rgba(18,26,20,.7) 0%,rgba(18,26,20,.7) 35%,rgba(18,26,20,0) 100%);z-index:1;pointer-events:none"></div>
+										<span style="position:absolute;left:11px;top:9px;font-family:'Spline Sans Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.92);z-index:2">[ {categoryById[artwork.categoryIds[0]]} ]</span>
+									</>
 								)}
 								<div class="vd-cap" style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:14px;background:linear-gradient(180deg,rgba(0,0,0,0) 45%,rgba(18,26,20,.74));z-index:2">
 									<div style="font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:600;color:#fff;line-height:1.05">{artwork.title}</div>
@@ -244,7 +249,7 @@ const region = locale === 'it' ? 'Toscana' : 'Tuscany'
 						</div>
 						<div style="padding:16px 16px 18px">
 							<div style="display:flex;align-items:baseline;gap:10px">
-								<span style="font-family:'Spline Sans Mono',monospace;font-size:12px;letter-spacing:.18em;color:var(--gold)">{step.num}</span>
+								<span style="font-family:'Spline Sans Mono',monospace;font-size:12px;letter-spacing:.18em;color:var(--bark)">{step.num}</span>
 								<h3 style="font-family:'Cormorant Garamond',serif;font-size:23px;font-weight:600;color:var(--ink);margin:0">{step.title}</h3>
 							</div>
 							<p style="font-size:14.5px;line-height:1.6;color:#52564c;margin:6px 0 0">{step.short}</p>
@@ -291,7 +296,7 @@ const region = locale === 'it' ? 'Toscana' : 'Tuscany'
 			<div class="container" style="padding-block:clamp(46px,6vw,80px)">
 				<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:26px">
 					<h2 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(28px,4vw,44px);margin:0;color:var(--ink)">{t.home.seriesTitle}</h2>
-					<a href={p('/series')} style="font-weight:600;font-size:14px;color:var(--verde);transition:color .2s" onmouseover="this.style.color='var(--verde-deep)'" onmouseout="this.style.color='var(--verde)'">{t.home.seriesLink}</a>
+					<a href={p('/series')} style="font-weight:600;font-size:14px;color:var(--verde-deep);transition:color .2s" onmouseover="this.style.color='var(--ink)'" onmouseout="this.style.color='var(--verde-deep)'">{t.home.seriesLink}</a>
 				</div>
 				<div class="vd-cards">
 					{series.map((s) => {

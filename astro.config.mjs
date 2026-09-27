@@ -8,6 +8,8 @@ export default defineConfig({
 	// Outside node_modules so CI can persist it with actions/cache (npm ci wipes node_modules).
 	// Holds the downloaded Storage originals and the generated AVIF/WebP variants.
 	cacheDir: './.astro-cache',
+	// Inline the (small, ~12 KB) global CSS incl. @font-face rules: no render-blocking stylesheet request.
+	build: { inlineStylesheets: 'always' },
 	image: {
 		// Artwork/series/content images live in Firebase Storage; <RemoteImage> optimizes them at build time.
 		remotePatterns: [
