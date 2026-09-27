@@ -18,7 +18,7 @@ export const it = {
 		heroSubtitle:
 			'Paesaggi onirici tra velature leonardesche e segno inciso, nati dalla natura toscana tra Pisa e Lucca.',
 		heroOffer:
-			'Su commissione: ritratti, murali, dipinti e oggetti personalizzati.',
+			'Su commissione: ritratti, pitture murali, dipinti e oggetti personalizzati.',
 		ctaWorks: 'Esplora le opere',
 		ctaCommission: 'Richiedi una commissione',
 		featuredEyebrow: 'Selezione',
