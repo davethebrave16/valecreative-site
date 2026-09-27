@@ -3,6 +3,7 @@ export const it = {
 	nav: {
 		home: 'Home',
 		works: 'Opere',
+		process: 'Come lavoro',
 		series: 'Serie',
 		techniques: 'Tecniche',
 		about: 'Chi sono',
@@ -23,6 +24,8 @@ export const it = {
 		featuredEyebrow: 'Selezione',
 		featuredTitle: 'Opere in evidenza',
 		featuredLink: 'Tutte le opere →',
+		processEyebrow: 'Processo',
+		processCtaMore: 'Scopri come lavoro',
 		bandEyebrow: 'Lo studio',
 		bandQuote:
 			'«La natura non è uno sfondo: è uno specchio. Gli alberi che dipingo sono una proiezione di me stessa.»',
@@ -119,12 +122,81 @@ export const it = {
 		placeholder: '[ ritratto · valentina ]',
 	},
 
+	// Process / how I work
+	process: {
+		eyebrow: 'Come lavoro',
+		title: 'Come nasce un\'opera su misura',
+		intro:
+			'Ogni commissione è un dialogo. Dal primo racconto alla consegna, ti accompagno passo dopo passo, con i tempi e la cura che un\'opera fatta a mano richiede.',
+		stepsLead: 'In queste immagini, la nascita di ',
+		stepsLeadSuffix: '',
+		quote: (title: string) => `«${title}»`,
+		steps: [
+			{
+				num: '01',
+				title: 'Ascolto',
+				text: 'Ogni opera nasce da un dialogo. Per un ritratto ti chiedo alcune fotografie del soggetto, possibilmente con luce naturale e da angolazioni diverse, per avere libertà di scelta. Per un\'opera murale rilevo le misure e le caratteristiche della parete. Per un tema libero raccolgo la tua idea. O, se preferisci lasciarmi carta bianca, mi documento e trovo io la strada giusta.',
+				short: 'Mi racconti la tua idea, mi mandi foto o misure.',
+			},
+			{
+				num: '02',
+				title: 'Bozzetto',
+				text: 'Trasformo la richiesta in un disegno preparatorio: schizzi, scelte di stile e palette di colori. Insieme scegliamo il bozzetto da cui partire. Per le opere murali adatto le proporzioni alla parete e preparo il riporto con la tecnica dello spolvero.',
+				short: 'Scegliamo insieme il disegno preparatorio.',
+			},
+			{
+				num: '03',
+				title: 'Realizzazione',
+				text: 'Se il supporto non è già pronto, lo preparo io: costruisco il telaio e preparo la tela o la tavola con l\'imprimitura tradizionale a gesso e colla. Poi lavoro con la tecnica più adatta all\'idea: l\'olio su legno, per la sua brillantezza e durata, l\'olio o l\'acrilico su tela, oppure la pirografia su legno grezzo.',
+				short: 'Preparo il supporto e dipingo in studio.',
+			},
+			{
+				num: '04',
+				title: 'Consegna',
+				text: 'Gli ultimi ritocchi, le finiture protettive dove servono, e l\'opera è pronta per iniziare la sua vita nella tua casa.',
+				short: 'L\'opera finita arriva nella tua casa.',
+			},
+		],
+		pathsTitle: 'Ogni commissione è diversa',
+		pathsIntro: 'Il dipinto su tema l\'hai visto nascere qui sopra. Ecco le altre strade.',
+		paths: {
+			portrait: {
+				title: 'Ritratto',
+				text: 'Parto dalle fotografie che mi invii, scelgo con te il formato e dipingo il ritratto in studio, a olio o acrilico, su tela o tavola. Anche i ritratti dei tuoi animali.',
+			},
+			mural: {
+				title: 'Opera murale',
+				text: 'Adatto l\'immagine alle proporzioni della parete, la riporto con lo spolvero e la dipingo con colori specifici per muro.',
+			},
+			pyrography: {
+				title: 'Pirografia',
+				text: 'Riporto il disegno sul legno grezzo, che posso anche sagomare, e lo incido con il fuoco. Profondità e sfumature nascono dal segno, dal chiaroscuro e da impregnanti più chiari o più scuri, non dal colore. Una finitura lucida protegge la tavola.',
+			},
+		},
+		seeWork: (title: string) => `Guarda «${title}» →`,
+		ctaTitle: 'Hai un\'idea? Raccontamela.',
+		ctaWorks: 'Guarda le opere',
+		pageTitle: 'Come lavoro: opere su commissione',
+		alt: {
+			opening: 'Valentina nel suo studio, davanti al tavolo di lavoro con fotografie e bozzetti; sul cavalletto un ritratto in corso, a terra «Le radici del futuro» e alcune pirografie.',
+			listening: 'Mani che sfogliano fotografie di un albero secolare, un ponte in pietra e scogliere, accanto a un taccuino di appunti: i riferimenti per «Le radici del futuro».',
+			sketch: 'Bozzetto a matita di un albero sul fiume con un ponte ad archi, accanto a uno studio ad acquerello e ai campioni della palette di colori.',
+			creation: 'La pittrice dipinge a olio le radici dell\'albero su una tela al cavalletto; la parte alta dell\'opera è ancora solo disegnata.',
+			delivery: '«Le radici del futuro» finito e incorniciato, appoggiato su una panca di legno in una stanza luminosa.',
+			portrait: 'Ritratto a olio di Rino Gattuso in lavorazione sul cavalletto, con il pennello sulla camicia scura e la tavolozza in primo piano.',
+			mural: 'La pittrice al lavoro su un murale con cascata e vegetazione tropicale lungo il vano scale; a sinistra il disegno riportato con lo spolvero.',
+			pyrography: 'Una mano incide con il pirografo «La compagnia dell\'anello», un paesaggio con ponte e borgo, su una tavola di legno grezzo.',
+		},
+	},
+
 	// Commissions form (Contattami)
 	commissions: {
 		eyebrow: 'Contattami',
 		title: 'Mettiti in contatto',
 		subtitle:
 			'Domande, idee o un\'opera su commissione in mente: scrivimi pure. Raccontami cosa immagini: ti risponderò personalmente entro 48 ore con una proposta pensata per te, senza alcun impegno.',
+		processLinkLead: 'Vuoi sapere come lavoro?',
+		processLinkLabel: 'Scopri il processo →',
 		form: {
 			name: 'Nome e cognome',
 			namePlaceholder: 'Il tuo nome',
@@ -159,6 +231,7 @@ export const it = {
 		worksDescription: 'Galleria di dipinti originali di Valentina Damiano: olio su tela, tecnica mista, acquerello e incisione. Opere disponibili all\'acquisto, su commissione e in serie tematiche.',
 		seriesDescription: 'Le serie tematiche di Valentina Damiano: raccolte di dipinti unite da soggetto, tecnica o periodo creativo. Boschi, paesaggi e visioni oniriche.',
 		techniquesDescription: 'Le tecniche artistiche di Valentina Damiano: pittura a olio con velature, incisione su rame, doratura a foglia oro, acquerello e artigianato creativo.',
+		processDescription: 'Come nasce un\'opera su commissione di Valentina Damiano: ascolto, bozzetto, realizzazione e consegna. Ritratti, opere murali e pirografie su misura, tra Pisa e Lucca.',
 		aboutDescription: 'Pittrice, incisore e insegnante d\'arte formata all\'Istituto Russoli e all\'Accademia di Belle Arti di Firenze. Scopri il percorso artistico di Valentina Damiano a Pisa e Lucca.',
 		contactDescription: 'Mettiti in contatto con Valentina Damiano per domande, commissioni pittoriche su misura, doratura a foglia oro o corsi d\'arte personalizzati. Studio a Pisa e Lucca.',
 		privacyDescription: 'Informativa privacy e cookie del sito di Valentina Damiano: quali dati vengono trattati e quali cookie di analisi vengono utilizzati.',

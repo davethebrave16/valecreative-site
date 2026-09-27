@@ -218,6 +218,40 @@ main {
 	gap: clamp(16px, 2vw, 30px);
 }
 
+/* ─── Process steps (image/text rows, alternating on desktop) ───────────── */
+.vd-steps {
+	display: flex;
+	flex-direction: column;
+	gap: clamp(40px, 6vw, 88px);
+}
+
+.vd-step {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: clamp(20px, 3.5vw, 56px);
+	align-items: center;
+}
+
+@media (min-width: 820px) {
+	.vd-step { grid-template-columns: 1fr 1fr; }
+	.vd-step:nth-child(even) .vd-step-media { order: 2; }
+}
+
+/* ─── Process cards (homepage: 1 → 2×2 → 4 in a row) ────────────────────── */
+.vd-process-cards {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: clamp(14px, 1.8vw, 24px);
+}
+
+@media (min-width: 560px) {
+	.vd-process-cards { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 920px) {
+	.vd-process-cards { grid-template-columns: repeat(4, 1fr); }
+}
+
 /* ─── Masonry cell ───────────────────────────────────────────────────────── */
 .vd-cell {
 	position: relative;

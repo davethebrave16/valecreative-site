@@ -105,11 +105,15 @@ src/
 │   ├── types.ts              # Firestore schema interfaces — cross-project contract
 │   ├── fetchContent.ts       # Build-time Firestore query functions
 │   ├── utils.ts              # sortByPosition() — shared stable sort for manual ordering fields
+│   ├── processImages.ts      # Local process-page images (astro:assets imports) + related artwork slugs — see "Process Page"
 │   └── blurHashUtils.ts      # blurHashToDataUri() — Node.js Buffer, build-time only
+├── assets/
+│   └── process/              # Local AI-illustration PNGs for the process page / homepage section (optimized at build)
 ├── components/
 │   ├── pages/                 # Shared page bodies — one file per page, `locale` prop, used by both route trees below
 │   │   ├── HomePage.astro
 │   │   ├── AboutPage.astro
+│   │   ├── ProcessPage.astro      # "Come lavoro" / "How I work" — see "Process Page" below
 │   │   ├── CommissionsPage.astro
 │   │   ├── ContactPage.astro
 │   │   ├── WorksIndexPage.astro / WorkDetailPage.astro   # WorksIndexPage now renders a categories grid, not artworks — see "Categories" below
@@ -129,6 +133,7 @@ src/
 │   └── [locale]/               # The only content tree — getStaticPaths loops `locales` (both `it` and `en`)
 │       ├── index.astro         # renders <HomePage locale={locale} />
 │       ├── about.astro
+│       ├── process.astro
 │       ├── contact.astro
 │       ├── works/{index,[slug]}.astro
 │       ├── works/category/[slug].astro   # per-category artwork gallery — see "Categories" below
@@ -176,7 +181,7 @@ There is no unprefixed content route — `src/pages/index.astro` and `src/pages/
 Two routes outside `[locale]/` exist purely to redirect, never to render real content — both built on the shared `src/components/LocaleGateway.astro` (takes an optional `path` prop, e.g. `undefined`, `'works'`, `'works/some-slug'`):
 
 - `src/pages/index.astro` — the bare domain (`/`). `<LocaleGateway />` (no `path`).
-- `src/pages/[...path].astro` — catches every other legacy unprefixed path (`/works`, `/about`, `/contact`, `/series`, `/techniques`, and their slug pages) so a visitor who omits the locale prefix still lands somewhere instead of hitting a 404. Since `output: 'static'` requires concrete paths, its `getStaticPaths()` enumerates the known top-level routes plus slugs from the same fetchers the real content pages use (`getArtworks`, `getPublishedSeries`, `getTechniques` from `src/lib/fetchContent.ts`). No routing conflict with `/it/*`/`/en/*` — this is static output, so `/works` and `/it/works` are simply distinct pre-rendered files, not a runtime dispatch decision.
+- `src/pages/[...path].astro` — catches every other legacy unprefixed path (`/works`, `/process`, `/about`, `/contact`, `/series`, `/techniques`, and their slug pages) so a visitor who omits the locale prefix still lands somewhere instead of hitting a 404. Since `output: 'static'` requires concrete paths, its `getStaticPaths()` enumerates the known top-level routes plus slugs from the same fetchers the real content pages use (`getArtworks`, `getPublishedSeries`, `getTechniques` from `src/lib/fetchContent.ts`). No routing conflict with `/it/*`/`/en/*` — this is static output, so `/works` and `/it/works` are simply distinct pre-rendered files, not a runtime dispatch decision.
 
 `LocaleGateway.astro` itself:
 - `<meta http-equiv="refresh" content="0;url=/it{path}">` is the no-JS/crawler fallback (defaults to Italian).
@@ -447,6 +452,18 @@ This makes the link behave like a real "back" button — e.g. `/works` → a cat
 | unexpected/undefined `availability` | Fallback button (`t.works.requestInfo`) | `/contact?type=info` |
 
 `CommissionRequestForm.jsx` reads `type`/`ref` from `window.location.search` via a lazy `useState` initializer (SSR-safe, no post-mount flash) to pre-select the matching request-type chip and pre-fill the description textarea; both remain freely editable. There is no `/commissions` route — the spec's "commission page" is this repo's existing `/contact` route.
+
+Other commission buttons outside the artwork page always link to `p('/contact?type=commission')` (no `ref`): the homepage hero primary CTA (`home.ctaCommission`, "Richiedi una commissione"), the homepage process section's primary button, and the process page's final CTA — all three share the `home.ctaCommission` label. Use the same href for any future commission button.
+
+## Process Page (`/process`)
+
+`src/pages/[locale]/process.astro` → `src/components/pages/ProcessPage.astro` — the "Come lavoro" / "How I work" page. It sits in `navLinks` in `BaseLayout.astro` between Works and Techniques, so it appears in the desktop nav, the mobile burger and the footer. `/process` is also in the `[...path].astro` gateway list. Sections: opening image + intro, four alternating steps (`.vd-steps`/`.vd-step`), three commission-type cards (`.vd-cards`), final CTA.
+
+- **Copy** lives in `src/i18n/{it,en}.ts` → `process.*`. `process.steps` (num/title/`text`/`short`) is shared with the homepage process section (`HomePage.astro`, between Featured works and the Intro band, `.vd-process-cards` grid: 1 → 2×2 → 4 columns), with the "Processo" / "Process" eyebrow, which renders `short` and reuses `process.title`, so numbers and titles can't drift apart.
+- **Images** are the only local content images on the site. The PNGs in `src/assets/process/` are imported in `src/lib/processImages.ts` and rendered with `astro:assets` `<Picture>` (`formats={['avif','webp']}`, `fallbackFormat="jpg"`; without that the fallback `<img>` stays PNG and some variants exceed 2MB). `stepImageKeys` is index-aligned with `process.steps`; alt texts are in `process.alt.*`. The OG image is generated with `getImage({ width: 1200, height: 630, fit: 'cover', format: 'jpg' })` and passed as an absolute URL.
+- **Related artworks**: `PROCESS_ARTWORK_SLUGS` (`le-radici-del-futuro`, `ritratto-di-rino-gattuso`, `cascata-su-vano-scale`, `la-compagnia-dellanello`) are looked up in `getArtworks(locale)` at build time. A link is only rendered when the artwork exists, and its text uses the artwork's localized title (so EN shows `titleEn`).
+- **JSON-LD**: `@graph` of `WebPage` + `Service` (provider → `/#person`, no offers/prices) + `BreadcrumbList`.
+- The contact page shows a "Vuoi sapere come lavoro? Scopri il processo →" link under its intro (`commissions.processLinkLead`/`processLinkLabel`).
 
 ## Commission Form — submitCommission Cloud Function
 

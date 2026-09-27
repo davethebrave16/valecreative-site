@@ -1,0 +1,185 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro'
+import { Picture, getImage } from 'astro:assets'
+import { getArtworks } from '@/lib/fetchContent'
+import { useTranslations, getLocalePath, type Locale } from '@/i18n/utils'
+import { processImages, stepImageKeys, PROCESS_ARTWORK_SLUGS } from '@/lib/processImages'
+
+interface Props {
+	locale: string
+}
+
+const { locale } = Astro.props
+const t = useTranslations(locale)
+const p = (path: string) => getLocalePath(locale, path)
+const SITE = 'https://valentinadamiano.it'
+
+const allArtworks = await getArtworks(locale as Locale)
+const findArtwork = (slug: string) => allArtworks.find((a) => a.slug === slug)
+const stepsArtwork = findArtwork(PROCESS_ARTWORK_SLUGS.steps)
+const portraitArtwork = findArtwork(PROCESS_ARTWORK_SLUGS.portrait)
+const muralArtwork = findArtwork(PROCESS_ARTWORK_SLUGS.mural)
+const pyrographyArtwork = findArtwork(PROCESS_ARTWORK_SLUGS.pyrography)
+
+const paths = [
+	{ key: 'portrait', image: processImages.portrait, artwork: portraitArtwork, ...t.process.paths.portrait },
+	{ key: 'mural', image: processImages.mural, artwork: muralArtwork, ...t.process.paths.mural },
+	{ key: 'pyrography', image: processImages.pyrography, artwork: pyrographyArtwork, ...t.process.paths.pyrography },
+] as const
+
+const ogImage = await getImage({ src: processImages.opening, width: 1200, height: 630, fit: 'cover', format: 'jpg' })
+const ogImageUrl = `${SITE}${ogImage.src}`
+
+const pageUrl = `${SITE}${p('/process')}`
+const serviceName = locale === 'it' ? 'Opere d\'arte su commissione' : 'Commissioned artworks'
+const region = locale === 'it' ? 'Toscana' : 'Tuscany'
+---
+
+<BaseLayout
+	title={t.process.pageTitle}
+	lang={locale}
+	description={t.meta.processDescription}
+	ogImage={ogImageUrl}
+>
+	<script slot="head" type="application/ld+json" set:html={JSON.stringify({
+		'@context': 'https://schema.org',
+		'@graph': [
+			{
+				'@type': 'WebPage',
+				'@id': `${pageUrl}#webpage`,
+				url: pageUrl,
+				name: t.process.title,
+				description: t.meta.processDescription,
+				inLanguage: locale === 'it' ? 'it-IT' : 'en-US',
+				isPartOf: { '@id': `${SITE}/#website` },
+				primaryImageOfPage: { '@type': 'ImageObject', url: ogImageUrl },
+				about: { '@id': `${pageUrl}#service` },
+			},
+			{
+				'@type': 'Service',
+				'@id': `${pageUrl}#service`,
+				name: serviceName,
+				serviceType: serviceName,
+				description: t.process.intro,
+				provider: { '@id': `${SITE}/#person` },
+				areaServed: ['Pisa', 'Lucca', region],
+			},
+			{
+				'@type': 'BreadcrumbList',
+				itemListElement: [
+					{ '@type': 'ListItem', position: 1, name: t.nav.home, item: `${SITE}${p('/')}` },
+					{ '@type': 'ListItem', position: 2, name: t.nav.process, item: pageUrl },
+				],
+			},
+		],
+	})} />
+
+	<!-- ── Opening ── -->
+	<section class="vd-rise" style="padding:clamp(34px,5vw,64px) 0 clamp(40px,5vw,72px)">
+		<div class="container">
+			<div class="vd-eyebrow">{t.process.eyebrow}</div>
+			<h1 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(34px,5.5vw,62px);line-height:1.04;margin:10px 0 0;color:var(--ink);max-width:20ch">{t.process.title}</h1>
+			<p style="max-width:60ch;margin:16px 0 32px;font-size:clamp(16px,1.6vw,18px);line-height:1.7;color:#52564c">{t.process.intro}</p>
+			<div style="position:relative;aspect-ratio:16/9;border-radius:4px;overflow:hidden;border:1px solid var(--line);box-shadow:0 30px 70px -36px rgba(31,42,34,.6)">
+				<Picture
+					src={processImages.opening}
+					alt={t.process.alt.opening}
+					formats={['avif', 'webp']}
+					fallbackFormat="jpg"
+					widths={[640, 1000, 1376]}
+					sizes="(min-width: 1320px) 1216px, 100vw"
+					loading="eager"
+					fetchpriority="high"
+					style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"
+				/>
+			</div>
+		</div>
+	</section>
+
+	<!-- ── Four steps ── -->
+	<section style="padding-bottom:clamp(46px,6vw,84px)">
+		<div class="container">
+			<p style="margin:0 0 clamp(28px,4vw,48px);font-family:'Cormorant Garamond',serif;font-style:italic;font-size:clamp(20px,2.2vw,24px);line-height:1.4;color:var(--bark)">
+				{t.process.stepsLead}{stepsArtwork ? (
+					<a href={p(`/works/${stepsArtwork.slug}`)} style="color:var(--verde);text-decoration:underline;text-underline-offset:3px">{t.process.quote(stepsArtwork.title)}</a>
+				) : t.process.quote('Le radici del futuro')}{t.process.stepsLeadSuffix}
+			</p>
+			<div class="vd-steps">
+				{t.process.steps.map((step, i) => (
+					<div class="vd-step">
+						<div class="vd-step-media" style="position:relative;aspect-ratio:4/3;border-radius:4px;overflow:hidden;border:1px solid var(--line)">
+							<Picture
+								src={processImages[stepImageKeys[i]]}
+								alt={t.process.alt[stepImageKeys[i]]}
+								formats={['avif', 'webp']}
+								fallbackFormat="jpg"
+								widths={[480, 768, 1024]}
+								sizes="(min-width: 820px) 50vw, 100vw"
+								loading="lazy"
+								style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"
+							/>
+						</div>
+						<div>
+							<div style="font-family:'Spline Sans Mono',monospace;font-size:13px;letter-spacing:.2em;color:var(--gold)">{step.num}</div>
+							<h2 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(28px,3.4vw,40px);margin:6px 0 0;color:var(--ink)">{step.title}</h2>
+							<p style="max-width:56ch;margin:14px 0 0;font-size:16.5px;line-height:1.75;color:#41463d">{step.text}</p>
+						</div>
+					</div>
+				))}
+			</div>
+		</div>
+	</section>
+
+	<!-- ── Ornamental divider ── -->
+	<div class="container">
+		<div class="vd-divider" style="padding:0 0 clamp(34px,4vw,52px)">
+			<span class="vd-divider-line"></span>
+			<span class="vd-divider-diamond"></span>
+			<span class="vd-divider-line"></span>
+		</div>
+	</div>
+
+	<!-- ── Every commission is different ── -->
+	<section style="padding-bottom:clamp(46px,6vw,84px)">
+		<div class="container">
+			<h2 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(28px,4vw,44px);margin:0;color:var(--ink)">{t.process.pathsTitle}</h2>
+			<p style="max-width:60ch;margin:12px 0 30px;font-size:16px;line-height:1.65;color:#52564c">{t.process.pathsIntro}</p>
+			<div class="vd-cards">
+				{paths.map((path) => (
+					<article style="border:1px solid var(--line);background:var(--parchment);border-radius:5px;overflow:hidden;display:flex;flex-direction:column">
+						<div style="position:relative;aspect-ratio:4/3">
+							<Picture
+								src={path.image}
+								alt={t.process.alt[path.key]}
+								formats={['avif', 'webp']}
+								fallbackFormat="jpg"
+								widths={[400, 640, 896]}
+								sizes="(min-width: 1320px) 400px, (min-width: 820px) 30vw, 100vw"
+								loading="lazy"
+								style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"
+							/>
+						</div>
+						<div style="padding:18px 18px 22px;display:flex;flex-direction:column;flex:1">
+							<h3 style="font-family:'Cormorant Garamond',serif;font-size:25px;font-weight:600;color:var(--ink);margin:0">{path.title}</h3>
+							<p style="font-size:14.5px;line-height:1.65;color:#52564c;margin:8px 0 0;flex:1">{path.text}</p>
+							{path.artwork && (
+								<a href={p(`/works/${path.artwork.slug}`)} style="margin-top:14px;font-weight:600;font-size:14px;color:var(--verde);transition:color .2s" onmouseover="this.style.color='var(--verde-deep)'" onmouseout="this.style.color='var(--verde)'">{t.process.seeWork(path.artwork.title)}</a>
+							)}
+						</div>
+					</article>
+				))}
+			</div>
+		</div>
+	</section>
+
+	<!-- ── Final call to action ── -->
+	<section style="border-top:1px solid var(--line)">
+		<div class="container" style="padding-block:clamp(50px,7vw,96px);text-align:center">
+			<h2 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(30px,4.4vw,50px);margin:0;color:var(--ink)">{t.process.ctaTitle}</h2>
+			<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:14px;margin-top:28px">
+				<a href={p('/contact?type=commission')} class="vd-btn-primary">{t.home.ctaCommission} <span>→</span></a>
+				<a href={p('/works')} class="vd-btn-outline">{t.process.ctaWorks}</a>
+			</div>
+		</div>
+	</section>
+</BaseLayout>

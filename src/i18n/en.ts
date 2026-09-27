@@ -3,6 +3,7 @@ export const en = {
 	nav: {
 		home: 'Home',
 		works: 'Works',
+		process: 'How I work',
 		series: 'Series',
 		techniques: 'Techniques',
 		about: 'Studio',
@@ -23,6 +24,8 @@ export const en = {
 		featuredEyebrow: 'Selection',
 		featuredTitle: 'Featured works',
 		featuredLink: 'All works →',
+		processEyebrow: 'Process',
+		processCtaMore: 'See how I work',
 		bandEyebrow: 'The studio',
 		bandQuote:
 			'"Nature is not a backdrop — it is a mirror. The trees I paint are a projection of myself."',
@@ -118,12 +121,81 @@ export const en = {
 		placeholder: '[ portrait · valentina ]',
 	},
 
+	// Process / how I work
+	process: {
+		eyebrow: 'How I work',
+		title: 'How a bespoke artwork comes to life',
+		intro:
+			'Every commission is a conversation. From the first story you tell me to the day the piece arrives, I\'ll walk with you step by step, with the time and care that handmade work deserves.',
+		stepsLead: 'In these images, ',
+		stepsLeadSuffix: ' takes shape',
+		quote: (title: string) => `“${title}”`,
+		steps: [
+			{
+				num: '01',
+				title: 'Listening',
+				text: 'Every piece begins with a conversation. For a portrait, I\'ll ask for a few photographs of the subject, ideally in natural light and from different angles, so we have room to choose. For a mural, I take the measurements and note the character of the wall. For a free theme, I gather your idea. Or, if you\'d rather give me carte blanche, I do my research and find the right path myself.',
+				short: 'Tell me your idea and send me photos or measurements.',
+			},
+			{
+				num: '02',
+				title: 'Sketch',
+				text: 'I turn your request into a preparatory drawing: sketches, choices of style and a colour palette. Together we choose the sketch to start from. For murals, I adapt the proportions to the wall and prepare the transfer using the traditional pouncing technique (spolvero).',
+				short: 'Together we choose the preparatory drawing.',
+			},
+			{
+				num: '03',
+				title: 'Creation',
+				text: 'If the support isn\'t ready yet, I make it myself: I build the stretcher and prime the canvas or panel with a traditional gesso-and-glue ground. Then I work in whichever technique best suits the idea: oil on wood, for its brilliance and longevity; oil or acrylic on canvas; or pyrography on raw wood.',
+				short: 'I prepare the support and paint in the studio.',
+			},
+			{
+				num: '04',
+				title: 'Delivery',
+				text: 'The final touches, a protective finish where needed, and the piece is ready to begin its life in your home.',
+				short: 'The finished piece arrives in your home.',
+			},
+		],
+		pathsTitle: 'Every commission is different',
+		pathsIntro: 'You\'ve just watched the painting come to life above. Here are the other paths a commission can take.',
+		paths: {
+			portrait: {
+				title: 'Portrait',
+				text: 'I start from the photos you send me, choose the format with you and paint the portrait in the studio, in oil or acrylic, on canvas or panel. Portraits of your animals, too.',
+			},
+			mural: {
+				title: 'Mural',
+				text: 'I adapt the image to the proportions of the wall, transfer it with the pouncing technique and paint it with colours made for walls.',
+			},
+			pyrography: {
+				title: 'Pyrography',
+				text: 'I transfer the drawing onto raw wood, which I can also cut to shape, and engrave it with fire. Depth and nuance come from the mark itself, from light and shade, and from lighter or darker wood stains, not from colour. A glossy finish protects the panel.',
+			},
+		},
+		seeWork: (title: string) => `See “${title}” →`,
+		ctaTitle: 'Have an idea? Tell me about it.',
+		ctaWorks: 'See the works',
+		pageTitle: 'How I work: commissioned artworks',
+		alt: {
+			opening: 'Valentina in her studio at a worktable covered in photos and sketches, with a portrait in progress on the easel and “The roots of the future” and pyrographs leaning against the walls.',
+			listening: 'Hands sorting photos of an ancient tree, a stone bridge and cliffs beside a notebook of handwritten notes: the references for “The roots of the future”.',
+			sketch: 'Pencil sketch of a tree by a river with an arched bridge, beside a watercolour study and swatches of the colour palette.',
+			creation: 'The painter working in oils on the tree\'s roots on an easel canvas, with the top of the composition still only drawn.',
+			delivery: 'The finished, framed “The roots of the future” resting on a wooden bench in a sunlit room.',
+			portrait: 'An oil portrait of Rino Gattuso in progress on the easel, the brush on his dark shirt and the palette in the foreground.',
+			mural: 'The painter at work on a waterfall-and-jungle mural along a stairwell, with the pounced outline still visible on the left.',
+			pyrography: 'A hand burning “La compagnia dell\'anello”, a landscape with a bridge and village, into a raw wooden panel with a pyrography pen.',
+		},
+	},
+
 	// Commissions form (Contact)
 	commissions: {
 		eyebrow: 'Contact',
 		title: 'Get in touch',
 		subtitle:
 			'Questions, ideas, or a commissioned piece in mind — I\'d love to hear from you. Tell me what you\'re imagining and I\'ll reply personally within 48 hours with a proposal shaped around you, no strings attached.',
+		processLinkLead: 'Curious how I work?',
+		processLinkLabel: 'Discover the process →',
 		form: {
 			name: 'Full name',
 			namePlaceholder: 'Your name',
@@ -158,6 +230,7 @@ export const en = {
 		worksDescription: 'Gallery of original paintings by Valentina Damiano: oil on canvas, mixed media, watercolour and engraving. Available for purchase, commission, and organised in thematic series.',
 		seriesDescription: 'Thematic series by Valentina Damiano: collections of paintings united by subject, technique, or creative period. Forests, landscapes, and dreamlike visions.',
 		techniquesDescription: 'Artistic techniques by Valentina Damiano: oil glazing, copper engraving, gold-leaf gilding, watercolour, and creative craft.',
+		processDescription: 'How a commissioned artwork by Valentina Damiano comes to life: listening, sketch, painting and delivery. Bespoke portraits, murals and pyrography from Pisa and Lucca, Tuscany.',
 		aboutDescription: 'Painter, engraver and art teacher trained at the Istituto Russoli and the Accademia di Belle Arti di Firenze. Discover Valentina Damiano\'s artistic journey in Pisa and Lucca, Tuscany.',
 		contactDescription: 'Get in touch with Valentina Damiano for questions, bespoke artwork commissions, gold-leaf gilding, or personalised art courses. Studio in Pisa and Lucca, Tuscany.',
 		privacyDescription: 'Privacy and cookie policy for Valentina Damiano\'s website: which data is processed and which analytics cookies are used.',
