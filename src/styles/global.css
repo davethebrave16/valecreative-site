@@ -252,6 +252,21 @@ main {
 	.vd-process-cards { grid-template-columns: repeat(4, 1fr); }
 }
 
+/* ─── Commission-type cards (process page: 1 → 2×2 → 4, never an orphan) ── */
+.vd-paths {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: clamp(16px, 2vw, 30px);
+}
+
+@media (min-width: 560px) {
+	.vd-paths { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 1100px) {
+	.vd-paths { grid-template-columns: repeat(4, 1fr); }
+}
+
 /* ─── Masonry cell ───────────────────────────────────────────────────────── */
 .vd-cell {
 	position: relative;

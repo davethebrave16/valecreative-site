@@ -16,9 +16,9 @@ export const it = {
 		eyebrow: 'Artista · Pittrice · Artigiana',
 		heroTitle: 'Il bosco come specchio dell\'anima',
 		heroSubtitle:
-			'Paesaggi onirici tra velature leonardesche, segno inciso e foglia oro. Una ricerca pittorica radicata nella natura toscana, tra Pisa e Lucca.',
+			'Paesaggi onirici tra velature leonardesche e segno inciso, nati dalla natura toscana tra Pisa e Lucca.',
 		heroOffer:
-			'Opere originali, ritratti su commissione e pezzi unici realizzati su misura per te: dal bosco alla tua parete.',
+			'Su commissione: ritratti, murali, dipinti e oggetti personalizzati.',
 		ctaWorks: 'Esplora le opere',
 		ctaCommission: 'Richiedi una commissione',
 		featuredEyebrow: 'Selezione',
@@ -30,7 +30,7 @@ export const it = {
 		bandQuote:
 			'«La natura non è uno sfondo: è uno specchio. Gli alberi che dipingo sono una proiezione di me stessa.»',
 		bandText:
-			'Formata all\'Istituto d\'Arte «F. Russoli» e all\'Accademia di Belle Arti di Firenze, intreccio la pittura classica a velature con il segno inciso e la doratura a foglia oro. Dipingo, incido, insegno.',
+			'Formata all\'Istituto d\'Arte «F. Russoli» e all\'Accademia di Belle Arti di Firenze, intreccio la pittura classica a velature con il segno inciso. Dipingo, incido, insegno.',
 		bandLink: 'Conosci la storia →',
 		seriesTitle: 'Serie tematiche',
 		seriesLink: 'Tutte le serie →',
@@ -148,7 +148,7 @@ export const it = {
 				num: '03',
 				title: 'Realizzazione',
 				text: 'Se il supporto non è già pronto, lo preparo io: costruisco il telaio e preparo la tela o la tavola con l\'imprimitura tradizionale a gesso e colla. Poi lavoro con la tecnica più adatta all\'idea: l\'olio su legno, per la sua brillantezza e durata, l\'olio o l\'acrilico su tela, oppure la pirografia su legno grezzo.',
-				short: 'Preparo il supporto e dipingo in studio.',
+				short: 'Preparo il supporto e realizzo l\'opera in studio.',
 			},
 			{
 				num: '04',
@@ -172,6 +172,10 @@ export const it = {
 				title: 'Pirografia',
 				text: 'Riporto il disegno sul legno grezzo, che posso anche sagomare, e lo incido con il fuoco. Profondità e sfumature nascono dal segno, dal chiaroscuro e da impregnanti più chiari o più scuri, non dal colore. Una finitura lucida protegge la tavola.',
 			},
+			objects: {
+				title: 'Oggetti personalizzati',
+				text: 'Un nome, uno stemma, una dedica: trasformo oggetti in pezzi unici, sbalzando il rame, incidendo il vetro o pirografando il legno. Cofanetti, cornici, bicchieri, portachiavi e bomboniere: regali che portano con sé una storia.',
+			},
 		},
 		seeWork: (title: string) => `Guarda «${title}» →`,
 		ctaTitle: 'Hai un\'idea? Raccontamela.',
@@ -186,6 +190,7 @@ export const it = {
 			portrait: 'Ritratto a olio di Rino Gattuso in lavorazione sul cavalletto, con il pennello sulla camicia scura e la tavolozza in primo piano.',
 			mural: 'La pittrice al lavoro su un murale con cascata e vegetazione tropicale lungo il vano scale; a sinistra il disegno riportato con lo spolvero.',
 			pyrography: 'Una mano incide con il pirografo «La compagnia dell\'anello», un paesaggio con ponte e borgo, su una tavola di legno grezzo.',
+			objects: 'Mani che sbalzano una farfalla su una lastra di rame; intorno un cofanetto con coperchio in rame sbalzato, un calice di vetro inciso, portachiavi e una scatolina in legno pirografati.',
 		},
 	},
 
@@ -227,13 +232,13 @@ export const it = {
 
 	// Per-page SEO meta descriptions
 	meta: {
-		homeDescription: 'Pittrice e incisore a Pisa e Lucca. Paesaggi onirici con velature a olio, foglia oro e incisione. Commissioni, serie tematiche e corsi d\'arte in Toscana.',
+		homeDescription: 'Pittrice e incisore tra Pisa e Lucca: paesaggi onirici a velature, ritratti, murali e oggetti personalizzati su commissione. Serie tematiche e corsi d\'arte.',
 		worksDescription: 'Galleria di dipinti originali di Valentina Damiano: olio su tela, tecnica mista, acquerello e incisione. Opere disponibili all\'acquisto, su commissione e in serie tematiche.',
 		seriesDescription: 'Le serie tematiche di Valentina Damiano: raccolte di dipinti unite da soggetto, tecnica o periodo creativo. Boschi, paesaggi e visioni oniriche.',
 		techniquesDescription: 'Le tecniche artistiche di Valentina Damiano: pittura a olio con velature, incisione su rame, doratura a foglia oro, acquerello e artigianato creativo.',
 		processDescription: 'Come nasce un\'opera su commissione di Valentina Damiano: ascolto, bozzetto, realizzazione e consegna. Ritratti, opere murali e pirografie su misura, tra Pisa e Lucca.',
 		aboutDescription: 'Pittrice, incisore e insegnante d\'arte formata all\'Istituto Russoli e all\'Accademia di Belle Arti di Firenze. Scopri il percorso artistico di Valentina Damiano a Pisa e Lucca.',
-		contactDescription: 'Mettiti in contatto con Valentina Damiano per domande, commissioni pittoriche su misura, doratura a foglia oro o corsi d\'arte personalizzati. Studio a Pisa e Lucca.',
+		contactDescription: 'Mettiti in contatto con Valentina Damiano per domande, opere su commissione, oggetti personalizzati o corsi d\'arte su misura. Studio a Pisa e Lucca.',
 		privacyDescription: 'Informativa privacy e cookie del sito di Valentina Damiano: quali dati vengono trattati e quali cookie di analisi vengono utilizzati.',
 	},
 

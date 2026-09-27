@@ -1,9 +1,9 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro'
 import { Picture, getImage } from 'astro:assets'
-import { getArtworks } from '@/lib/fetchContent'
+import { getArtworks, getCategories } from '@/lib/fetchContent'
 import { useTranslations, getLocalePath, type Locale } from '@/i18n/utils'
-import { processImages, stepImageKeys, PROCESS_ARTWORK_SLUGS } from '@/lib/processImages'
+import { processImages, stepImageKeys, PROCESS_ARTWORK_SLUGS, PROCESS_CATEGORY_SLUGS } from '@/lib/processImages'
 
 interface Props {
 	locale: string
@@ -14,17 +14,34 @@ const t = useTranslations(locale)
 const p = (path: string) => getLocalePath(locale, path)
 const SITE = 'https://valentinadamiano.it'
 
-const allArtworks = await getArtworks(locale as Locale)
+const [allArtworks, categories] = await Promise.all([
+	getArtworks(locale as Locale),
+	getCategories(locale as Locale),
+])
 const findArtwork = (slug: string) => allArtworks.find((a) => a.slug === slug)
 const stepsArtwork = findArtwork(PROCESS_ARTWORK_SLUGS.steps)
 const portraitArtwork = findArtwork(PROCESS_ARTWORK_SLUGS.portrait)
 const muralArtwork = findArtwork(PROCESS_ARTWORK_SLUGS.mural)
 const pyrographyArtwork = findArtwork(PROCESS_ARTWORK_SLUGS.pyrography)
+const objectsCategory = categories.find((c) => c.slug === PROCESS_CATEGORY_SLUGS.objects)
 
+// Links only render when the target exists at build time. `focus` is the per-image
+// object-position that keeps the subject visible inside the shared 4:3 crop.
+const artworkLink = (a?: { slug: string; title: string }) =>
+	a ? { href: p(`/works/${a.slug}`), label: t.process.seeWork(a.title) } : undefined
 const paths = [
-	{ key: 'portrait', image: processImages.portrait, artwork: portraitArtwork, ...t.process.paths.portrait },
-	{ key: 'mural', image: processImages.mural, artwork: muralArtwork, ...t.process.paths.mural },
-	{ key: 'pyrography', image: processImages.pyrography, artwork: pyrographyArtwork, ...t.process.paths.pyrography },
+	{ key: 'portrait', image: processImages.portrait, focus: '60% 50%', link: artworkLink(portraitArtwork), ...t.process.paths.portrait },
+	{ key: 'mural', image: processImages.mural, focus: '50% 78%', link: artworkLink(muralArtwork), ...t.process.paths.mural },
+	{ key: 'pyrography', image: processImages.pyrography, focus: '55% 50%', link: artworkLink(pyrographyArtwork), ...t.process.paths.pyrography },
+	{
+		key: 'objects',
+		image: processImages.objects,
+		focus: '55% 45%',
+		link: objectsCategory
+			? { href: p(`/works/category/${objectsCategory.slug}`), label: t.process.seeWork(objectsCategory.name) }
+			: undefined,
+		...t.process.paths.objects,
+	},
 ] as const
 
 const ogImage = await getImage({ src: processImages.opening, width: 1200, height: 630, fit: 'cover', format: 'jpg' })
@@ -144,7 +161,7 @@ const region = locale === 'it' ? 'Toscana' : 'Tuscany'
 		<div class="container">
 			<h2 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(28px,4vw,44px);margin:0;color:var(--ink)">{t.process.pathsTitle}</h2>
 			<p style="max-width:60ch;margin:12px 0 30px;font-size:16px;line-height:1.65;color:#52564c">{t.process.pathsIntro}</p>
-			<div class="vd-cards">
+			<div class="vd-paths">
 				{paths.map((path) => (
 					<article style="border:1px solid var(--line);background:var(--parchment);border-radius:5px;overflow:hidden;display:flex;flex-direction:column">
 						<div style="position:relative;aspect-ratio:4/3">
@@ -154,16 +171,16 @@ const region = locale === 'it' ? 'Toscana' : 'Tuscany'
 								formats={['avif', 'webp']}
 								fallbackFormat="jpg"
 								widths={[400, 640, 896]}
-								sizes="(min-width: 1320px) 400px, (min-width: 820px) 30vw, 100vw"
+								sizes="(min-width: 1320px) 300px, (min-width: 1100px) 25vw, (min-width: 560px) 50vw, 100vw"
 								loading="lazy"
-								style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"
+								style={`position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:${path.focus}`}
 							/>
 						</div>
 						<div style="padding:18px 18px 22px;display:flex;flex-direction:column;flex:1">
 							<h3 style="font-family:'Cormorant Garamond',serif;font-size:25px;font-weight:600;color:var(--ink);margin:0">{path.title}</h3>
 							<p style="font-size:14.5px;line-height:1.65;color:#52564c;margin:8px 0 0;flex:1">{path.text}</p>
-							{path.artwork && (
-								<a href={p(`/works/${path.artwork.slug}`)} style="margin-top:14px;font-weight:600;font-size:14px;color:var(--verde);transition:color .2s" onmouseover="this.style.color='var(--verde-deep)'" onmouseout="this.style.color='var(--verde)'">{t.process.seeWork(path.artwork.title)}</a>
+							{path.link && (
+								<a href={path.link.href} style="margin-top:14px;font-weight:600;font-size:14px;color:var(--verde);transition:color .2s" onmouseover="this.style.color='var(--verde-deep)'" onmouseout="this.style.color='var(--verde)'">{path.link.label}</a>
 							)}
 						</div>
 					</article>

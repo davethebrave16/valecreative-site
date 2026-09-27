@@ -9,6 +9,7 @@ import delivery from '@/assets/process/consegna.png'
 import portrait from '@/assets/process/ritratto.png'
 import mural from '@/assets/process/murale.png'
 import pyrography from '@/assets/process/pirografia.png'
+import objects from '@/assets/process/oggettiartigianali.png'
 
 export const processImages = {
 	opening,
@@ -19,6 +20,7 @@ export const processImages = {
 	portrait,
 	mural,
 	pyrography,
+	objects,
 }
 
 // Index-aligned with `process.steps` in src/i18n/{it,en}.ts
@@ -31,4 +33,9 @@ export const PROCESS_ARTWORK_SLUGS = {
 	portrait: 'ritratto-di-rino-gattuso',
 	mural: 'cascata-su-vano-scale',
 	pyrography: 'la-compagnia-dellanello',
+} as const
+
+// The objects card links to a whole category page rather than a single artwork.
+export const PROCESS_CATEGORY_SLUGS = {
+	objects: 'oggetti-artigianali',
 } as const

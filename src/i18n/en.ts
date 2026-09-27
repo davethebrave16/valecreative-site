@@ -16,9 +16,9 @@ export const en = {
 		eyebrow: 'Artist · Painter · Craftsperson',
 		heroTitle: 'The forest as mirror of the soul',
 		heroSubtitle:
-			'Dreamlike landscapes woven from Leonardesque glazing, engraved marks, and gold leaf. A painterly inquiry rooted in the Tuscan landscape, between Pisa and Lucca.',
+			'Dreamlike landscapes woven from Leonardesque glazing and engraved marks, born of the Tuscan countryside between Pisa and Lucca.',
 		heroOffer:
-			'Original paintings, commissioned portraits and one-of-a-kind pieces made just for you — from the forest to your wall.',
+			'On commission: portraits, murals, paintings and personalised objects.',
 		ctaWorks: 'Explore works',
 		ctaCommission: 'Request a commission',
 		featuredEyebrow: 'Selection',
@@ -30,7 +30,7 @@ export const en = {
 		bandQuote:
 			'"Nature is not a backdrop — it is a mirror. The trees I paint are a projection of myself."',
 		bandText:
-			'Trained at the Istituto d\'Arte «F. Russoli» and the Accademia di Belle Arti di Firenze, I weave classical glazing with engraved marks and gold-leaf gilding. I paint, engrave, teach.',
+			'Trained at the Istituto d\'Arte «F. Russoli» and the Accademia di Belle Arti di Firenze, I weave classical glazing with engraved marks. I paint, engrave, teach.',
 		bandLink: 'Read the story →',
 		seriesTitle: 'Thematic series',
 		seriesLink: 'All series →',
@@ -147,7 +147,7 @@ export const en = {
 				num: '03',
 				title: 'Creation',
 				text: 'If the support isn\'t ready yet, I make it myself: I build the stretcher and prime the canvas or panel with a traditional gesso-and-glue ground. Then I work in whichever technique best suits the idea: oil on wood, for its brilliance and longevity; oil or acrylic on canvas; or pyrography on raw wood.',
-				short: 'I prepare the support and paint in the studio.',
+				short: 'I prepare the support and create the piece in the studio.',
 			},
 			{
 				num: '04',
@@ -171,6 +171,10 @@ export const en = {
 				title: 'Pyrography',
 				text: 'I transfer the drawing onto raw wood, which I can also cut to shape, and engrave it with fire. Depth and nuance come from the mark itself, from light and shade, and from lighter or darker wood stains, not from colour. A glossy finish protects the panel.',
 			},
+			objects: {
+				title: 'Personalised objects',
+				text: 'A name, a crest, a dedication: I turn everyday objects into one-of-a-kind pieces by embossing copper, engraving glass or pyrographing wood. Boxes, frames, glasses, keyrings and wedding favours: gifts that carry a story with them.',
+			},
 		},
 		seeWork: (title: string) => `See “${title}” →`,
 		ctaTitle: 'Have an idea? Tell me about it.',
@@ -185,6 +189,7 @@ export const en = {
 			portrait: 'An oil portrait of Rino Gattuso in progress on the easel, the brush on his dark shirt and the palette in the foreground.',
 			mural: 'The painter at work on a waterfall-and-jungle mural along a stairwell, with the pounced outline still visible on the left.',
 			pyrography: 'A hand burning “La compagnia dell\'anello”, a landscape with a bridge and village, into a raw wooden panel with a pyrography pen.',
+			objects: 'Hands embossing a butterfly into a copper sheet, surrounded by a box with an embossed copper lid, an engraved wine glass, and pyrographed wooden keyrings and a small box.',
 		},
 	},
 
@@ -226,13 +231,13 @@ export const en = {
 
 	// Per-page SEO meta descriptions
 	meta: {
-		homeDescription: 'Painter and engraver based in Pisa and Lucca, Tuscany. Dreamlike oil glazing, gold-leaf gilding, and engraving. Art commissions, thematic series, and courses.',
+		homeDescription: 'Painter and engraver in Pisa and Lucca, Tuscany: dreamlike landscapes, commissioned portraits, murals and personalised objects. Series and art courses.',
 		worksDescription: 'Gallery of original paintings by Valentina Damiano: oil on canvas, mixed media, watercolour and engraving. Available for purchase, commission, and organised in thematic series.',
 		seriesDescription: 'Thematic series by Valentina Damiano: collections of paintings united by subject, technique, or creative period. Forests, landscapes, and dreamlike visions.',
 		techniquesDescription: 'Artistic techniques by Valentina Damiano: oil glazing, copper engraving, gold-leaf gilding, watercolour, and creative craft.',
 		processDescription: 'How a commissioned artwork by Valentina Damiano comes to life: listening, sketch, painting and delivery. Bespoke portraits, murals and pyrography from Pisa and Lucca, Tuscany.',
 		aboutDescription: 'Painter, engraver and art teacher trained at the Istituto Russoli and the Accademia di Belle Arti di Firenze. Discover Valentina Damiano\'s artistic journey in Pisa and Lucca, Tuscany.',
-		contactDescription: 'Get in touch with Valentina Damiano for questions, bespoke artwork commissions, gold-leaf gilding, or personalised art courses. Studio in Pisa and Lucca, Tuscany.',
+		contactDescription: 'Get in touch with Valentina Damiano for questions, commissioned artworks, personalised objects or tailored art courses. Studio in Pisa and Lucca, Tuscany.',
 		privacyDescription: 'Privacy and cookie policy for Valentina Damiano\'s website: which data is processed and which analytics cookies are used.',
 	},
 
