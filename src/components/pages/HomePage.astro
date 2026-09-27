@@ -3,7 +3,10 @@ import BaseLayout from '@/layouts/BaseLayout.astro'
 import { getArtworks, getPublishedSeries, getContentBySlug, getCategories } from '@/lib/fetchContent'
 import { useTranslations, getLocalePath, type Locale } from '@/i18n/utils'
 import { sortByPosition } from '@/lib/utils'
-import { Picture } from 'astro:assets'
+import { Picture, Image } from 'astro:assets'
+import RemoteImage from '@/components/RemoteImage.astro'
+import { IMAGE_SIZES, getRemoteSrcset } from '@/lib/remoteImage'
+import logoWhite from '@/assets/logo-white.png'
 import { processImages, stepImageKeys } from '@/lib/processImages'
 
 interface Props {
@@ -47,6 +50,10 @@ function cellGridStyle(orient: string) {
 	return 'grid-row:span 2'
 }
 
+// Preload the LCP hero with the same AVIF srcset <RemoteImage> renders (identical transform options).
+const heroImage = heroArtwork?.coverImage?.original ? heroArtwork.coverImage : undefined
+const heroPreloadSrcset = heroImage ? await getRemoteSrcset(heroImage, 'avif') : ''
+
 const heroTitle = hero?.title ?? t.home.heroTitle
 const heroBody = hero?.body
 
@@ -63,6 +70,9 @@ const region = locale === 'it' ? 'Toscana' : 'Tuscany'
 	description={t.meta.homeDescription}
 	ogImage={heroArtwork?.coverImage?.medium ?? heroArtwork?.coverImage?.original}
 >
+	{heroPreloadSrcset && (
+		<link slot="head" rel="preload" as="image" type="image/avif" imagesrcset={heroPreloadSrcset} imagesizes={IMAGE_SIZES.homeHero} fetchpriority="high" />
+	)}
 	<script slot="head" type="application/ld+json" set:html={JSON.stringify({
 		'@context': 'https://schema.org',
 		'@graph': [
@@ -120,13 +130,12 @@ const region = locale === 'it' ? 'Toscana' : 'Tuscany'
 				<!-- Hero image: first featured artwork or gradient placeholder -->
 				<div class="vd-rise" style="position:relative">
 					<div style="position:relative;aspect-ratio:4/5;border-radius:4px;overflow:hidden;border:1px solid var(--line);box-shadow:0 30px 70px -36px rgba(31,42,34,.6)">
-						{heroArtwork?.coverImage?.medium || heroArtwork?.coverImage?.original ? (
-							<img
-								src={heroArtwork.coverImage!.medium ?? heroArtwork.coverImage!.original}
-								alt={heroArtwork.coverImage!.alt ?? heroArtwork.title}
-								width={heroArtwork.coverImage!.width}
-								height={heroArtwork.coverImage!.height}
-								loading="eager"
+						{heroImage ? (
+							<RemoteImage
+								image={heroImage}
+								alt={heroImage.alt ?? heroArtwork!.title}
+								sizes={IMAGE_SIZES.homeHero}
+								priority
 								style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"
 							/>
 						) : (
@@ -169,18 +178,18 @@ const region = locale === 'it' ? 'Toscana' : 'Tuscany'
 				<div class="vd-grid">
 					{featuredArtworks.map((artwork) => {
 						const orient = getOrientation(artwork.dimensions)
-						const imgSrc = artwork.coverImage?.thumb ?? artwork.coverImage?.medium ?? artwork.coverImage?.original
+						const cover = artwork.coverImage?.original ? artwork.coverImage : undefined
 						return (
 							<a
 								href={p(`/works/${artwork.slug}`)}
 								class="vd-cell"
 								style={cellGridStyle(orient)}
 							>
-								{imgSrc ? (
-									<img
-										src={imgSrc}
-										alt={artwork.coverImage?.alt ?? artwork.title}
-										loading="lazy"
+								{cover ? (
+									<RemoteImage
+										image={cover}
+										alt={cover.alt ?? artwork.title}
+										sizes={orient === 'landscape' ? IMAGE_SIZES.gridWide : IMAGE_SIZES.grid}
 										class="vd-img"
 										style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"
 									/>
@@ -256,16 +265,15 @@ const region = locale === 'it' ? 'Toscana' : 'Tuscany'
 			<div class="vd-two">
 				<div>
 					<div style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:var(--gold-soft)">{t.home.bandEyebrow}</div>
-					{introArtwork?.coverImage?.medium || introArtwork?.coverImage?.original ? (
-						<img
-							src={introArtwork.coverImage!.medium ?? introArtwork.coverImage!.original}
-							alt={introArtwork.coverImage!.alt ?? introArtwork.title}
-							width={introArtwork.coverImage!.width}
-							height={introArtwork.coverImage!.height}
+					{introArtwork?.coverImage?.original ? (
+						<RemoteImage
+							image={introArtwork.coverImage}
+							alt={introArtwork.coverImage.alt ?? introArtwork.title}
+							sizes={IMAGE_SIZES.twoColumn}
 							style="max-width:100%;height:auto;border-radius:6px;margin-top:26px;box-shadow:0 12px 32px rgba(0,0,0,.28)"
 						/>
 					) : (
-						<img src="/logowhite512.png" alt="" width="120" height="120" style="border-radius:50%;margin-top:26px;opacity:.96" />
+						<Image src={logoWhite} alt="" width={120} densities={[1, 2]} loading="lazy" style="border-radius:50%;margin-top:26px;opacity:.96" />
 					)}
 				</div>
 				<div>
@@ -288,7 +296,7 @@ const region = locale === 'it' ? 'Toscana' : 'Tuscany'
 				<div class="vd-cards">
 					{series.map((s) => {
 						const count = artworkCountBySeries[s.id] ?? 0
-						const imgSrc = s.coverImage?.thumb ?? s.coverImage?.medium ?? s.coverImage?.original
+						const cover = s.coverImage?.original ? s.coverImage : undefined
 						return (
 							<a
 								href={p(`/series/${s.slug}`)}
@@ -296,8 +304,8 @@ const region = locale === 'it' ? 'Toscana' : 'Tuscany'
 								onmouseover="this.style.borderColor='var(--gold)'"
 								onmouseout="this.style.borderColor='var(--line)'"
 							>
-								{imgSrc ? (
-									<img src={imgSrc} alt={s.coverImage?.alt ?? s.name} loading="lazy" style="width:100%;height:150px;object-fit:cover" />
+								{cover ? (
+									<RemoteImage image={cover} alt={cover.alt ?? s.name} sizes={IMAGE_SIZES.cards} style="width:100%;height:150px;object-fit:cover;display:block" />
 								) : (
 									<div style="height:150px;background:linear-gradient(155deg,#33473b 0%,#5d6b4d 40%,#b68a3c 100%)"></div>
 								)}

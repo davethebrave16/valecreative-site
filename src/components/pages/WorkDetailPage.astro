@@ -1,5 +1,7 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro'
+import RemoteImage from '@/components/RemoteImage.astro'
+import { IMAGE_SIZES } from '@/lib/remoteImage'
 import ImageLightbox from '@/components/ImageLightbox.astro'
 import ArtworkCTA from '@/components/ArtworkCTA.astro'
 import { getArtworkGallery, getCategories, getPublishedSeries, getTechniques } from '@/lib/fetchContent'
@@ -116,12 +118,11 @@ const lightboxItems = [
 							aria-label={t.lightbox.open}
 							style="position:absolute;inset:0;height:100%"
 						>
-							<img
-								src={artwork.coverImage.medium ?? artwork.coverImage.original}
+							<RemoteImage
+								image={artwork.coverImage}
 								alt={artwork.coverImage.alt ?? artwork.title}
-								width={artwork.coverImage.width}
-								height={artwork.coverImage.height}
-								loading="eager"
+								sizes={IMAGE_SIZES.workMain}
+								priority
 								style="width:100%;height:100%;object-fit:contain"
 							/>
 							<span class="vd-zoom-icon" aria-hidden="true">⤢</span>
@@ -205,12 +206,10 @@ const lightboxItems = [
 									data-lightbox-index={i + (artwork.coverImage?.original ? 1 : 0)}
 									aria-label={t.lightbox.open}
 								>
-									<img
-										src={img.medium ?? img.thumb ?? img.original}
+									<RemoteImage
+										image={img}
 										alt={img.alt ?? ''}
-										width={img.width}
-										height={img.height}
-										loading="lazy"
+										sizes={IMAGE_SIZES.cards}
 										style="width:100%;aspect-ratio:4/3;object-fit:cover;display:block"
 									/>
 									<span class="vd-zoom-icon" aria-hidden="true">⤢</span>

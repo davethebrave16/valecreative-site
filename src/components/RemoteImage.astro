@@ -1,0 +1,39 @@
+---
+// Responsive AVIF (+ WebP fallback) <picture> for Firebase Storage images, generated at build time.
+// `sizes` is required: it must describe the rendered width in the surrounding layout.
+import { Picture } from 'astro:assets'
+import { blurHashToDataUri } from '@/lib/blurHashUtils'
+import { remoteImageOptions } from '@/lib/remoteImage'
+import type { ImageObject } from '@/lib/types'
+
+interface Props {
+	image: ImageObject
+	sizes: string
+	alt?: string
+	// LCP element: eager + high fetch priority. Everything else lazy-loads.
+	priority?: boolean
+	class?: string
+	style?: string
+}
+
+const { image, sizes, alt, priority = false, class: className, style = '' } = Astro.props
+
+// Tiny (8×6) BlurHash backdrop, painted until the real image arrives.
+const placeholder = image.blurHash ? blurHashToDataUri(image.blurHash, 8, 6) : ''
+const imgStyle = placeholder
+	? `background:url('${placeholder}') center/cover no-repeat;${style}`
+	: style
+---
+
+<Picture
+	{...remoteImageOptions(image)}
+	formats={['avif']}
+	fallbackFormat="webp"
+	sizes={sizes}
+	alt={alt ?? image.alt ?? ''}
+	loading={priority ? 'eager' : 'lazy'}
+	fetchpriority={priority ? 'high' : undefined}
+	decoding="async"
+	class={className}
+	style={imgStyle}
+/>

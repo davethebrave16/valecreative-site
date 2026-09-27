@@ -655,3 +655,15 @@ footer {
 	background: var(--ink);
 	color: #cfc8b6;
 }
+
+/* ─── Full-width hero with optimized background (series/category detail) ─── */
+/* --vd-bg-sm / --vd-bg-lg are set inline from getRemoteBackground() */
+.vd-bg-hero {
+	background: var(--vd-bg-sm) center/cover no-repeat;
+}
+
+@media (min-width: 800px) {
+	.vd-bg-hero {
+		background-image: var(--vd-bg-lg);
+	}
+}

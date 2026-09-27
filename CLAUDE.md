@@ -20,6 +20,8 @@ npm run preview    # Preview the production build locally
 - `repository_dispatch` with type `publish-site` (triggered externally, e.g. from the backoffice)
 - `workflow_dispatch` (manual trigger from GitHub UI)
 
+The workflow caches Astro's `cacheDir` (`.astro-cache/`, set in `astro.config.mjs` outside `node_modules` because `npm ci` wipes it) with `actions/cache`, restored after `npm ci`. It holds the downloaded Storage originals and the generated image variants, so only the first build after a cache miss re-encodes everything.
+
 Required GitHub secrets: `PUBLIC_FIREBASE_API_KEY`, `PUBLIC_FIREBASE_AUTH_DOMAIN`, `PUBLIC_FIREBASE_PROJECT_ID`, `PUBLIC_FIREBASE_STORAGE_BUCKET`, `PUBLIC_FIREBASE_MESSAGING_SENDER_ID`, `PUBLIC_FIREBASE_APP_ID`, `VITE_GA_MEASUREMENT_ID`, `FIREBASE_SERVICE_ACCOUNT`.
 
 ## Tech Stack
@@ -124,7 +126,7 @@ src/
 │   ├── ArtworkCTA.astro           # Astro component — availability/origin-driven CTA on the artwork detail page
 │   ├── CommissionRequestForm.jsx  # React island — calls the submitCommission Cloud Function at runtime (reCAPTCHA v3 verified)
 │   ├── ContactForm.jsx            # React island — stub, see TODO inside
-│   ├── BlurHashImage.astro        # Astro component — decodes BlurHash at build time
+│   ├── RemoteImage.astro          # Responsive AVIF/WebP <Picture> for Firebase Storage images (see "Storage Images")
 │   ├── ImageLightbox.astro        # Full-size image dialog — click-to-enlarge (see below)
 │   └── LocaleGateway.astro        # Shared redirect-only markup for the gateway pages below
 ├── pages/
@@ -331,7 +333,19 @@ The legend (rendered in `CategoryDetailPage.astro`, above the origin tabs/grid) 
 
 `blurHashUtils.ts` → `blurHashToDataUri(hash, w, h)`:
 - **Only call from `.astro` files** — uses `Buffer` which is not available in the browser
-- `BlurHashImage.astro` uses this to inline a placeholder background before the real image loads
+- `RemoteImage.astro` uses it (decoded at 8×6) as the `<img>` background until the real image paints
+
+## Storage Images (`RemoteImage.astro` / `src/lib/remoteImage.ts`)
+
+The backoffice stores only `ImageObject.original` in Firestore — `thumb`/`medium` are never populated (the Resize Images extension is **not** installed). All resizing happens at build time through `astro:assets` + sharp; `firebasestorage.googleapis.com` (bucket `valecreative-prod`) is authorized in `image.remotePatterns` in `astro.config.mjs`.
+
+- **Always render Storage images with `<RemoteImage image={...} sizes={IMAGE_SIZES.x} />`**, never a raw `<img src={...original}>`. It outputs a `<picture>` with an AVIF `<source>` + WebP fallback `<img>` at widths `[400, 800, 1200, 1600]`, filtered to never exceed the original width (Astro only does that filtering for local imports), and width/height from the `ImageObject` to avoid CLS. `sizes` is required — pick or add a value in `IMAGE_SIZES` (`src/lib/remoteImage.ts`) matching the layout.
+- `priority` → `loading="eager"` + `fetchpriority="high"`; use it only on the LCP image (homepage hero, artwork detail main image, About portrait). Everything else is lazy.
+- The homepage hero is also preloaded with `<link rel="preload" as="image" type="image/avif" imagesrcset>` from `getRemoteSrcset()`, which shares `remoteImageOptions()` with the component so the URLs match.
+- CSS background heroes (series/category detail pages) use `getRemoteBackground()` → `--vd-bg-sm`/`--vd-bg-lg` inline vars consumed by `.vd-bg-hero` in `global.css` (800px WebP below 800px viewport, 1600px above).
+- Colour: sharp converts embedded ICC profiles (Display P3 iPhone photos) to sRGB and strips the profile — verified to match an explicit colour-managed conversion.
+- The lightbox and `og:image` still use `original`.
+- Logos are imported from `src/assets/logo.png` / `logo-white.png` and rendered with `<Image width={…} densities={[1, 2]}>`; `public/` holds only favicons and `apple-touch-icon.png`.
 
 ## Image Lightbox
 

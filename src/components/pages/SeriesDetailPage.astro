@@ -1,5 +1,7 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro'
+import RemoteImage from '@/components/RemoteImage.astro'
+import { IMAGE_SIZES, getRemoteBackground } from '@/lib/remoteImage'
 import { getArtworks, getCategories } from '@/lib/fetchContent'
 import { useTranslations, getLocalePath, type Locale } from '@/i18n/utils'
 import type { Series } from '@/lib/types'
@@ -35,9 +37,11 @@ function cellGridStyle(orient: string) {
 	return 'grid-row:span 2'
 }
 
-const heroBg = series.coverImage?.original
-	? `url('${series.coverImage.medium ?? series.coverImage.original}') center/cover no-repeat`
-	: 'radial-gradient(130% 120% at 30% 14%,#d9b25e 0%,#6b4f37 44%,#243029 100%)'
+// Optimized WebP backgrounds (800px on mobile, 1600px above) — see .vd-bg-hero in global.css
+const heroBgImages = series.coverImage?.original ? await getRemoteBackground(series.coverImage) : null
+const heroBgStyle = heroBgImages
+	? `--vd-bg-sm:url('${heroBgImages.small}');--vd-bg-lg:url('${heroBgImages.large}')`
+	: 'background:radial-gradient(130% 120% at 30% 14%,#d9b25e 0%,#6b4f37 44%,#243029 100%)'
 
 const fallbackDescription = locale === 'it'
 	? `Serie ${series.name} — Valentina Damiano`
@@ -74,7 +78,7 @@ const fallbackDescription = locale === 'it'
 
 	<section class="vd-rise">
 		<!-- Hero banner -->
-		<div style={`position:relative;overflow:hidden;background:${heroBg}`}>
+		<div class={heroBgImages ? 'vd-bg-hero' : undefined} style={`position:relative;overflow:hidden;${heroBgStyle}`}>
 			<div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,28,22,.18),rgba(20,28,22,.62))"></div>
 			<div class="container" style="position:relative;padding-block:clamp(46px,7vw,110px)">
 				<a href={p('/series')} data-back-link style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.85);display:inline-block;margin-bottom:16px">{t.series.backLink}</a>
@@ -93,18 +97,18 @@ const fallbackDescription = locale === 'it'
 				<div class="vd-grid">
 					{artworks.map((artwork) => {
 						const orient = getOrientation(artwork.dimensions)
-						const imgSrc = artwork.coverImage?.thumb ?? artwork.coverImage?.medium ?? artwork.coverImage?.original
+						const cover = artwork.coverImage?.original ? artwork.coverImage : undefined
 						return (
 							<a
 								href={p(`/works/${artwork.slug}`)}
 								class="vd-cell"
 								style={cellGridStyle(orient)}
 							>
-								{imgSrc ? (
-									<img
-										src={imgSrc}
-										alt={artwork.coverImage?.alt ?? artwork.title}
-										loading="lazy"
+								{cover ? (
+									<RemoteImage
+										image={cover}
+										alt={cover.alt ?? artwork.title}
+										sizes={orient === 'landscape' ? IMAGE_SIZES.gridWide : IMAGE_SIZES.grid}
 										class="vd-img"
 										style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"
 									/>
