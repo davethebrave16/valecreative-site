@@ -222,6 +222,7 @@ export const it = {
 			again: 'Invia un\'altra richiesta',
 		},
 		error: 'Qualcosa è andato storto. Riprova.',
+		recaptchaUnavailable: 'Non è stato possibile caricare la verifica di sicurezza (potrebbe essere bloccata da un ad-blocker). Disattivalo per questo sito e riprova, oppure scrivimi direttamente a studio@valentinadamiano.it.',
 	},
 
 	// Footer

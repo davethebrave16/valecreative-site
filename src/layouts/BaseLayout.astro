@@ -122,38 +122,31 @@ const pageTitle = `${title} — Vale Creative`
 		<!-- Fonts (self-hosted via @fontsource, see imports above) -->
 		<link rel="preload" as="font" type="font/woff2" href={cormorant600Url} crossorigin />
 
-		<!-- Google Analytics 4 — loaded, but disabled until CookieConsentBanner confirms consent -->
+		<!-- Google Analytics 4 — stub only. gtag.js itself is injected by CookieConsentBanner after consent
+		     (immediately on "accept", or on window load for a returning visitor); calls made before that
+		     are queued in dataLayer. The disable flag stays set until consent is confirmed. -->
 		{gaId && (
-			<>
-				<script define:vars={{ gaId }}>
-					window[`ga-disable-${gaId}`] = true
-					window.dataLayer = window.dataLayer || []
-					function gtag() { dataLayer.push(arguments) }
-					window.gtag = gtag
-					gtag('js', new Date())
-				</script>
-				<script async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}></script>
-			</>
-		)}
-
-		<!-- Meta Pixel — loaded, but not initialized until CookieConsentBanner confirms consent -->
-		{metaPixelId && (
-			<script define:vars={{ metaPixelId }}>
-				!function(f,b,e,v,n,t,s)
-				{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-				n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-				if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-				n.queue=[];t=b.createElement(e);t.async=!0;
-				t.src=v;s=b.getElementsByTagName(e)[0];
-				s.parentNode.insertBefore(t,s)}(window, document,'script',
-				'https://connect.facebook.net/en_US/fbevents.js')
+			<script define:vars={{ gaId }}>
+				window[`ga-disable-${gaId}`] = true
+				window.dataLayer = window.dataLayer || []
+				function gtag() { dataLayer.push(arguments) }
+				window.gtag = gtag
+				gtag('js', new Date())
 			</script>
 		)}
 
-		<!-- Google reCAPTCHA v3 -->
-		{recaptchaSiteKey && (
-			<script async defer src={`https://www.google.com/recaptcha/api.js?render=${recaptchaSiteKey}`}></script>
+		<!-- Meta Pixel — fbq queue stub only. fbevents.js is injected by CookieConsentBanner after consent. -->
+		{metaPixelId && (
+			<script is:inline>
+				!function(f)
+				{if(f.fbq)return;var n=f.fbq=function(){n.callMethod?
+				n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+				if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+				n.queue=[]}(window)
+			</script>
 		)}
+
+		<!-- reCAPTCHA v3 is loaded lazily by CommissionRequestForm (contact page only) — key read from data-recaptcha-key -->
 
 		<!-- Per-page JSON-LD and other head additions -->
 		<slot name="head" />

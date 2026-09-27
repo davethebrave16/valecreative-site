@@ -49,30 +49,54 @@ const privacyHref = getLocalePath(locale, '/privacy')
 	const gaId = banner?.dataset.gaId
 	const pixelId = banner?.dataset.pixelId
 
-	function enableGa(id: string) {
+	// Third-party scripts are only fetched after consent. BaseLayout defines the gtag/fbq stubs up
+	// front, so the calls below are queued and replayed in order once the library loads.
+	function injectScript(src: string) {
+		if (document.querySelector(`script[src="${src}"]`)) return
+		const script = document.createElement('script')
+		script.async = true
+		script.src = src
+		document.head.appendChild(script)
+	}
+
+	// Returning visitors with stored consent: fetch after window load so the scripts never compete
+	// with the LCP image. The config/init calls are queued immediately, so no page view is lost.
+	function afterLoad(fn: () => void) {
+		if (document.readyState === 'complete') fn()
+		else window.addEventListener('load', fn, { once: true })
+	}
+
+	function load(src: string, deferLoad: boolean) {
+		if (deferLoad) afterLoad(() => injectScript(src))
+		else injectScript(src)
+	}
+
+	function enableGa(id: string, deferLoad: boolean) {
 		;(window as Window & { [key: string]: unknown })[`ga-disable-${id}`] = false
 		const gtag = (window as Window & { gtag?: Function }).gtag
 		if (typeof gtag === 'function') gtag('config', id)
+		load(`https://www.googletagmanager.com/gtag/js?id=${id}`, deferLoad)
 	}
 
 	function disableGa(id: string) {
 		;(window as Window & { [key: string]: unknown })[`ga-disable-${id}`] = true
 	}
 
-	function enableFbq(id: string) {
+	function enableFbq(id: string, deferLoad: boolean) {
 		const fbq = (window as Window & { fbq?: Function }).fbq
 		if (typeof fbq === 'function') {
 			fbq('init', id)
 			fbq('track', 'PageView')
 		}
+		load('https://connect.facebook.net/en_US/fbevents.js', deferLoad)
 	}
 
 	if (banner && (gaId || pixelId)) {
 		const consent = localStorage.getItem(CONSENT_KEY)
 
 		if (consent === 'accepted') {
-			if (gaId) enableGa(gaId)
-			if (pixelId) enableFbq(pixelId)
+			if (gaId) enableGa(gaId, true)
+			if (pixelId) enableFbq(pixelId, true)
 		} else if (consent === 'rejected') {
 			if (gaId) disableGa(gaId)
 		} else {
@@ -82,8 +106,8 @@ const privacyHref = getLocalePath(locale, '/privacy')
 
 		document.getElementById('vd-cookie-accept')?.addEventListener('click', () => {
 			localStorage.setItem(CONSENT_KEY, 'accepted')
-			if (gaId) enableGa(gaId)
-			if (pixelId) enableFbq(pixelId)
+			if (gaId) enableGa(gaId, false)
+			if (pixelId) enableFbq(pixelId, false)
 			banner.style.display = 'none'
 		})
 
