@@ -3,7 +3,8 @@ import { getLocalePath } from '@/i18n/utils'
 
 interface Props {
 	locale: string
-	gaId: string
+	gaId: string | null
+	pixelId: string | null
 	t: {
 		cookieConsent: {
 			text: string
@@ -14,13 +15,14 @@ interface Props {
 	}
 }
 
-const { locale, gaId, t } = Astro.props
+const { locale, gaId, pixelId, t } = Astro.props
 const privacyHref = getLocalePath(locale, '/privacy')
 ---
 
 <div
 	id="vd-cookie-banner"
 	data-ga-id={gaId}
+	data-pixel-id={pixelId}
 	style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--forest);border-top:1px solid rgba(255,255,255,.12);padding:16px clamp(18px,4vw,52px);"
 >
 	<div style="max-width:1320px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:14px 24px;justify-content:space-between">
@@ -45,6 +47,7 @@ const privacyHref = getLocalePath(locale, '/privacy')
 
 	const banner = document.getElementById('vd-cookie-banner')
 	const gaId = banner?.dataset.gaId
+	const pixelId = banner?.dataset.pixelId
 
 	function enableGa(id: string) {
 		;(window as Window & { [key: string]: unknown })[`ga-disable-${id}`] = false
@@ -56,27 +59,37 @@ const privacyHref = getLocalePath(locale, '/privacy')
 		;(window as Window & { [key: string]: unknown })[`ga-disable-${id}`] = true
 	}
 
-	if (banner && gaId) {
+	function enableFbq(id: string) {
+		const fbq = (window as Window & { fbq?: Function }).fbq
+		if (typeof fbq === 'function') {
+			fbq('init', id)
+			fbq('track', 'PageView')
+		}
+	}
+
+	if (banner && (gaId || pixelId)) {
 		const consent = localStorage.getItem(CONSENT_KEY)
 
 		if (consent === 'accepted') {
-			enableGa(gaId)
+			if (gaId) enableGa(gaId)
+			if (pixelId) enableFbq(pixelId)
 		} else if (consent === 'rejected') {
-			disableGa(gaId)
+			if (gaId) disableGa(gaId)
 		} else {
-			disableGa(gaId)
+			if (gaId) disableGa(gaId)
 			banner.style.display = 'block'
 		}
 
 		document.getElementById('vd-cookie-accept')?.addEventListener('click', () => {
 			localStorage.setItem(CONSENT_KEY, 'accepted')
-			enableGa(gaId)
+			if (gaId) enableGa(gaId)
+			if (pixelId) enableFbq(pixelId)
 			banner.style.display = 'none'
 		})
 
 		document.getElementById('vd-cookie-reject')?.addEventListener('click', () => {
 			localStorage.setItem(CONSENT_KEY, 'rejected')
-			disableGa(gaId)
+			if (gaId) disableGa(gaId)
 			banner.style.display = 'none'
 		})
 	}

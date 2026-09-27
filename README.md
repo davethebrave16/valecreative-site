@@ -64,6 +64,7 @@ Required GitHub repository secrets:
 | `PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | same |
 | `PUBLIC_FIREBASE_APP_ID` | same |
 | `VITE_GA_MEASUREMENT_ID` | Google Analytics → Admin → Data Streams |
+| `PUBLIC_META_PIXEL_ID` | Meta Business Manager → Events Manager → Data Sources → your Pixel |
 | `FIREBASE_SERVICE_ACCOUNT` | Firebase console → Project settings → Service accounts → Generate new private key (JSON) |
 
 ## Routes
@@ -170,9 +171,19 @@ Five custom GA4 events are fired from the site, all defined in `src/lib/analytic
 
 Both events are subject to the same consent gating as pageviews — see "Cookie consent" below.
 
+### Meta Pixel
+
+Add your Pixel ID to `.env`:
+```
+PUBLIC_META_PIXEL_ID=1234567890123456
+```
+To get a Pixel ID: Meta Business Manager → Events Manager → Data Sources → your Pixel → Settings. The `fbq` loader script is injected only when this variable is set — omitting it disables the Pixel without affecting the build. Follows the exact same consent-gating mechanism as GA4 (see "Cookie consent" below): `fbq('init', ...)` + `fbq('track', 'PageView')` only run after the visitor accepts cookies.
+
+A single custom event is fired beyond the automatic `PageView`: the standard `Lead` event, via `trackFbEvent('Lead')` in `src/lib/analytics.ts`, called from `src/components/CommissionRequestForm.jsx` right after the `submitCommission` Cloud Function call succeeds. `trackFbEvent` no-ops if `fbq` isn't loaded or consent hasn't been accepted.
+
 ### Cookie consent
 
-GA4 requires visitor opt-in before it collects any data — required for EU/Italian visitors under GDPR/ePrivacy. A cookie consent banner (`src/components/CookieConsentBanner.astro`) shows on first visit when `VITE_GA_MEASUREMENT_ID` is set; GA stays disabled (via Google's `ga-disable-<id>` flag) until the visitor clicks Accept. Their choice is remembered in `localStorage` and can be changed later from the `/privacy` page. reCAPTCHA v3 is not gated — it's treated as strictly necessary for spam protection on the commission form, not analytics. See `CLAUDE.md` → "Cookie Consent" for the full implementation.
+GA4 and the Meta Pixel both require visitor opt-in before they collect any data — required for EU/Italian visitors under GDPR/ePrivacy. A single cookie consent banner (`src/components/CookieConsentBanner.astro`) shows on first visit when `VITE_GA_MEASUREMENT_ID` and/or `PUBLIC_META_PIXEL_ID` is set; there is only one accept/reject toggle covering both providers (no separate analytics/marketing categories). GA stays disabled (via Google's `ga-disable-<id>` flag) and the Pixel's `fbq('init', ...)` is simply never called until the visitor clicks Accept. Their choice is remembered in `localStorage` and can be changed later from the `/privacy` page. reCAPTCHA v3 is not gated — it's treated as strictly necessary for spam protection on the commission form, not analytics. See `CLAUDE.md` → "Cookie Consent" for the full implementation.
 
 **Before launch**: the `/privacy` page's copy is a reasonable starting point but has not been reviewed by a lawyer — have it reviewed before the site goes live.
 

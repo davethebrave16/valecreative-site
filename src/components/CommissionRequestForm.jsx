@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { getFunctions, httpsCallable } from 'firebase/functions'
 import app from '@/lib/firebaseConfig'
-import { trackCommissionFormSubmit } from '@/lib/analytics'
+import { trackCommissionFormSubmit, trackFbEvent } from '@/lib/analytics'
 
 // Positional mapping — index must stay aligned with commissions.form.requestTypes in both it.ts and en.ts
 // ['Commissione'/'Commission', "Corso d'arte"/'Art course', 'Informazioni'/'Information']
@@ -93,6 +93,7 @@ export default function CommissionRequestForm({ labels }) {
 			})
 			setStatus('success')
 			trackCommissionFormSubmit('success', REQUEST_TYPE_CANONICAL[reqTypeIndex])
+			trackFbEvent('Lead')
 		} catch (err) {
 			const code = err?.code ?? ''
 			let errorReason = 'generic'
