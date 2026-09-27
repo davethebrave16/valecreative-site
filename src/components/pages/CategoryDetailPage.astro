@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro'
+import { getRemoteBackground } from '@/lib/remoteImage'
 import CategoryArtworkGrid from '@/components/CategoryArtworkGrid.astro'
 import { getArtworks } from '@/lib/fetchContent'
 import { useTranslations, getLocalePath, type Locale } from '@/i18n/utils'
@@ -31,9 +32,11 @@ const heroArtwork = category.featuredArtworkId
 	? artworks.find((a) => a.id === category.featuredArtworkId)
 	: undefined
 
-const heroBg = heroArtwork?.coverImage?.original
-	? `url('${heroArtwork.coverImage.medium ?? heroArtwork.coverImage.original}') center/cover no-repeat`
-	: 'radial-gradient(130% 120% at 30% 14%,#d9b25e 0%,#6b4f37 44%,#243029 100%)'
+// Optimized WebP backgrounds (800px on mobile, 1600px above) — see .vd-bg-hero in global.css
+const heroBgImages = heroArtwork?.coverImage?.original ? await getRemoteBackground(heroArtwork.coverImage) : null
+const heroBgStyle = heroBgImages
+	? `--vd-bg-sm:url('${heroBgImages.small}');--vd-bg-lg:url('${heroBgImages.large}')`
+	: 'background:radial-gradient(130% 120% at 30% 14%,#d9b25e 0%,#6b4f37 44%,#243029 100%)'
 
 const pageDescription = locale === 'it'
 	? `${category.name} — ${artworks.length} opere di Valentina Damiano.`
@@ -83,7 +86,7 @@ const heroImageUrl = heroArtwork?.coverImage?.original
 
 	<section class="vd-rise">
 		<!-- Hero banner -->
-		<div style={`position:relative;overflow:hidden;background:${heroBg}`}>
+		<div class={heroBgImages ? 'vd-bg-hero' : undefined} style={`position:relative;overflow:hidden;${heroBgStyle}`}>
 			<div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,28,22,.18),rgba(20,28,22,.62))"></div>
 			<div class="container" style="position:relative;padding-block:clamp(46px,7vw,110px)">
 				<a href={p('/works')} data-back-link style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.85);display:inline-block;margin-bottom:16px">{t.works.backLink}</a>

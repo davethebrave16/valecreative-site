@@ -13,6 +13,39 @@ const CANONICAL_TO_INDEX = { commission: 0, course: 1, info: 2 }
 const functions = getFunctions(app, 'europe-west1')
 const submitCommission = httpsCallable(functions, 'submitCommission')
 
+// reCAPTCHA v3 is loaded only on this form, on first interaction (or at submit as a fallback, e.g.
+// autofill without focus) — never globally, so it doesn't compete with other pages' loading.
+const RECAPTCHA_TIMEOUT_MS = 10000
+let recaptchaPromise = null
+
+function loadRecaptcha(siteKey) {
+	if (recaptchaPromise) return recaptchaPromise
+	recaptchaPromise = new Promise((resolve, reject) => {
+		const script = document.createElement('script')
+		script.src = `https://www.google.com/recaptcha/api.js?render=${siteKey}`
+		script.async = true
+		script.onload = () => {
+			if (window.grecaptcha?.ready) window.grecaptcha.ready(() => resolve(window.grecaptcha))
+			else reject(new Error('grecaptcha unavailable'))
+		}
+		script.onerror = () => reject(new Error('reCAPTCHA script failed to load'))
+		document.head.appendChild(script)
+	}).catch((err) => {
+		// Allow a retry on the next submit (e.g. after disabling an ad blocker).
+		recaptchaPromise = null
+		document.querySelector('script[src*="recaptcha/api.js"]')?.remove()
+		throw err
+	})
+	return recaptchaPromise
+}
+
+function withTimeout(promise, ms) {
+	return Promise.race([
+		promise,
+		new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
+	])
+}
+
 export default function CommissionRequestForm({ labels }) {
 	const form = labels?.form ?? {}
 	const success = labels?.success ?? {}
@@ -53,6 +86,10 @@ export default function CommissionRequestForm({ labels }) {
 		return errors
 	}
 
+	const handlePrefetchRecaptcha = () => {
+		if (recaptchaSiteKey) loadRecaptcha(recaptchaSiteKey).catch(() => {})
+	}
+
 	const handleChange = (e) => {
 		const { name, value } = e.target
 		setFields((prev) => ({ ...prev, [name]: value }))
@@ -74,12 +111,21 @@ export default function CommissionRequestForm({ labels }) {
 		setFieldErrors({})
 
 		let recaptchaToken = ''
-		try {
-			if (window.grecaptcha && recaptchaSiteKey) {
-				recaptchaToken = await window.grecaptcha.execute(recaptchaSiteKey, { action: 'submit_commission' })
+		if (recaptchaSiteKey) {
+			try {
+				const grecaptcha = await withTimeout(loadRecaptcha(recaptchaSiteKey), RECAPTCHA_TIMEOUT_MS)
+				recaptchaToken = await withTimeout(
+					grecaptcha.execute(recaptchaSiteKey, { action: 'submit_commission' }),
+					RECAPTCHA_TIMEOUT_MS,
+				)
+			} catch {
+				// Script blocked/failed: don't call the function (it would reject an empty token anyway).
+				// Same analytics event the server-side rejection produces.
+				setServerError(labels?.recaptchaUnavailable ?? errorMsg)
+				setStatus('error')
+				trackCommissionFormSubmit('error', REQUEST_TYPE_CANONICAL[reqTypeIndex], 'recaptcha')
+				return
 			}
-		} catch {
-			recaptchaToken = ''
 		}
 
 		try {
@@ -132,6 +178,8 @@ export default function CommissionRequestForm({ labels }) {
 	return (
 		<form
 			onSubmit={handleSubmit}
+			onFocus={handlePrefetchRecaptcha}
+			onInput={handlePrefetchRecaptcha}
 			noValidate
 			style={{ border: '1px solid var(--line)', background: 'var(--parchment)', borderRadius: 8, padding: 'clamp(22px,3vw,38px)', display: 'flex', flexDirection: 'column', gap: 18, maxWidth: 560 }}
 		>

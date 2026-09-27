@@ -1,6 +1,8 @@
 ---
 import { getLocalePath } from '@/i18n/utils'
 import type { Artwork } from '@/lib/types'
+import RemoteImage from '@/components/RemoteImage.astro'
+import { IMAGE_SIZES } from '@/lib/remoteImage'
 
 interface Props {
 	locale: string
@@ -36,13 +38,13 @@ function availabilityColor(availability: string) {
 <div id={id} class="vd-grid" style={`display:${hidden ? 'none' : 'grid'}`}>
 	{artworks.map((artwork) => {
 		const orient = getOrientation(artwork.dimensions)
-		const imgSrc = artwork.coverImage?.thumb ?? artwork.coverImage?.medium ?? artwork.coverImage?.original
+		const cover = artwork.coverImage?.original ? artwork.coverImage : undefined
 		const avail = artwork.availability
 		const dotColor = availabilityColor(avail)
 		return (
 			<a href={p(`/works/${artwork.slug}`)} class="vd-cell" style={cellGridStyle(orient)}>
-				{imgSrc ? (
-					<img src={imgSrc} alt={artwork.coverImage?.alt ?? artwork.title} loading="lazy" class="vd-img" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" />
+				{cover ? (
+					<RemoteImage image={cover} alt={cover.alt ?? artwork.title} sizes={orient === 'landscape' ? IMAGE_SIZES.gridWide : IMAGE_SIZES.grid} class="vd-img" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" />
 				) : (
 					<div class="vd-img" style="position:absolute;inset:0;background:linear-gradient(155deg,#33473b 0%,#5d6b4d 40%,#b68a3c 100%)"></div>
 				)}

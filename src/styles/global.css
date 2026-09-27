@@ -10,7 +10,7 @@
 	--verde: #2c7466;
 	--verde-deep: #205c52;
 	--line: rgba(31, 42, 34, 0.14);
-	--muted: #7c7567;
+	--muted: #6b6558;
 	--rose: #c8536b;
 	--syellow: #e2b043;
 	--sblue: #4e6fa0;
@@ -75,6 +75,16 @@ button {
 
 .vd-rise {
 	animation: vdRise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+/* Transform-only variant for above-the-fold LCP content (homepage hero): never starts invisible */
+@keyframes vdRiseMove {
+	from { transform: translateY(14px); }
+	to   { transform: none; }
+}
+
+.vd-rise-move {
+	animation: vdRiseMove 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
 /* ─── Layout ─────────────────────────────────────────────────────────────── */
@@ -654,4 +664,26 @@ h1, h2, h3 {
 footer {
 	background: var(--ink);
 	color: #cfc8b6;
+}
+
+/* ─── Full-width hero with optimized background (series/category detail) ─── */
+/* --vd-bg-sm / --vd-bg-lg are set inline from getRemoteBackground() */
+.vd-bg-hero {
+	background: var(--vd-bg-sm) center/cover no-repeat;
+}
+
+@media (min-width: 800px) {
+	.vd-bg-hero {
+		background-image: var(--vd-bg-lg);
+	}
+}
+
+/* ─── Reduced motion ─────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation: none !important;
+		transition: none !important;
+	}
 }

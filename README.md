@@ -116,7 +116,7 @@ The site is bilingual using a single set of page bodies plus Astro dynamic routi
 
 ## Logo
 
-Replace `/public/logo.svg` with the actual logo file. The header and footer both reference it at `/logo.svg`. It should be square (42×42 rendered) with a transparent or dark background for the footer.
+The logo lives in `src/assets/logo.png` (header, 42px) and `src/assets/logo-white.png` (footer 52px, homepage fallback 120px). Both are rendered via `astro:assets` `<Image>` with `densities={[1, 2]}`, so the source files can stay high-resolution. Favicons and `apple-touch-icon.png` stay in `public/`.
 
 ## Social Links
 
@@ -133,7 +133,7 @@ match /commissions/{docId} {
 }
 ```
 
-Requires `PUBLIC_RECAPTCHA_SITE_KEY` in `.env` (see `.env.example`) — the site key from [google.com/recaptcha/admin](https://www.google.com/recaptcha/admin). Without it, the reCAPTCHA script is not injected and submissions are rejected server-side with a "security verification failed" message. The corresponding `RECAPTCHA_SECRET_KEY` secret and `submitCommission` function itself live in the backoffice repo — see its `CLAUDE.md` for deployment.
+Requires `PUBLIC_RECAPTCHA_SITE_KEY` in `.env` (see `.env.example`) — the site key from [google.com/recaptcha/admin](https://www.google.com/recaptcha/admin). The reCAPTCHA script is loaded only on the contact page, when the visitor first interacts with the form. Without the key, the script is not injected and submissions are rejected server-side with a "security verification failed" message. The corresponding `RECAPTCHA_SECRET_KEY` secret and `submitCommission` function itself live in the backoffice repo — see its `CLAUDE.md` for deployment.
 
 ## CMS Content Blocks
 
@@ -166,7 +166,7 @@ Five custom GA4 events are fired from the site, all defined in `src/lib/analytic
 |-------|--------|--------------|
 | `view_artwork_gallery` | `artwork_slug`, `artwork_title` | Visitor opens an artwork's image lightbox (`src/components/ImageLightbox.astro`) — clicking any thumbnail with `data-lightbox-index` calls `openAt()`, which fires the event every time the lightbox dialog opens, including re-opens on the same page. |
 | `artwork_cta_click` | `artwork_slug`, `artwork_title`, `cta_type` (`for_sale` \| `commissioned` \| `sold` \| `not_for_sale` \| `fallback`) | Visitor clicks the call-to-action link/button on an artwork detail page (`src/components/ArtworkCTA.astro`), which routes them to `/contact` with `type`/`ref` query params. `cta_type` mirrors which CTA variant was shown, derived from the artwork's `origin` and `availability` fields (see `CLAUDE.md` → "Artworks — origin & availability fields"). |
-| `commission_form_submit` | `status` (`success` \| `error`), `request_type` (`commission` \| `course` \| `info`), `error_reason` (`recaptcha` \| `validation` \| `generic`, only present when `status === 'error'`) | Visitor submits the commission/contact form on `/contact` (`src/components/CommissionRequestForm.jsx`) and the `submitCommission` Cloud Function call resolves or rejects. Only fires on an actual server round-trip — client-side validation failures caught before the request is sent are not tracked. |
+| `commission_form_submit` | `status` (`success` \| `error`), `request_type` (`commission` \| `course` \| `info`), `error_reason` (`recaptcha` \| `validation` \| `generic`, only present when `status === 'error'`) | Visitor submits the commission/contact form on `/contact` (`src/components/CommissionRequestForm.jsx`) and the `submitCommission` Cloud Function call resolves or rejects. Fires when the `submitCommission` call resolves or rejects, and also with `error_reason: 'recaptcha'` when the reCAPTCHA script can't be loaded (e.g. ad blocker) — client-side validation failures caught before the request is sent are not tracked. |
 | `category_tab_toggle` | `category_slug`, `origin` (`personal` \| `commissioned`) | Visitor switches the Personal/Commissioned tab on a category page (`/works/category/[slug]`, `src/components/pages/CategoryDetailPage.astro`) — only rendered when a category has artworks in both origins. |
 | `language_switch` | `target_locale` | Visitor clicks the IT/EN language switcher in the header or mobile menu (`src/layouts/BaseLayout.astro`). |
 
@@ -184,7 +184,7 @@ A single custom event is fired beyond the automatic `PageView`: the standard `Le
 
 ### Cookie consent
 
-GA4 and the Meta Pixel both require visitor opt-in before they collect any data — required for EU/Italian visitors under GDPR/ePrivacy. A single cookie consent banner (`src/components/CookieConsentBanner.astro`) shows on first visit when `VITE_GA_MEASUREMENT_ID` and/or `PUBLIC_META_PIXEL_ID` is set; there is only one accept/reject toggle covering both providers (no separate analytics/marketing categories). GA stays disabled (via Google's `ga-disable-<id>` flag) and the Pixel's `fbq('init', ...)` is simply never called until the visitor clicks Accept. Their choice is remembered in `localStorage` and can be changed later from the `/privacy` page. reCAPTCHA v3 is not gated — it's treated as strictly necessary for spam protection on the commission form, not analytics. See `CLAUDE.md` → "Cookie Consent" for the full implementation.
+GA4 and the Meta Pixel both require visitor opt-in before they collect any data — required for EU/Italian visitors under GDPR/ePrivacy. A single cookie consent banner (`src/components/CookieConsentBanner.astro`) shows on first visit when `VITE_GA_MEASUREMENT_ID` and/or `PUBLIC_META_PIXEL_ID` is set; there is only one accept/reject toggle covering both providers (no separate analytics/marketing categories). The GA and Pixel libraries are not even downloaded until the visitor clicks Accept (for returning visitors who already accepted, they load after the page's `load` event); GA also keeps Google's `ga-disable-<id>` flag set until then. Their choice is remembered in `localStorage` and can be changed later from the `/privacy` page. reCAPTCHA v3 is not gated — it's treated as strictly necessary for spam protection on the commission form, not analytics — and it's loaded only on the contact page. See `CLAUDE.md` → "Cookie Consent" for the full implementation.
 
 **Before launch**: the `/privacy` page's copy is a reasonable starting point but has not been reviewed by a lawyer — have it reviewed before the site goes live.
 
@@ -212,7 +212,7 @@ Place a `1200×630 px` JPEG at `public/og-default.jpg`. This image is used as th
 - The commission form runs in the browser but does not touch Firestore directly — it calls the `submitCommission` Cloud Function, which verifies reCAPTCHA v3 and writes server-side
 - The Works section is a static two-level drill-down, no client-side React filtering: `/works` shows a grid of category cards (each with a representative cover image chosen in the backoffice), and clicking one navigates to `/works/category/:slug`, a real static page showing that category's artworks with a Personal/Commissioned toggle (plain vanilla JS, not a React island)
 - Detail pages (artwork, category, series, technique) have a "smart" back link — it calls the browser's `history.back()` when there's somewhere to go back to (so it returns to the actual page you came from, e.g. a category gallery, not always a fixed parent URL), falling back to a real `href` for direct links, new tabs, and crawlers
-- Images are stored in Firebase Storage; `thumb` and `medium` variants are auto-generated by the Firebase Resize Images extension
+- Images are stored in Firebase Storage (only the original is uploaded); responsive AVIF/WebP variants are generated at build time by `src/components/RemoteImage.astro` (`astro:assets` + sharp) and cached in `.astro-cache/`
 - Exception: the illustrative images on the `/process` page and the homepage process section are local files in `src/assets/process/`, optimized at build time by Astro's `astro:assets` (`<Picture>`: responsive AVIF/WebP with a JPEG fallback, lazy-loaded below the fold). They are AI-generated illustrations based on Valentina's real artworks. Imports and alt-text keys are centralized in `src/lib/processImages.ts`
 - BlurHash placeholders are decoded at build time and inlined as BMP data URIs
 - The artwork detail page's cover image and gallery thumbnails open in a full-size click-to-enlarge dialog (`src/components/ImageLightbox.astro`), showing the original-resolution image with prev/next paging, keyboard/backdrop close, scroll/pinch zoom with click-drag panning, double-click/double-tap zoom toggle, and no external dependency

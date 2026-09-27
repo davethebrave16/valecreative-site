@@ -221,6 +221,7 @@ export const en = {
 			again: 'Send another request',
 		},
 		error: 'Something went wrong. Please try again.',
+		recaptchaUnavailable: 'The security check could not be loaded (it may be blocked by an ad blocker). Disable it for this site and try again, or email me directly at studio@valentinadamiano.it.',
 	},
 
 	// Footer

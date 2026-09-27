@@ -3,6 +3,7 @@ dist/
 .env
 .firebaserc
 .astro/
+.astro-cache/
 *.local
 .DS_Store
 .firebase
