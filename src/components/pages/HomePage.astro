@@ -108,9 +108,10 @@ const region = locale === 'it' ? 'Toscana' : 'Tuscany'
 						</h1>
 					)}
 					<p style="max-width:46ch;margin:26px 0 0;font-size:clamp(16px,1.6vw,18.5px);line-height:1.7;color:#41463d">{t.home.heroSubtitle}</p>
+					<p style="max-width:46ch;margin:14px 0 0;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:clamp(18px,1.9vw,21px);line-height:1.5;color:var(--bark)">{t.home.heroOffer}</p>
 					<div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:34px">
-						<a href={p('/works')} class="vd-btn-primary">{t.home.ctaWorks} <span>→</span></a>
-						<a href={p('/contact')} class="vd-btn-outline">{t.home.ctaCommission}</a>
+						<a href={p('/contact')} class="vd-btn-primary">{t.home.ctaCommission} <span>→</span></a>
+						<a href={p('/works')} class="vd-btn-outline">{t.home.ctaWorks}</a>
 					</div>
 				</div>
 

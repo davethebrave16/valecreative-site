@@ -16,6 +16,8 @@ export const en = {
 		heroTitle: 'The forest as mirror of the soul',
 		heroSubtitle:
 			'Dreamlike landscapes woven from Leonardesque glazing, engraved marks, and gold leaf. A painterly inquiry rooted in the Tuscan landscape, between Pisa and Lucca.',
+		heroOffer:
+			'Original paintings, commissioned portraits and one-of-a-kind pieces made just for you — from the forest to your wall.',
 		ctaWorks: 'Explore works',
 		ctaCommission: 'Request a commission',
 		featuredEyebrow: 'Selection',
@@ -121,7 +123,7 @@ export const en = {
 		eyebrow: 'Contact',
 		title: 'Get in touch',
 		subtitle:
-			'Questions, ideas, or a commission in mind — I\'d love to hear from you. Tell me what\'s on your mind and I\'ll reply personally.',
+			'Questions, ideas, or a commissioned piece in mind — I\'d love to hear from you. Tell me what you\'re imagining and I\'ll reply personally within 48 hours with a proposal shaped around you, no strings attached.',
 		form: {
 			name: 'Full name',
 			namePlaceholder: 'Your name',

@@ -16,6 +16,8 @@ export const it = {
 		heroTitle: 'Il bosco come specchio dell\'anima',
 		heroSubtitle:
 			'Paesaggi onirici tra velature leonardesche, segno inciso e foglia oro. Una ricerca pittorica radicata nella natura toscana, tra Pisa e Lucca.',
+		heroOffer:
+			'Opere originali, ritratti su commissione e pezzi unici realizzati su misura per te: dal bosco alla tua parete.',
 		ctaWorks: 'Esplora le opere',
 		ctaCommission: 'Richiedi una commissione',
 		featuredEyebrow: 'Selezione',
@@ -122,7 +124,7 @@ export const it = {
 		eyebrow: 'Contattami',
 		title: 'Mettiti in contatto',
 		subtitle:
-			'Domande, idee o una commissione in mente: scrivimi pure. Raccontami cosa hai in mente, ti risponderò personalmente.',
+			'Domande, idee o un\'opera su commissione in mente: scrivimi pure. Raccontami cosa immagini: ti risponderò personalmente entro 48 ore con una proposta pensata per te, senza alcun impegno.',
 		form: {
 			name: 'Nome e cognome',
 			namePlaceholder: 'Il tuo nome',
