@@ -1,3 +1,5 @@
+import { hasMarketingConsent } from './consent'
+
 /**
  * Fire a GA4 custom event via window.gtag.
  * Safe to call when gtag is not loaded (e.g. measurement ID not set,
@@ -58,7 +60,7 @@ export function trackLanguageSwitch(targetLocale: string): void {
 
 /**
  * Fire a Meta Pixel standard event via window.fbq.
- * Safe to call when fbq is not loaded/initialized or consent hasn't been
+ * Safe to call when fbq is not loaded/initialized or marketing consent hasn't been
  * granted (e.g. Pixel ID not set, ad blocker, or SSR context) — fails silently.
  */
 export function trackFbEvent(
@@ -67,6 +69,6 @@ export function trackFbEvent(
 ): void {
 	if (typeof window === 'undefined') return
 	if (typeof (window as Window & { fbq?: Function }).fbq !== 'function') return
-	if (localStorage.getItem('vd-cookie-consent') !== 'accepted') return
+	if (!hasMarketingConsent()) return
 	;(window as Window & { fbq: Function }).fbq('track', eventName, params)
 }

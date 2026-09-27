@@ -264,10 +264,17 @@ export const it = {
 
 	// Cookie consent banner
 	cookieConsent: {
-		text: 'Utilizziamo cookie di analisi (Google Analytics) per capire come viene usato il sito. Puoi accettarli o rifiutarli liberamente.',
+		text: 'Con il tuo consenso usiamo Google Analytics, per capire come viene usato il sito, e il Meta Pixel, per misurare i risultati delle nostre attività su Facebook e Instagram. Senza consenso nessuno dei due viene attivato.',
 		learnMore: 'Scopri di più',
 		accept: 'Accetta',
 		reject: 'Rifiuta',
+		customize: 'Personalizza',
+		save: 'Salva preferenze',
+		statisticsLabel: 'Statistiche (Google Analytics)',
+		statisticsDescription: 'Ci aiutano a capire in forma aggregata come viene usato il sito.',
+		marketingLabel: 'Marketing (Meta Pixel)',
+		marketingDescription: 'Misurano i risultati delle nostre attività su Facebook e Instagram.',
+		preferences: 'Preferenze cookie',
 	},
 
 	// Privacy / cookie policy page

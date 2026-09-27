@@ -11,41 +11,72 @@ interface Props {
 			learnMore: string
 			accept: string
 			reject: string
+			customize: string
+			save: string
+			statisticsLabel: string
+			statisticsDescription: string
+			marketingLabel: string
+			marketingDescription: string
 		}
 	}
 }
 
 const { locale, gaId, pixelId, t } = Astro.props
+const c = t.cookieConsent
 const privacyHref = getLocalePath(locale, '/privacy')
+// Accept and Reject share the same style on purpose (equal prominence).
+const choiceButtonStyle = 'padding:10px 20px;font-size:13.5px;font-weight:600;border-radius:999px;border:1px solid #f3ecdc;background:#f3ecdc;color:var(--forest);cursor:pointer'
+const secondaryButtonStyle = 'padding:10px 18px;font-size:13.5px;font-weight:600;border-radius:999px;border:1px solid rgba(255,255,255,.35);background:transparent;color:#f3ecdc;cursor:pointer'
+const categories = [
+	...(gaId ? [{ id: 'analytics', label: c.statisticsLabel, description: c.statisticsDescription }] : []),
+	...(pixelId ? [{ id: 'marketing', label: c.marketingLabel, description: c.marketingDescription }] : []),
+]
 ---
 
 <div
 	id="vd-cookie-banner"
 	data-ga-id={gaId}
 	data-pixel-id={pixelId}
-	style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--forest);border-top:1px solid rgba(255,255,255,.12);padding:16px clamp(18px,4vw,52px);"
+	role="region"
+	aria-label={c.customize}
+	style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--forest);border-top:1px solid rgba(255,255,255,.12);padding:16px clamp(18px,4vw,52px);font-family:'Hanken Grotesk',sans-serif"
 >
 	<div style="max-width:1320px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:14px 24px;justify-content:space-between">
-		<p style="margin:0;flex:1 1 320px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;line-height:1.6;color:#f3ecdc">
-			{t.cookieConsent.text}
+		<p style="margin:0;flex:1 1 320px;font-size:13.5px;line-height:1.6;color:#f3ecdc">
+			{c.text}
 			{' '}
-			<a href={privacyHref} style="color:var(--gold-soft);text-decoration:underline">{t.cookieConsent.learnMore}</a>
+			<a href={privacyHref} style="color:var(--gold-soft);text-decoration:underline">{c.learnMore}</a>
 		</p>
-		<div style="display:flex;gap:10px;flex:none">
-			<button type="button" id="vd-cookie-reject" class="vd-btn-outline" style="border-color:rgba(255,255,255,.3);color:#f3ecdc;padding:10px 18px;font-size:13.5px">
-				{t.cookieConsent.reject}
-			</button>
-			<button type="button" id="vd-cookie-accept" class="vd-btn-primary" style="padding:10px 20px;font-size:13.5px">
-				{t.cookieConsent.accept}
-			</button>
+		<div style="display:flex;flex-wrap:wrap;gap:10px;flex:none">
+			<button type="button" id="vd-cookie-customize" aria-expanded="false" aria-controls="vd-cookie-panel" style={secondaryButtonStyle}>{c.customize}</button>
+			<button type="button" id="vd-cookie-reject" style={choiceButtonStyle}>{c.reject}</button>
+			<button type="button" id="vd-cookie-accept" style={choiceButtonStyle}>{c.accept}</button>
+		</div>
+	</div>
+
+	<!-- Per-category choice: both switches off by default -->
+	<div id="vd-cookie-panel" hidden style="max-width:1320px;margin:14px auto 0;padding-top:14px;border-top:1px solid rgba(255,255,255,.12)">
+		{categories.map((cat) => (
+			<label style="display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:10px 0;color:#f3ecdc;cursor:pointer">
+				<span>
+					<span style="display:block;font-size:14px;font-weight:600">{cat.label}</span>
+					<span style="display:block;font-size:13px;line-height:1.5;color:#cfc8b6;margin-top:2px">{cat.description}</span>
+				</span>
+				<input type="checkbox" role="switch" data-consent-category={cat.id} style="flex:none;width:22px;height:22px;margin-top:2px;accent-color:var(--gold-soft);cursor:pointer" />
+			</label>
+		))}
+		<div style="display:flex;justify-content:flex-end;margin-top:8px">
+			<button type="button" id="vd-cookie-save" style={choiceButtonStyle}>{c.save}</button>
 		</div>
 	</div>
 </div>
 
 <script>
-	const CONSENT_KEY = 'vd-cookie-consent'
+	import { readConsent, writeConsent, type Consent } from '@/lib/consent'
 
 	const banner = document.getElementById('vd-cookie-banner')
+	const panel = document.getElementById('vd-cookie-panel')
+	const customizeBtn = document.getElementById('vd-cookie-customize')
 	const gaId = banner?.dataset.gaId
 	const pixelId = banner?.dataset.pixelId
 
@@ -91,39 +122,98 @@ const privacyHref = getLocalePath(locale, '/privacy')
 		load('https://connect.facebook.net/en_US/fbevents.js', deferLoad)
 	}
 
-	if (banner && (gaId || pixelId)) {
-		const consent = localStorage.getItem(CONSENT_KEY)
+	// First-party cookies set by each service, removed when that category is revoked.
+	const CATEGORY_COOKIES: Record<keyof Consent, (name: string) => boolean> = {
+		analytics: (name) => name === '_ga' || name.startsWith('_ga_'),
+		marketing: (name) => name === '_fbp' || name === '_fbc',
+	}
 
-		if (consent === 'accepted') {
-			if (gaId) enableGa(gaId, true)
-			if (pixelId) enableFbq(pixelId, true)
-		} else if (consent === 'rejected') {
-			if (gaId) disableGa(gaId)
+	function deleteCookies(matches: (name: string) => boolean) {
+		const names = document.cookie.split(';').map((c) => c.split('=')[0].trim()).filter(matches)
+		// GA/Pixel set them on the registrable domain (e.g. .valentinadamiano.it): try every parent domain.
+		const parts = location.hostname.split('.')
+		const domains = ['', ...parts.map((_, i) => parts.slice(i).join('.')).filter((d) => d.includes('.'))]
+		for (const name of names) {
+			for (const domain of domains) {
+				document.cookie = `${name}=; Max-Age=0; path=/${domain ? `; domain=${domain}` : ''}`
+			}
+		}
+	}
+
+	function setPanelOpen(open: boolean) {
+		if (!panel || !customizeBtn) return
+		panel.hidden = !open
+		customizeBtn.setAttribute('aria-expanded', String(open))
+	}
+
+	function openPreferences() {
+		if (!banner) return
+		const current = readConsent() ?? { analytics: false, marketing: false }
+		document.querySelectorAll<HTMLInputElement>('[data-consent-category]').forEach((input) => {
+			input.checked = current[input.dataset.consentCategory as keyof Consent] === true
+		})
+		setPanelOpen(true)
+		banner.style.display = 'block'
+	}
+
+	// Apply a new choice. Newly granted categories load right away (page_view / PageView for THIS page);
+	// a revoked category deletes its first-party cookies and reloads, so no library stays in memory.
+	function saveConsent(next: Consent) {
+		const previous = readConsent() ?? { analytics: false, marketing: false }
+		writeConsent(next)
+		const revoked = (Object.keys(next) as (keyof Consent)[]).filter((k) => previous[k] && !next[k])
+		if (revoked.length > 0) {
+			revoked.forEach((category) => deleteCookies(CATEGORY_COOKIES[category]))
+			location.reload()
+			return
+		}
+		if (gaId && next.analytics && !previous.analytics) enableGa(gaId, false)
+		if (pixelId && next.marketing && !previous.marketing) enableFbq(pixelId, false)
+		if (banner) banner.style.display = 'none'
+		setPanelOpen(false)
+	}
+
+	if (banner && (gaId || pixelId)) {
+		const consent = readConsent()
+
+		if (consent) {
+			// Returning visitor: same behaviour as before, now per category.
+			if (gaId) {
+				if (consent.analytics) enableGa(gaId, true)
+				else disableGa(gaId)
+			}
+			if (pixelId && consent.marketing) enableFbq(pixelId, true)
 		} else {
 			if (gaId) disableGa(gaId)
 			banner.style.display = 'block'
 		}
 
 		document.getElementById('vd-cookie-accept')?.addEventListener('click', () => {
-			localStorage.setItem(CONSENT_KEY, 'accepted')
-			if (gaId) enableGa(gaId, false)
-			if (pixelId) enableFbq(pixelId, false)
-			banner.style.display = 'none'
+			saveConsent({ analytics: true, marketing: true })
 		})
 
 		document.getElementById('vd-cookie-reject')?.addEventListener('click', () => {
-			localStorage.setItem(CONSENT_KEY, 'rejected')
-			if (gaId) disableGa(gaId)
-			banner.style.display = 'none'
+			saveConsent({ analytics: false, marketing: false })
+		})
+
+		customizeBtn?.addEventListener('click', () => {
+			if (panel?.hidden) openPreferences()
+			else setPanelOpen(false)
+		})
+
+		document.getElementById('vd-cookie-save')?.addEventListener('click', () => {
+			const checked = (category: keyof Consent) =>
+				document.querySelector<HTMLInputElement>(`[data-consent-category="${category}"]`)?.checked === true
+			saveConsent({ analytics: checked('analytics'), marketing: checked('marketing') })
 		})
 	}
 
-	// Re-shown by the "manage cookie preferences" control on the privacy page.
+	// "Cookie preferences" in the footer and "manage preferences" on the privacy page reopen the panel
+	// with the current choice; revocation happens when the visitor saves.
 	document.querySelectorAll('[data-manage-cookie-consent]').forEach((el) => {
-		el.addEventListener('click', () => {
-			localStorage.removeItem(CONSENT_KEY)
-			if (gaId) disableGa(gaId)
-			if (banner) banner.style.display = 'block'
+		el.addEventListener('click', (event) => {
+			event.preventDefault()
+			openPreferences()
 		})
 	})
 </script>

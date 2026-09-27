@@ -260,6 +260,11 @@ const pageTitle = `${title} — Vale Creative`
 						<a href={p('/privacy')} style="font-size:14px;color:#cfc8b6;text-decoration:none;transition:color .2s" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#cfc8b6'">
 							{t.nav.privacy}
 						</a>
+						{(gaId || metaPixelId) && (
+							<button type="button" data-manage-cookie-consent style="font:inherit;font-size:14px;color:#cfc8b6;background:none;border:0;padding:0;cursor:pointer;transition:color .2s" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#cfc8b6'">
+								{t.cookieConsent.preferences}
+							</button>
+						)}
 					</nav>
 				</div>
 				<div style="display:flex;align-items:center;gap:16px;margin:34px 0 0;padding-top:20px;border-top:1px solid rgba(255,255,255,.12)">
