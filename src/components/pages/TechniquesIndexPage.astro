@@ -21,7 +21,7 @@ const groupedByCategory = CATEGORY_ORDER.map((category) => ({
 	items: techniques.filter((tech) => tech.category === category),
 })).filter((group) => group.items.length > 0)
 
-const pageTitle = locale === 'it' ? 'Tecniche pittoriche' : 'Painting Techniques'
+const pageTitle = locale === 'it' ? 'Tecniche di pittura, incisione e artigianato' : 'Painting, printmaking and craft techniques'
 ---
 
 <BaseLayout title={pageTitle} lang={locale} description={t.meta.techniquesDescription}>

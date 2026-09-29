@@ -235,7 +235,7 @@ export const en = {
 		homeDescription: 'Artist and painter based between Pisa and Lucca: oil paintings, commissioned portraits and prints, plus personalised handmade gifts.',
 		worksDescription: 'Original and commissioned works: landscapes, portraits, animals, drawings, prints and personalised handmade gifts.',
 		seriesDescription: 'Thematic series by Valentina Damiano: collections of paintings united by subject, technique, or creative period. Forests, landscapes, and dreamlike visions.',
-		techniquesDescription: 'Artistic techniques by Valentina Damiano: oil glazing, copper engraving, gold-leaf gilding, watercolour, and creative craft.',
+		techniquesDescription: 'Oil and watercolour painting, drawing, printmaking, wood pyrography and copper repoussé: techniques for original works and personalised commissions.',
 		processDescription: 'How a commissioned artwork by Valentina Damiano comes to life: listening, sketch, painting and delivery. Bespoke portraits, murals and pyrography from Pisa and Lucca, Tuscany.',
 		aboutDescription: 'Painter, engraver and art teacher trained at the Istituto Russoli and the Accademia di Belle Arti di Firenze. Discover Valentina Damiano\'s artistic journey in Pisa and Lucca, Tuscany.',
 		contactDescription: 'Get in touch with Valentina Damiano for questions, commissioned artworks, personalised objects or tailored art courses. Studio in Pisa and Lucca, Tuscany.',

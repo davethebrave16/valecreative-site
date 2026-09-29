@@ -236,7 +236,7 @@ export const it = {
 		homeDescription: 'Artista e pittrice tra Pisa e Lucca: quadri a olio, ritratti su commissione e incisioni. Realizza anche oggetti personalizzati fatti a mano.',
 		worksDescription: 'Opere originali e su commissione: paesaggi, ritratti, animali, disegni, incisioni e oggetti personalizzati fatti a mano.',
 		seriesDescription: 'Le serie tematiche di Valentina Damiano: raccolte di dipinti unite da soggetto, tecnica o periodo creativo. Boschi, paesaggi e visioni oniriche.',
-		techniquesDescription: 'Le tecniche artistiche di Valentina Damiano: pittura a olio con velature, incisione su rame, doratura a foglia oro, acquerello e artigianato creativo.',
+		techniquesDescription: 'Pittura a olio e acquerello, disegno, incisione, pirografia su legno e sbalzo su rame: le tecniche per opere originali e oggetti personalizzati su commissione.',
 		processDescription: 'Come nasce un\'opera su commissione di Valentina Damiano: ascolto, bozzetto, realizzazione e consegna. Ritratti, opere murali e pirografie su misura, tra Pisa e Lucca.',
 		aboutDescription: 'Pittrice, incisore e insegnante d\'arte formata all\'Istituto Russoli e all\'Accademia di Belle Arti di Firenze. Scopri il percorso artistico di Valentina Damiano a Pisa e Lucca.',
 		contactDescription: 'Mettiti in contatto con Valentina Damiano per domande, opere su commissione, oggetti personalizzati o corsi d\'arte su misura. Studio a Pisa e Lucca.',
