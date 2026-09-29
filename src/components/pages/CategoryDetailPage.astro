@@ -39,9 +39,10 @@ const heroBgStyle = heroBgImages
 	? `--vd-bg-sm:url('${heroBgImages.small}');--vd-bg-lg:url('${heroBgImages.large}')`
 	: 'background:radial-gradient(130% 120% at 30% 14%,#d9b25e 0%,#6b4f37 44%,#243029 100%)'
 
-const pageDescription = locale === 'it'
+const fallbackDescription = locale === 'it'
 	? `${category.name} — ${artworks.length} opere di Valentina Damiano.`
 	: `${category.name} — ${artworks.length} artworks by Valentina Damiano.`
+const pageDescription = category.description ?? fallbackDescription
 
 const pageUrl = `${SITE}${p(`/works/category/${category.slug}`)}`
 const heroImageUrl = heroArtwork?.coverImage?.original
@@ -94,6 +95,9 @@ const heroImageUrl = heroArtwork?.coverImage?.original
 			<div class="container" style="position:relative;padding-block:clamp(46px,7vw,110px)">
 				<a href={p('/works')} data-back-link style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.85);display:inline-block;margin-bottom:16px">{t.works.backLink}</a>
 				<h1 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(38px,6vw,76px);margin:0;color:#fff">{category.name}</h1>
+				{category.description && (
+					<p style="max-width:54ch;margin:14px 0 0;font-size:clamp(16px,1.7vw,19px);line-height:1.6;color:#ece5d6">{category.description}</p>
+				)}
 			</div>
 		</div>
 

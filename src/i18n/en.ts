@@ -41,7 +41,7 @@ export const en = {
 	works: {
 		eyebrow: 'Gallery',
 		title: 'Works',
-		subtitle: 'Paintings on canvas and board, various formats and orientations.',
+		subtitle: 'Paintings, drawings, prints and personalised objects, original and made to order.',
 		filterPersonal: 'Personal',
 		filterCommissioned: 'Commissioned',
 		countLabel: (n: number) => `${n} works`,
@@ -232,8 +232,8 @@ export const en = {
 
 	// Per-page SEO meta descriptions
 	meta: {
-		homeDescription: 'Painter and engraver in Pisa and Lucca, Tuscany: dreamlike landscapes, commissioned portraits, murals and personalised objects. Series and art courses.',
-		worksDescription: 'Gallery of original paintings by Valentina Damiano: oil on canvas, mixed media, watercolour and engraving. Available for purchase, commission, and organised in thematic series.',
+		homeDescription: 'Artist and painter based between Pisa and Lucca: oil paintings, commissioned portraits and prints, plus personalised handmade gifts.',
+		worksDescription: 'Original and commissioned works: landscapes, portraits, animals, drawings, prints and personalised handmade gifts.',
 		seriesDescription: 'Thematic series by Valentina Damiano: collections of paintings united by subject, technique, or creative period. Forests, landscapes, and dreamlike visions.',
 		techniquesDescription: 'Artistic techniques by Valentina Damiano: oil glazing, copper engraving, gold-leaf gilding, watercolour, and creative craft.',
 		processDescription: 'How a commissioned artwork by Valentina Damiano comes to life: listening, sketch, painting and delivery. Bespoke portraits, murals and pyrography from Pisa and Lucca, Tuscany.',

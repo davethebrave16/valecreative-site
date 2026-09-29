@@ -42,7 +42,7 @@ export const it = {
 		eyebrow: 'Galleria',
 		title: 'Opere',
 		subtitle:
-			'Dipinti su tela e tavola di formati e orientamenti diversi.',
+			'Dipinti, disegni, incisioni e oggetti personalizzati, originali e su commissione.',
 		filterPersonal: 'Personali',
 		filterCommissioned: 'Commissionate',
 		countLabel: (n: number) => `${n} opere`,
@@ -233,8 +233,8 @@ export const it = {
 
 	// Per-page SEO meta descriptions
 	meta: {
-		homeDescription: 'Pittrice e incisore tra Pisa e Lucca: paesaggi onirici a velature, ritratti, murali e oggetti personalizzati su commissione. Serie tematiche e corsi d\'arte.',
-		worksDescription: 'Galleria di dipinti originali di Valentina Damiano: olio su tela, tecnica mista, acquerello e incisione. Opere disponibili all\'acquisto, su commissione e in serie tematiche.',
+		homeDescription: 'Artista e pittrice tra Pisa e Lucca: quadri a olio, ritratti su commissione e incisioni. Realizza anche oggetti personalizzati fatti a mano.',
+		worksDescription: 'Opere originali e su commissione: paesaggi, ritratti, animali, disegni, incisioni e oggetti personalizzati fatti a mano.',
 		seriesDescription: 'Le serie tematiche di Valentina Damiano: raccolte di dipinti unite da soggetto, tecnica o periodo creativo. Boschi, paesaggi e visioni oniriche.',
 		techniquesDescription: 'Le tecniche artistiche di Valentina Damiano: pittura a olio con velature, incisione su rame, doratura a foglia oro, acquerello e artigianato creativo.',
 		processDescription: 'Come nasce un\'opera su commissione di Valentina Damiano: ascolto, bozzetto, realizzazione e consegna. Ritratti, opere murali e pirografie su misura, tra Pisa e Lucca.',

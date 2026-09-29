@@ -3,6 +3,7 @@ import { getLocalePath } from '@/i18n/utils'
 import type { Artwork } from '@/lib/types'
 import RemoteImage from '@/components/RemoteImage.astro'
 import { gridImageProps } from '@/lib/remoteImage'
+import { looksLikeFilename } from '@/lib/altText'
 
 interface Props {
 	locale: string
@@ -44,7 +45,7 @@ function availabilityColor(availability: string) {
 		return (
 			<a href={p(`/works/${artwork.slug}`)} class="vd-cell" style={cellGridStyle(orient)}>
 				{cover ? (
-					<RemoteImage image={cover} alt={cover.alt ?? artwork.title} {...gridImageProps(orient)} class="vd-img" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" />
+					<RemoteImage image={cover} alt={looksLikeFilename(cover.alt) ? artwork.title : (cover.alt ?? artwork.title)} {...gridImageProps(orient)} class="vd-img" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" />
 				) : (
 					<div class="vd-img" style="position:absolute;inset:0;background:linear-gradient(155deg,#33473b 0%,#5d6b4d 40%,#b68a3c 100%)"></div>
 				)}

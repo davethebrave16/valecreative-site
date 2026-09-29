@@ -4,6 +4,7 @@ import RemoteImage from '@/components/RemoteImage.astro'
 import { gridImageProps, getRemoteBackground, getOgImage } from '@/lib/remoteImage'
 import { getArtworks, getCategories } from '@/lib/fetchContent'
 import { useTranslations, getLocalePath, type Locale } from '@/i18n/utils'
+import { looksLikeFilename } from '@/lib/altText'
 import type { Series } from '@/lib/types'
 
 interface Props {
@@ -110,7 +111,7 @@ const fallbackDescription = locale === 'it'
 								{cover ? (
 									<RemoteImage
 										image={cover}
-										alt={cover.alt ?? artwork.title}
+										alt={looksLikeFilename(cover.alt) ? artwork.title : (cover.alt ?? artwork.title)}
 										{...gridImageProps(orient)}
 										class="vd-img"
 										style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"

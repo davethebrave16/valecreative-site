@@ -4,6 +4,7 @@ import RemoteImage from '@/components/RemoteImage.astro'
 import { IMAGE_SIZES, IMAGE_ASPECTS, getOgImage } from '@/lib/remoteImage'
 import { getContentBySlug, getArtworks } from '@/lib/fetchContent'
 import { useTranslations, getLocalePath, type Locale } from '@/i18n/utils'
+import { looksLikeFilename } from '@/lib/altText'
 
 interface Props {
 	locale: string
@@ -65,7 +66,7 @@ const firenze = locale === 'it' ? 'Firenze' : 'Florence'
 						{content?.image?.original ? (
 							<RemoteImage
 								image={content.image}
-								alt={content.image.alt ?? 'Valentina Damiano'}
+								alt={looksLikeFilename(content.image.alt) ? 'Valentina Damiano' : (content.image.alt ?? 'Valentina Damiano')}
 								sizes={IMAGE_SIZES.twoColumn}
 								aspect={IMAGE_ASPECTS.portrait}
 								priority
@@ -143,7 +144,7 @@ const firenze = locale === 'it' ? 'Firenze' : 'Florence'
 										{cover ? (
 											<RemoteImage
 												image={cover}
-												alt={cover.alt ?? artwork.title}
+												alt={looksLikeFilename(cover.alt) ? artwork.title : (cover.alt ?? artwork.title)}
 												sizes={IMAGE_SIZES.aboutThumb}
 												aspect={IMAGE_ASPECTS.portrait}
 												style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"

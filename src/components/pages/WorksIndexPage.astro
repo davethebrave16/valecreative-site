@@ -4,6 +4,7 @@ import RemoteImage from '@/components/RemoteImage.astro'
 import { IMAGE_SIZES, IMAGE_ASPECTS } from '@/lib/remoteImage'
 import { getArtworks, getCategories } from '@/lib/fetchContent'
 import { useTranslations, getLocalePath, type Locale } from '@/i18n/utils'
+import { looksLikeFilename } from '@/lib/altText'
 
 interface Props {
 	locale: string
@@ -43,7 +44,7 @@ const GRADS = [
 	'radial-gradient(120% 120% at 40% 82%,#b68a3c 0%,#5a4632 42%,#232e26 100%)',
 ]
 
-const pageTitle = locale === 'it' ? 'Opere — Galleria di Pittura' : 'Works — Painting Gallery'
+const pageTitle = locale === 'it' ? 'Dipinti, ritratti e oggetti personalizzati' : 'Paintings, portraits and personalised gifts'
 ---
 
 <BaseLayout title={pageTitle} lang={locale} description={t.meta.worksDescription}>
@@ -67,7 +68,7 @@ const pageTitle = locale === 'it' ? 'Opere — Galleria di Pittura' : 'Works —
 								onmouseout="this.style.borderColor='var(--line)'"
 							>
 								{cover ? (
-									<RemoteImage image={cover} alt={cover.alt ?? cat.name} sizes={IMAGE_SIZES.cards} aspect={IMAGE_ASPECTS.card} style="width:100%;height:210px;object-fit:cover;display:block" />
+									<RemoteImage image={cover} alt={looksLikeFilename(cover.alt) ? cat.name : (cover.alt ?? cat.name)} sizes={IMAGE_SIZES.cards} aspect={IMAGE_ASPECTS.card} style="width:100%;height:210px;object-fit:cover;display:block" />
 								) : (
 									<div style={`height:210px;background:${GRADS[i % GRADS.length]}`}></div>
 								)}

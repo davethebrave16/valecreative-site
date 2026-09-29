@@ -51,6 +51,8 @@ export interface Category {
 	name: string
 	nameEn?: string
 	slug: string
+	description?: string
+	descriptionEn?: string
 	featuredArtworkId?: string
 }
 

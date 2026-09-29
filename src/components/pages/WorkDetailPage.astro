@@ -6,6 +6,7 @@ import ImageLightbox from '@/components/ImageLightbox.astro'
 import ArtworkCTA from '@/components/ArtworkCTA.astro'
 import { getArtworkGallery, getCategories, getPublishedSeries, getTechniques } from '@/lib/fetchContent'
 import { useTranslations, getLocalePath, type Locale } from '@/i18n/utils'
+import { resolveAlt } from '@/lib/altText'
 import type { Artwork } from '@/lib/types'
 
 interface Props {
@@ -49,12 +50,12 @@ const lightboxItems = [
 	...(artwork.coverImage?.original
 		? [{
 			src: await getLightboxSrc(artwork.coverImage),
-			alt: artwork.coverImage.alt ?? artwork.title,
+			alt: resolveAlt(artwork.coverImage.alt, artwork.title, techniqueName),
 		}]
 		: []),
 	...(await Promise.all(gallery.map(async (img) => ({
 		src: await getLightboxSrc(img),
-		alt: img.alt ?? artwork.title,
+		alt: resolveAlt(img.alt, artwork.title, techniqueName),
 		caption: img.caption,
 	})))),
 ]
@@ -125,7 +126,7 @@ const ogImage = await getOgImage(artwork.coverImage)
 						>
 							<RemoteImage
 								image={artwork.coverImage}
-								alt={artwork.coverImage.alt ?? artwork.title}
+								alt={resolveAlt(artwork.coverImage.alt, artwork.title, techniqueName)}
 								sizes={IMAGE_SIZES.workMain}
 								priority
 								style="width:100%;height:100%;object-fit:contain"
@@ -213,7 +214,7 @@ const ogImage = await getOgImage(artwork.coverImage)
 								>
 									<RemoteImage
 										image={img}
-										alt={img.alt ?? ''}
+										alt={resolveAlt(img.alt, artwork.title, techniqueName)}
 										sizes={IMAGE_SIZES.cards}
 										aspect={IMAGE_ASPECTS.galleryCard}
 										style="width:100%;aspect-ratio:4/3;object-fit:cover;display:block"
