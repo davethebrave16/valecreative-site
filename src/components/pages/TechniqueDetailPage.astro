@@ -5,6 +5,7 @@ import { gridImageProps, getOgImage } from '@/lib/remoteImage'
 import { getArtworks } from '@/lib/fetchContent'
 import { useTranslations, getLocalePath, type Locale } from '@/i18n/utils'
 import { looksLikeFilename } from '@/lib/altText'
+import { truncateMetaDescription } from '@/lib/metaDescription'
 import type { Technique } from '@/lib/types'
 
 interface Props {
@@ -39,12 +40,13 @@ function cellGridStyle(orient: string) {
 const fallbackDescription = locale === 'it'
 	? `${technique.name} — tecnica artistica di Valentina Damiano`
 	: `${technique.name} — artistic technique by Valentina Damiano`
+const metaDescription = truncateMetaDescription(technique.description ?? fallbackDescription)
 ---
 
 <BaseLayout
 	title={technique.name}
 	lang={locale}
-	description={technique.description ?? fallbackDescription}
+	description={metaDescription}
 	ogImage={ogImage?.url}
 	ogImageWidth={ogImage?.width}
 	ogImageHeight={ogImage?.height}

@@ -5,6 +5,7 @@ import CategoryArtworkGrid from '@/components/CategoryArtworkGrid.astro'
 import { getArtworks } from '@/lib/fetchContent'
 import { useTranslations, getLocalePath, type Locale } from '@/i18n/utils'
 import { sortByPosition } from '@/lib/utils'
+import { truncateMetaDescription } from '@/lib/metaDescription'
 import type { Category } from '@/lib/types'
 
 interface Props {
@@ -43,6 +44,7 @@ const fallbackDescription = locale === 'it'
 	? `${category.name} — ${artworks.length} opere di Valentina Damiano.`
 	: `${category.name} — ${artworks.length} artworks by Valentina Damiano.`
 const pageDescription = category.description ?? fallbackDescription
+const metaDescription = truncateMetaDescription(pageDescription)
 
 const pageUrl = `${SITE}${p(`/works/category/${category.slug}`)}`
 const heroImageUrl = heroArtwork?.coverImage?.original
@@ -51,7 +53,7 @@ const heroImageUrl = heroArtwork?.coverImage?.original
 <BaseLayout
 	title={category.name}
 	lang={locale}
-	description={pageDescription}
+	description={metaDescription}
 	ogImage={ogImage?.url}
 	ogImageWidth={ogImage?.width}
 	ogImageHeight={ogImage?.height}
