@@ -224,6 +224,16 @@ export const en = {
 		recaptchaUnavailable: 'The security check could not be loaded (it may be blocked by an ad blocker). Disable it for this site and try again, or email me directly at studio@valentinadamiano.it.',
 	},
 
+	// Alternative contact channels (below the commissions form)
+	contactAlternatives: {
+		hint: 'Prefer Facebook, Instagram or email?',
+		hintLink: 'Find them below ↓',
+		title: 'Prefer to reach me another way?',
+		text: 'Send me a message on Facebook or Instagram, or drop me an email — I reply personally.',
+		facebook: 'Message me on Facebook',
+		instagram: 'Message me on Instagram',
+	},
+
 	// Footer
 	footer: {
 		tagline: 'Art · Creation · Personalisation',

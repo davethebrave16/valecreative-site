@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro'
 import CommissionRequestForm from '@/components/CommissionRequestForm'
+import ContactAlternatives from '@/components/ContactAlternatives.astro'
 import { useTranslations, getLocalePath } from '@/i18n/utils'
 
 interface Props {
@@ -29,11 +30,54 @@ const pageTitle = locale === 'it' ? 'Contattami — Valentina Damiano' : 'Contac
 				</p>
 			</div>
 
-			<!-- Form -->
-			<CommissionRequestForm
-				client:visible
-				labels={t.commissions}
-			/>
+			<p class="vd-contact-hint">
+				{t.contactAlternatives.hint}{' '}
+				<a href="#alt-contact">{t.contactAlternatives.hintLink}</a>
+			</p>
+
+			<div class="vd-contact-layout">
+				<!-- Form -->
+				<div>
+					<CommissionRequestForm
+						client:visible
+						labels={t.commissions}
+					/>
+				</div>
+
+				<aside class="vd-contact-aside">
+					<ContactAlternatives locale={locale} />
+				</aside>
+			</div>
 		</div>
 	</section>
 </BaseLayout>
+
+<style>
+	.vd-contact-hint {
+		margin: 0 0 20px;
+		font-size: 14.5px;
+		line-height: 1.6;
+		color: #52564c;
+	}
+	.vd-contact-hint a {
+		font-weight: 600;
+		color: var(--verde);
+		white-space: nowrap;
+	}
+	.vd-contact-layout {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+	}
+	@media (min-width: 900px) {
+		.vd-contact-hint { display: none; }
+		.vd-contact-layout {
+			grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+			gap: clamp(32px, 4vw, 64px);
+			align-items: start;
+		}
+		.vd-contact-aside {
+			position: sticky;
+			top: 96px; /* sticky header (~75px) + gap */
+		}
+	}
+</style>

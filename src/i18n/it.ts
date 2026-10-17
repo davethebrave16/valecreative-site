@@ -225,6 +225,16 @@ export const it = {
 		recaptchaUnavailable: 'Non è stato possibile caricare la verifica di sicurezza (potrebbe essere bloccata da un ad-blocker). Disattivalo per questo sito e riprova, oppure scrivimi direttamente a studio@valentinadamiano.it.',
 	},
 
+	// Alternative contact channels (below the commissions form)
+	contactAlternatives: {
+		hint: 'Preferisci scrivermi su Facebook, Instagram o via mail?',
+		hintLink: 'Trovi i contatti qui sotto ↓',
+		title: 'Preferisci scrivermi in un altro modo?',
+		text: 'Puoi mandarmi un messaggio su Facebook o Instagram, oppure scrivermi una mail: ti rispondo personalmente.',
+		facebook: 'Scrivimi su Facebook',
+		instagram: 'Scrivimi su Instagram',
+	},
+
 	// Footer
 	footer: {
 		tagline: 'Arte · Creazione · Personalizzazione',

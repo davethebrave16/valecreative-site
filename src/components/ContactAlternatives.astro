@@ -1,0 +1,112 @@
+---
+import { useTranslations } from '@/i18n/utils'
+
+interface Props {
+	locale: string
+}
+
+// Handles taken from the footer links in BaseLayout.astro (instagram.com/vale_creat1ve, facebook.com/universeofmine).
+const FACEBOOK_HANDLE = 'universeofmine'
+const INSTAGRAM_USERNAME = 'vale_creat1ve'
+const CONTACT_EMAIL = 'info@valentinadamiano.it'
+
+const { locale } = Astro.props
+const c = useTranslations(locale).contactAlternatives
+
+const channels = [
+	{ channel: 'facebook', href: `https://m.me/${FACEBOOK_HANDLE}`, label: c.facebook, isExternal: true, icon: 'M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z' },
+	{ channel: 'instagram', href: `https://ig.me/m/${INSTAGRAM_USERNAME}`, label: c.instagram, isExternal: true, icon: 'M12 0C8.74 0 8.333.014 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.014 8.333 0 8.74 0 12s.014 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.986 8.74 24 12 24s3.667-.014 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.014-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.014 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678c-3.405 0-6.162 2.76-6.162 6.162 0 3.405 2.76 6.162 6.162 6.162 3.405 0 6.162-2.76 6.162-6.162 0-3.405-2.76-6.162-6.162-6.162zM12 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm7.846-10.405c0 .795-.646 1.44-1.44 1.44-.795 0-1.44-.646-1.44-1.44 0-.795.646-1.439 1.44-1.439.793-.001 1.44.644 1.44 1.439z' },
+	{ channel: 'email', href: `mailto:${CONTACT_EMAIL}`, label: CONTACT_EMAIL, isExternal: false, icon: '' },
+]
+---
+
+<section id="alt-contact" class="vd-contact-alt" aria-labelledby="contact-alt-title">
+	<h2 id="contact-alt-title" class="vd-contact-alt-title">{c.title}</h2>
+	<p class="vd-contact-alt-text">{c.text}</p>
+	<ul class="vd-contact-alt-list">
+		{channels.map((ch) => (
+			<li>
+				<a
+					class="vd-btn-outline vd-contact-alt-btn"
+					href={ch.href}
+					data-contact-alt={ch.channel}
+					{...(ch.isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+				>
+					{ch.icon ? (
+						<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d={ch.icon} /></svg>
+					) : (
+						<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-10 6L2 7" /></svg>
+					)}
+					<span>{ch.label}</span>
+				</a>
+			</li>
+		))}
+	</ul>
+</section>
+
+<style>
+	.vd-contact-alt {
+		margin-top: clamp(40px, 5vw, 64px);
+		padding-top: clamp(28px, 4vw, 40px);
+		border-top: 1px solid var(--line);
+		/* sticky header (~75px) + breathing room, for the #alt-contact anchor */
+		scroll-margin-top: 96px;
+	}
+	.vd-contact-alt-title {
+		font-family: 'Cormorant Garamond', serif;
+		font-weight: 600;
+		font-size: clamp(24px, 3.2vw, 32px);
+		margin: 0;
+		color: var(--ink);
+	}
+	.vd-contact-alt-text {
+		max-width: 52ch;
+		margin: 10px 0 20px;
+		font-size: 15.5px;
+		line-height: 1.65;
+		color: #52564c;
+	}
+	.vd-contact-alt-list {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 12px;
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+	.vd-contact-alt-btn {
+		min-height: 48px;
+		gap: 10px;
+		max-width: 100%;
+		overflow-wrap: anywhere;
+	}
+	@media (min-width: 900px) {
+		.vd-contact-alt {
+			margin-top: 0;
+			padding-top: 0;
+			border-top: none;
+		}
+		.vd-contact-alt-list {
+			flex-direction: column;
+			align-items: stretch;
+		}
+		.vd-contact-alt-btn {
+			width: 100%;
+			box-sizing: border-box;
+		}
+	}
+	.vd-contact-alt-btn:focus-visible {
+		outline: 3px solid var(--verde);
+		outline-offset: 3px;
+		border-color: var(--ink);
+	}
+</style>
+
+<script>
+	document.querySelectorAll<HTMLAnchorElement>('[data-contact-alt]').forEach((el) => {
+		el.addEventListener('click', () => {
+			const gtag = (window as Window & { gtag?: (...args: unknown[]) => void }).gtag
+			if (typeof gtag === 'function') gtag('event', 'contact_alt_click', { channel: el.dataset.contactAlt })
+		})
+	})
+</script>
