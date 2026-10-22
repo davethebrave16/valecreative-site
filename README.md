@@ -53,6 +53,16 @@ Builds the static site, then asks for confirmation before deploying to Firebase 
 - **`repository_dispatch`** with type `publish-site` — fired externally (e.g. from the backoffice after a content publish)
 - **`workflow_dispatch`** — manual run from the GitHub Actions UI
 
+The `firebase-tools` version used by the deploy step is pinned to `15.34.0` (`firebaseToolsVersion` in the workflow). From `15.34.1` the CLI queries the Service Usage API before deploying, and the deploy service account lacks `serviceusage.services.get` (CI fails with `403 Permission denied to get service [firebasehosting.googleapis.com]`). To unpin/upgrade, first grant the role:
+
+```bash
+gcloud projects add-iam-policy-binding <project-id> \
+  --member="serviceAccount:<client_email>" \
+  --role="roles/serviceusage.serviceUsageViewer"
+```
+
+(`<client_email>` is the one in the `FIREBASE_SERVICE_ACCOUNT` secret's JSON.)
+
 Required GitHub repository secrets:
 
 | Secret | Where to find it |
