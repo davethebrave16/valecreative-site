@@ -41,6 +41,8 @@ const pageTitle = locale === 'it' ? 'Contattami — Valentina Damiano' : 'Contac
 					<CommissionRequestForm
 						client:visible
 						labels={t.commissions}
+						locale={locale}
+						privacyHref={p('/privacy')}
 					/>
 				</div>
 

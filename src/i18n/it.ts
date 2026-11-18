@@ -215,14 +215,25 @@ export const it = {
 			submitting: 'Invio…',
 			requiredError: 'Questo campo è obbligatorio.',
 			emailInvalidError: 'Inserisci un indirizzo email valido.',
+			phone: 'Telefono o WhatsApp (facoltativo)',
+			phonePlaceholder: '+39 333 123 4567',
+			phoneHelp: 'Solo se preferisci essere ricontattato così',
+			phoneInvalidError: 'Inserisci un numero valido (6-20 cifre, con eventuale prefisso internazionale), oppure lascia il campo vuoto.',
+			privacyNoticeLead: 'Uso i dati che inserisci solo per risponderti. Maggiori informazioni nell\'',
+			privacyNoticeLink: 'informativa privacy',
 		},
 		success: {
 			title: 'Grazie!',
-			message: 'Ho ricevuto la tua richiesta. Ti risponderò al più presto con i dettagli.',
+			message: 'Ho ricevuto la tua richiesta e ti risponderò all\'indirizzo email che mi hai lasciato, entro 48 ore e senza alcun impegno. Se non vedi la mia risposta, dai un\'occhiata anche nella cartella spam, oppure scrivimi a info@valentinadamiano.it.',
+			messageWithPhone: 'Ho ricevuto la tua richiesta e ti risponderò via email o, se preferisci, ti contatterò al numero che mi hai lasciato, entro 48 ore e senza alcun impegno. Se non vedi la mia risposta, controlla anche la cartella spam, oppure scrivimi a info@valentinadamiano.it.',
 			again: 'Invia un\'altra richiesta',
 		},
 		error: 'Qualcosa è andato storto. Riprova.',
-		recaptchaUnavailable: 'Non è stato possibile caricare la verifica di sicurezza (potrebbe essere bloccata da un ad-blocker). Disattivalo per questo sito e riprova, oppure scrivimi direttamente a studio@valentinadamiano.it.',
+		recaptchaUnavailable: 'Non è stato possibile caricare la verifica di sicurezza (potrebbe essere bloccata da un ad-blocker). Disattivalo per questo sito e riprova, oppure scrivimi direttamente a info@valentinadamiano.it.',
+		errors: {
+			recaptchaFailed: 'Verifica di sicurezza non superata. Ricarica la pagina e riprova, oppure scrivimi a info@valentinadamiano.it.',
+			invalid: 'Controlla i dati inseriti e riprova.',
+		},
 	},
 
 	// Alternative contact channels (below the commissions form)
@@ -300,7 +311,7 @@ export const it = {
 			purposesTitle: 'Finalità e base giuridica del trattamento',
 			purposesIntro: 'I dati raccolti tramite questo sito sono trattati per le finalità e sulla base giuridica indicate di seguito, distinte per tipo di dato.',
 			purposeFormsLabel: 'Dati inseriti nei moduli (contatto e richiesta commissione)',
-			purposeFormsBody: 'Finalità: rispondere alla richiesta dell\'utente ed eventualmente gestire la commissione richiesta. Base giuridica: esecuzione di misure precontrattuali richieste dall\'interessato (art. 6.1.b GDPR), attivata con l\'invio volontario del modulo.',
+			purposeFormsBody: 'Finalità: rispondere alla richiesta dell\'utente ed eventualmente gestire la commissione richiesta. Nel modulo di richiesta commissione, oltre a nome ed email, puoi indicare facoltativamente un numero di telefono o WhatsApp: se lo fai, lo utilizzo solo per rispondere alla tua richiesta, se preferisci essere ricontattato in questo modo. Fornire il numero è facoltativo e non incide sulla possibilità di inviare la richiesta. Base giuridica: esecuzione di misure precontrattuali richieste dall\'interessato (art. 6.1.b GDPR), attivata con l\'invio volontario del modulo; per il numero di telefono, la scelta di indicarlo costituisce una tua richiesta esplicita di essere ricontattato su quel canale.',
 			purposeAnalyticsLabel: 'Dati di navigazione aggregati (Google Analytics 4)',
 			purposeAnalyticsBody: 'Finalità: capire in forma aggregata come viene utilizzato il sito, per migliorarlo. Base giuridica: consenso dell\'utente (art. 6.1.a GDPR), raccolto tramite il banner cookie e revocabile in qualsiasi momento senza pregiudicare la liceità del trattamento già effettuato.',
 			purposeRecaptchaLabel: 'Dati tecnici (Google reCAPTCHA v3)',
@@ -334,6 +345,9 @@ export const it = {
 			retentionFormsBody: 'I dati inviati tramite i moduli del sito sono conservati per il tempo necessario a gestire la richiesta e l\'eventuale rapporto con il cliente che ne deriva. Non è previsto un termine di cancellazione automatica: i dati sono soggetti a riesame periodico e vengono cancellati su richiesta dell\'interessato o comunque quando non sono più necessari alle finalità per cui sono stati raccolti, salvo obblighi di conservazione più lunghi previsti dalla legge.',
 			retentionAnalyticsLabel: 'Dati di Google Analytics',
 			retentionAnalyticsBody: 'I dati a livello di utente e di evento raccolti tramite Google Analytics 4 sono conservati per 2 mesi, il periodo di conservazione predefinito delle proprietà Google Analytics 4 (parametro modificabile dal Titolare fino a un massimo di 14 mesi in Analytics Admin → Impostazioni dati → Conservazione dati). I dati aggregati nei report non sono soggetti a questo limite.',
+
+			recipientsTitle: 'Destinatari dei dati',
+			recipientsBody: 'I dati inviati tramite il modulo di richiesta sono conservati su Google Firebase (Firestore e Cloud Functions) e le email di conferma e di notifica sono inviate tramite Brevo, servizio di email transazionali. Questi fornitori trattano i dati per mio conto, al solo scopo di far funzionare il modulo.',
 
 			transferTitle: 'Trasferimento dei dati extra-UE',
 			transferBody: 'Google Analytics 4 e Google reCAPTCHA sono servizi forniti da Google LLC, con sede negli Stati Uniti. L\'eventuale trasferimento di dati verso gli Stati Uniti avviene sulla base delle garanzie adottate da Google, tra cui l\'adesione al Data Privacy Framework UE-USA e/o l\'adozione delle Clausole Contrattuali Standard approvate dalla Commissione Europea. Per maggiori informazioni si rimanda all\'informativa privacy di Google linkata più sotto.',

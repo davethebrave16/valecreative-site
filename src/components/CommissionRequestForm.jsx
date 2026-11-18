@@ -46,10 +46,11 @@ function withTimeout(promise, ms) {
 	])
 }
 
-export default function CommissionRequestForm({ labels }) {
+export default function CommissionRequestForm({ labels, locale = 'it', privacyHref = '/privacy' }) {
 	const form = labels?.form ?? {}
 	const success = labels?.success ?? {}
 	const errorMsg = labels?.error ?? 'Something went wrong. Please try again.'
+	const errors = labels?.errors ?? {}
 
 	const [status, setStatus] = useState('idle') // 'idle' | 'pending' | 'success' | 'error'
 	const [serverError, setServerError] = useState('')
@@ -59,12 +60,13 @@ export default function CommissionRequestForm({ labels }) {
 		return preType && preType in CANONICAL_TO_INDEX ? CANONICAL_TO_INDEX[preType] : 0
 	})
 	const [fieldErrors, setFieldErrors] = useState({})
+	const [hasSubmittedPhone, setHasSubmittedPhone] = useState(false)
 
 	// Read from the DOM (set by BaseLayout.astro) rather than import.meta.env, by design
 	const recaptchaSiteKey = typeof document !== 'undefined' ? document.body?.dataset?.recaptchaKey || '' : ''
 
 	const [fields, setFields] = useState(() => {
-		const base = { clientName: '', email: '', description: '', honeypot: '' }
+		const base = { clientName: '', email: '', phone: '', description: '', honeypot: '' }
 		if (typeof window === 'undefined') return base
 		const params = new URLSearchParams(window.location.search)
 		const preType = params.get('type')
@@ -77,11 +79,21 @@ export default function CommissionRequestForm({ labels }) {
 
 	const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+	// Same rule as the submitCommission function: optional "+", digits, spaces, - . ( ); 6-20 digits.
+	const isPhoneValid = (raw) => {
+		const value = raw.trim()
+		if (!value) return true
+		if (value.length > 40 || !/^\+?[\d\s\-.()]+$/.test(value)) return false
+		const digits = value.replace(/\D/g, '').length
+		return digits >= 6 && digits <= 20
+	}
+
 	const validate = () => {
 		const errors = {}
 		if (!fields.clientName.trim()) errors.clientName = form.requiredError
 		if (!fields.email.trim()) errors.email = form.requiredError
 		else if (!EMAIL_RE.test(fields.email.trim())) errors.email = form.emailInvalidError
+		if (!isPhoneValid(fields.phone)) errors.phone = form.phoneInvalidError
 		if (!fields.description.trim()) errors.description = form.requiredError
 		return errors
 	}
@@ -100,9 +112,9 @@ export default function CommissionRequestForm({ labels }) {
 		e.preventDefault()
 		if (fields.honeypot) return
 
-		const errors = validate()
-		if (Object.keys(errors).length > 0) {
-			setFieldErrors(errors)
+		const validationErrors = validate()
+		if (Object.keys(validationErrors).length > 0) {
+			setFieldErrors(validationErrors)
 			return
 		}
 
@@ -133,10 +145,13 @@ export default function CommissionRequestForm({ labels }) {
 				type: REQUEST_TYPE_CANONICAL[reqTypeIndex],
 				clientName: fields.clientName.trim(),
 				email: fields.email.trim(),
+				...(fields.phone.trim() ? { phone: fields.phone.trim() } : {}),
+				locale,
 				description: fields.description.trim(),
 				honeypot: fields.honeypot,
 				recaptchaToken,
 			})
+			setHasSubmittedPhone(Boolean(fields.phone.trim()))
 			setStatus('success')
 			trackCommissionFormSubmit('success', REQUEST_TYPE_CANONICAL[reqTypeIndex])
 			trackFbEvent('Lead')
@@ -145,10 +160,10 @@ export default function CommissionRequestForm({ labels }) {
 			let errorReason = 'generic'
 			if (code === 'functions/permission-denied') {
 				errorReason = 'recaptcha'
-				setServerError('Verifica di sicurezza non superata. Ricarica la pagina e riprova.')
+				setServerError(errors.recaptchaFailed ?? errorMsg)
 			} else if (code === 'functions/invalid-argument') {
 				errorReason = 'validation'
-				setServerError('Controlla i dati inseriti e riprova.')
+				setServerError(errors.invalid ?? errorMsg)
 			} else {
 				setServerError(errorMsg)
 			}
@@ -162,7 +177,7 @@ export default function CommissionRequestForm({ labels }) {
 			<div style={{ border: '1px solid var(--verde)', background: 'linear-gradient(180deg,#fff,var(--parchment))', borderRadius: 8, padding: 'clamp(28px,4vw,46px)', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 14, maxWidth: 560 }}>
 				<span style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--verde)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>✓</span>
 				<h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 600, fontSize: 30, margin: 0, color: 'var(--ink)' }}>{success.title}</h3>
-				<p style={{ margin: 0, fontSize: 16, lineHeight: 1.65, color: '#52564c', maxWidth: '42ch' }}>{success.message}</p>
+				<p style={{ margin: 0, fontSize: 16, lineHeight: 1.65, color: '#52564c', maxWidth: '42ch' }}>{hasSubmittedPhone ? (success.messageWithPhone ?? success.message) : success.message}</p>
 				<button
 					onClick={() => setStatus('idle')}
 					style={{ marginTop: 6, fontWeight: 600, fontSize: 14, color: 'var(--verde)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
@@ -224,6 +239,27 @@ export default function CommissionRequestForm({ labels }) {
 					/>
 					{fieldErrors.email && (
 						<span role="alert" style={{ color: 'var(--rose)', fontSize: '0.85rem' }}>{fieldErrors.email}</span>
+					)}
+				</label>
+				<label style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+					<span style={{ fontFamily: "'Spline Sans Mono', monospace", fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--bark)' }}>{form.phone}</span>
+					<input
+						className="vd-field"
+						type="tel"
+						name="phone"
+						value={fields.phone}
+						onChange={handleChange}
+						autoComplete="tel"
+						inputMode="tel"
+						placeholder={form.phonePlaceholder}
+						disabled={status === 'pending'}
+						aria-invalid={fieldErrors.phone ? 'true' : 'false'}
+						aria-describedby={fieldErrors.phone ? 'phone-help phone-error' : 'phone-help'}
+						style={fieldErrors.phone ? { borderColor: 'var(--rose)' } : undefined}
+					/>
+					<span id="phone-help" style={{ color: '#52564c', fontSize: '0.85rem' }}>{form.phoneHelp}</span>
+					{fieldErrors.phone && (
+						<span id="phone-error" role="alert" style={{ color: 'var(--rose)', fontSize: '0.85rem' }}>{fieldErrors.phone}</span>
 					)}
 				</label>
 			</div>
@@ -302,6 +338,13 @@ export default function CommissionRequestForm({ labels }) {
 			>
 				{status === 'pending' ? (form.submitting ?? '…') : (form.submit ?? 'Send')}
 			</button>
+
+			{form.privacyNoticeLead && (
+				<p style={{ margin: 0, fontSize: '0.85rem', lineHeight: 1.6, color: '#52564c' }}>
+					{form.privacyNoticeLead}
+					<a href={privacyHref} style={{ color: 'var(--verde)', fontWeight: 600 }}>{form.privacyNoticeLink}</a>.
+				</p>
+			)}
 		</form>
 	)
 }

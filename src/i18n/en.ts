@@ -214,14 +214,25 @@ export const en = {
 			submitting: 'Sending…',
 			requiredError: 'This field is required.',
 			emailInvalidError: 'Please enter a valid email address.',
+			phone: 'Phone or WhatsApp (optional)',
+			phonePlaceholder: '+39 333 123 4567',
+			phoneHelp: 'Only if you prefer to be contacted this way',
+			phoneInvalidError: 'Please enter a valid number (6-20 digits, optionally with an international prefix), or leave the field empty.',
+			privacyNoticeLead: 'I use the details you enter only to reply to you. More in the ',
+			privacyNoticeLink: 'privacy policy',
 		},
 		success: {
 			title: 'Thank you!',
-			message: 'I\'ve received your request and will get back to you soon with details.',
+			message: 'Thank you — your request has arrived. I\'ll reply to the email address you gave me within 48 hours, with no obligation. If you don\'t see my message, please check your spam folder or write to me at info@valentinadamiano.it.',
+			messageWithPhone: 'Thank you — your request has arrived. I\'ll reply by email or, if you prefer, reach out at the number you provided, within 48 hours and with no obligation. If you don\'t hear from me, please check your spam folder or write to info@valentinadamiano.it.',
 			again: 'Send another request',
 		},
 		error: 'Something went wrong. Please try again.',
-		recaptchaUnavailable: 'The security check could not be loaded (it may be blocked by an ad blocker). Disable it for this site and try again, or email me directly at studio@valentinadamiano.it.',
+		recaptchaUnavailable: 'The security check could not be loaded (it may be blocked by an ad blocker). Disable it for this site and try again, or email me directly at info@valentinadamiano.it.',
+		errors: {
+			recaptchaFailed: 'Security check failed. Please reload the page and try again, or write to me at info@valentinadamiano.it.',
+			invalid: 'Please check the details you entered and try again.',
+		},
 	},
 
 	// Alternative contact channels (below the commissions form)
@@ -299,7 +310,7 @@ export const en = {
 			purposesTitle: 'Purposes and legal basis for processing',
 			purposesIntro: 'Data collected through this site is processed for the purposes and on the legal basis set out below, according to the type of data involved.',
 			purposeFormsLabel: 'Data submitted through forms (contact and commission requests)',
-			purposeFormsBody: 'Purpose: to respond to your enquiry and, where applicable, to manage the commission you\'ve requested. Legal basis: performance of pre-contractual steps taken at your request (Art. 6.1.b GDPR), triggered by voluntarily submitting the form.',
+			purposeFormsBody: 'Purpose: to respond to your enquiry and, where applicable, to manage the commission you\'ve requested. In the commission request form, besides name and email, you may optionally provide a phone or WhatsApp number: if you do, I use it only to respond to your request, should you prefer to be contacted that way. Providing it is optional and does not affect your ability to submit the request. Legal basis: performance of pre-contractual steps taken at your request (Art. 6.1.b GDPR), triggered by voluntarily submitting the form; by entering a number you are explicitly asking to be contacted on that channel.',
 			purposeAnalyticsLabel: 'Aggregated browsing data (Google Analytics 4)',
 			purposeAnalyticsBody: 'Purpose: to understand, in aggregate form, how the site is used, in order to improve it. Legal basis: your consent (Art. 6.1.a GDPR), collected via the cookie banner and revocable at any time without affecting the lawfulness of processing carried out beforehand.',
 			purposeRecaptchaLabel: 'Technical data (Google reCAPTCHA v3)',
@@ -333,6 +344,9 @@ export const en = {
 			retentionFormsBody: 'Data submitted through the site\'s forms is retained for as long as needed to handle the request and any resulting relationship with the client. There is no automatic deletion deadline: the data is reviewed periodically and deleted upon request, or in any case once it is no longer needed for the purposes it was collected for, unless a longer retention period is required by law.',
 			retentionAnalyticsLabel: 'Google Analytics data',
 			retentionAnalyticsBody: 'User-level and event-level data collected through Google Analytics 4 is retained for 2 months, Google Analytics 4\'s default retention period (adjustable by the controller up to a maximum of 14 months in Analytics Admin → Data Settings → Data Retention). Aggregated report data is not subject to this limit.',
+
+			recipientsTitle: 'Data recipients',
+			recipientsBody: 'The details you submit through the commission form are stored on Google Firebase (Firestore and Cloud Functions) and the confirmation and notification emails are sent through Brevo, a transactional email service. These providers process the data on my behalf, only to operate the form.',
 
 			transferTitle: 'International data transfers',
 			transferBody: 'Google Analytics 4 and Google reCAPTCHA are provided by Google LLC, based in the United States. Any transfer of data to the US relies on the safeguards Google has in place, including its participation in the EU-US Data Privacy Framework and/or the use of Standard Contractual Clauses approved by the European Commission. See Google\'s own privacy policy, linked below, for further detail.',

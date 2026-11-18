@@ -143,7 +143,7 @@ match /commissions/{docId} {
 }
 ```
 
-Requires `PUBLIC_RECAPTCHA_SITE_KEY` in `.env` (see `.env.example`) — the site key from [google.com/recaptcha/admin](https://www.google.com/recaptcha/admin). The reCAPTCHA script is loaded only on the contact page, when the visitor first interacts with the form. Without the key, the script is not injected and submissions are rejected server-side with a "security verification failed" message. The corresponding `RECAPTCHA_SECRET_KEY` secret and `submitCommission` function itself live in the backoffice repo — see its `CLAUDE.md` for deployment.
+Requires `PUBLIC_RECAPTCHA_SITE_KEY` in `.env` (see `.env.example`) — the site key from [google.com/recaptcha/admin](https://www.google.com/recaptcha/admin). The reCAPTCHA script is loaded only on the contact page, when the visitor first interacts with the form. Without the key, the script is not injected and submissions are rejected server-side with a "security verification failed" message. The form fields are: name, email, optional **phone/WhatsApp** (`type="tel"`; sent only when filled, validated client-side with the same rule as the function), request type and message; `locale` is sent so the confirmation email matches the page language. On success the message differs when a phone was given (`commissions.success.messageWithPhone`); server error texts come from `commissions.errors.*`. A short notice under the button links to `/privacy`. The corresponding `RECAPTCHA_SECRET_KEY` secret and `submitCommission` function itself live in the backoffice repo — see its `CLAUDE.md` for deployment.
 
 ## CMS Content Blocks
 
