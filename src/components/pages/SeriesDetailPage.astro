@@ -1,28 +1,28 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro'
 import RemoteImage from '@/components/RemoteImage.astro'
-import { gridImageProps, getRemoteBackground, getOgImage } from '@/lib/remoteImage'
-import { getArtworks, getCategories } from '@/lib/fetchContent'
+import { IMAGE_SIZES, gridImageProps, getOgImage, getRemoteSrcset } from '@/lib/remoteImage'
+import { getCategories } from '@/lib/fetchContent'
 import { useTranslations, getLocalePath, type Locale } from '@/i18n/utils'
 import { looksLikeFilename } from '@/lib/altText'
-import type { Series } from '@/lib/types'
+import { truncateMetaDescription } from '@/lib/metaDescription'
+import type { Artwork, Series } from '@/lib/types'
 
 interface Props {
 	locale: string
 	series: Series
+	// Chronological (year ascending), see getSeriesArtworks()
+	artworks: Artwork[]
+	featured?: Artwork
 }
 
-const { locale, series } = Astro.props
+const { locale, series, artworks, featured } = Astro.props
 const t = useTranslations(locale)
 const p = (path: string) => getLocalePath(locale, path)
 const SITE = 'https://valentinadamiano.it'
 
-const [allArtworks, categories] = await Promise.all([
-	getArtworks(locale as Locale),
-	getCategories(locale as Locale),
-])
-const artworks = allArtworks.filter((a) => a.seriesId === series.id)
-const categoryById = Object.fromEntries(categories.map(c => [c.id, c.name]))
+const categories = await getCategories(locale as Locale)
+const categoryById = Object.fromEntries(categories.map((c) => [c.id, c.name]))
 
 function getOrientation(dims?: { width?: number; height?: number }) {
 	if (!dims?.width || !dims?.height) return 'square'
@@ -38,70 +38,136 @@ function cellGridStyle(orient: string) {
 	return 'grid-row:span 2'
 }
 
-// Optimized WebP backgrounds (800px on mobile, 1600px above) — see .vd-bg-hero in global.css
-const heroBgImages = series.coverImage?.original ? await getRemoteBackground(series.coverImage) : null
-const ogImage = await getOgImage(series.coverImage)
-const heroBgStyle = heroBgImages
-	? `--vd-bg-sm:url('${heroBgImages.small}');--vd-bg-lg:url('${heroBgImages.large}')`
-	: 'background:radial-gradient(130% 120% at 30% 14%,#d9b25e 0%,#6b4f37 44%,#243029 100%)'
+const isEmpty = artworks.length === 0
+const heroImage = featured?.coverImage?.original ? featured.coverImage : undefined
+const heroAlt = featured ? t.series.artworkAlt(featured.title, series.name) : series.name
+const heroPreloadSrcset = heroImage ? await getRemoteSrcset(heroImage, 'avif') : ''
+const ogImage = await getOgImage(heroImage)
+// The hero shows the whole artwork: its box takes the artwork's own ratio (explicit, so CLS stays 0).
+const heroRatio = heroImage?.width && heroImage?.height ? heroImage.width / heroImage.height : 4 / 3
 
-const fallbackDescription = locale === 'it'
-	? `Serie ${series.name} — Valentina Damiano`
-	: `${series.name} series — Valentina Damiano`
+// Indexing: an empty series is thin content (noindex both locales). A series whose English text is
+// incomplete shows Italian copy on /en: that page is noindex and neither page advertises the it<->en pair.
+const isEnglishFallback = locale === 'en' && !series.hasEnglish
+const isNoindex = isEmpty || isEnglishFallback
+const hasNoAlternates = isEmpty || !series.hasEnglish
+
+// `intro` is plain text: paragraphs split on blank lines, rendered escaped (never set:html).
+const introParagraphs = (series.intro ?? '').split(/\n\s*\n/).map((s) => s.trim()).filter(Boolean)
+
+// Meta description comes from the short description only (never the intro, which can carry notices).
+const metaDescription = series.description
+	? truncateMetaDescription(series.description)
+	: t.meta.seriesFallback(series.name, artworks.length)
+
+const url = `${SITE}${p(`/series/${series.slug}`)}`
+const artworkUrl = (a: Artwork) => `${SITE}${p(`/works/${a.slug}`)}`
+const schema = {
+	'@context': 'https://schema.org',
+	'@graph': [
+		{
+			'@type': 'CollectionPage',
+			'@id': `${url}#page`,
+			name: series.name,
+			...(series.description ? { description: series.description } : {}),
+			url,
+			inLanguage: locale,
+			isPartOf: { '@id': `${SITE}/#website` },
+			about: { '@id': `${url}#series` },
+			mainEntity: {
+				'@type': 'ItemList',
+				numberOfItems: artworks.length,
+				itemListElement: artworks.map((a, i) => ({
+					'@type': 'ListItem',
+					position: i + 1,
+					item: {
+						'@type': 'VisualArtwork',
+						name: a.title,
+						url: artworkUrl(a),
+						...(a.coverImage?.original ? { image: a.coverImage.original } : {}),
+						...(a.year ? { dateCreated: String(a.year) } : {}),
+					},
+				})),
+			},
+		},
+		{
+			'@type': 'CreativeWorkSeries',
+			'@id': `${url}#series`,
+			name: series.name,
+			...(series.description ? { description: series.description } : {}),
+			...(heroImage ? { image: heroImage.original } : {}),
+			creator: { '@type': 'Person', '@id': `${SITE}/#person`, name: 'Valentina Damiano' },
+			url,
+			inLanguage: locale,
+			hasPart: artworks.map((a) => ({ '@type': 'VisualArtwork', name: a.title, url: artworkUrl(a) })),
+		},
+		{
+			'@type': 'BreadcrumbList',
+			itemListElement: [
+				{ '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE}${p('/')}` },
+				{ '@type': 'ListItem', position: 2, name: t.nav.series, item: `${SITE}${p('/series')}` },
+				{ '@type': 'ListItem', position: 3, name: series.name },
+			],
+		},
+	],
+}
 ---
 
 <BaseLayout
 	title={series.name}
+	fullTitle={t.meta.seriesTitle(series.name)}
+	robots={isNoindex ? 'noindex,follow' : undefined}
+	noAlternates={hasNoAlternates}
 	lang={locale}
-	description={series.description ?? fallbackDescription}
+	description={metaDescription}
 	ogImage={ogImage?.url}
 	ogImageWidth={ogImage?.width}
 	ogImageHeight={ogImage?.height}
 >
-	<script slot="head" type="application/ld+json" set:html={JSON.stringify({
-		'@context': 'https://schema.org',
-		'@graph': [
-			{
-				'@type': 'CreativeWorkSeries',
-				name: series.name,
-				...(series.description ? { description: series.description } : {}),
-				...(series.coverImage?.original ? { image: series.coverImage.original } : {}),
-				creator: { '@type': 'Person', name: 'Valentina Damiano' },
-				url: `${SITE}${p(`/series/${series.slug}`)}`,
-			},
-			{
-				'@type': 'BreadcrumbList',
-				itemListElement: [
-					{ '@type': 'ListItem', position: 1, name: 'Home', item: SITE },
-					{ '@type': 'ListItem', position: 2, name: t.nav.series, item: `${SITE}${p('/series')}` },
-					{ '@type': 'ListItem', position: 3, name: series.name },
-				],
-			},
-		],
-	})} />
+	<script slot="head" type="application/ld+json" set:html={JSON.stringify(schema)} />
+	{heroImage && (
+		<link slot="head" rel="preload" as="image" type="image/avif" imagesrcset={heroPreloadSrcset} imagesizes={IMAGE_SIZES.seriesHero} fetchpriority="high" />
+	)}
 
-	<section class="vd-rise">
-		<!-- Hero banner -->
-		<div class={heroBgImages ? 'vd-bg-hero' : undefined} style={`position:relative;overflow:hidden;${heroBgStyle}`}>
-			<div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,28,22,.18),rgba(20,28,22,.62))"></div>
-			<div class="container" style="position:relative;padding-block:clamp(46px,7vw,110px)">
-				<a href={p('/series')} data-back-link style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.85);display:inline-block;margin-bottom:16px">{t.series.backLink}</a>
-				<h1 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(38px,6vw,76px);margin:0;color:#fff">{series.name}</h1>
-				{series.description && (
-					<p style="max-width:54ch;margin:14px 0 0;font-size:clamp(16px,1.7vw,19px);line-height:1.6;color:#ece5d6">{series.description}</p>
+	<section>
+		<!-- Hero: text + the whole featured artwork as a real <img> (LCP + image search), never cropped -->
+		<div class="vd-shero" style={heroImage ? undefined : 'background:radial-gradient(130% 120% at 30% 14%,#d9b25e 0%,#6b4f37 44%,#243029 100%)'}>
+			<div class={`container vd-shero-grid${heroImage ? '' : ' vd-shero-solo'}`}>
+				<div class="vd-rise-move">
+					<a href={p('/series')} data-back-link style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.85);display:inline-block;margin-bottom:16px">{t.series.backLink}</a>
+					<h1 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(36px,5.2vw,68px);margin:0;color:#fff">{series.name}</h1>
+					{series.description && (
+						<p style="max-width:54ch;margin:14px 0 0;font-size:clamp(16px,1.7vw,19px);line-height:1.6;color:#ece5d6">{series.description}</p>
+					)}
+				</div>
+				{heroImage && (
+					<div class="vd-shero-art" style={`--r:${heroRatio.toFixed(4)}`}>
+						<RemoteImage image={heroImage} alt={heroAlt} sizes={IMAGE_SIZES.seriesHero} priority style="display:block;width:100%;height:100%;object-fit:contain" />
+					</div>
 				)}
 			</div>
 		</div>
 
-		<!-- Artworks grid -->
+		{introParagraphs.length > 0 && (
+			<div class="container" style="padding-top:clamp(34px,4vw,56px)">
+				<div style="max-width:68ch">
+					{introParagraphs.map((para) => (
+						<p style="font-size:16.5px;line-height:1.75;color:#2f3a32;margin:0 0 1.1em">{para}</p>
+					))}
+				</div>
+			</div>
+		)}
+
+		<!-- Artworks grid, chronological -->
 		<div class="container" style="padding-block:clamp(34px,4vw,56px) clamp(50px,6vw,90px)">
-			{artworks.length === 0 ? (
+			{isEmpty ? (
 				<p style="color:var(--muted)">{t.series.noWorks}</p>
 			) : (
 				<div class="vd-grid">
 					{artworks.map((artwork) => {
 						const orient = getOrientation(artwork.dimensions)
 						const cover = artwork.coverImage?.original ? artwork.coverImage : undefined
+						const alt = t.series.artworkAlt(artwork.title, series.name)
 						return (
 							<a
 								href={p(`/works/${artwork.slug}`)}
@@ -111,7 +177,7 @@ const fallbackDescription = locale === 'it'
 								{cover ? (
 									<RemoteImage
 										image={cover}
-										alt={looksLikeFilename(cover.alt) ? artwork.title : (cover.alt ?? artwork.title)}
+										alt={looksLikeFilename(cover.alt) ? alt : (cover.alt ?? alt)}
 										{...gridImageProps(orient)}
 										class="vd-img"
 										style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"
@@ -124,7 +190,7 @@ const fallbackDescription = locale === 'it'
 								)}
 								<div class="vd-cap" style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:14px;background:linear-gradient(180deg,rgba(0,0,0,0) 42%,rgba(18,26,20,.76));z-index:2">
 									<div style="font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:600;color:#fff;line-height:1.05">{artwork.title}</div>
-									<div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:.08em;color:rgba(255,255,255,.82);margin-top:4px">{artwork.year}</div>
+									<div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:.08em;color:rgba(255,255,255,.82);margin-top:4px">{artwork.year || ''}</div>
 								</div>
 							</a>
 						)
@@ -134,3 +200,20 @@ const fallbackDescription = locale === 'it'
 		</div>
 	</section>
 </BaseLayout>
+
+<style>
+	.vd-shero { background: #243029; }
+	.vd-shero-grid { display: grid; gap: 28px; padding-block: clamp(34px, 5vw, 72px); }
+	/* Box = the artwork's own ratio (--r), capped in height; width shrinks with the cap, so nothing is cropped
+	   or letterboxed and the space is reserved before the image loads. */
+	.vd-shero-art {
+		--maxh: min(72svh, 720px);
+		aspect-ratio: var(--r);
+		width: min(100%, calc(var(--maxh) * var(--r)));
+		margin-inline: auto;
+	}
+	@media (min-width: 900px) {
+		.vd-shero-grid:not(.vd-shero-solo) { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 48px; align-items: center; }
+		.vd-shero-art { --maxh: min(78svh, 760px); margin-inline: 0 0; justify-self: end; }
+	}
+</style>

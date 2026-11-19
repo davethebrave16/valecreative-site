@@ -13,6 +13,33 @@ import type { Artwork, Category, GalleryImage, Series, Technique, Content } from
 import { localize, type Locale } from '../i18n/utils'
 import { sortByPosition } from './utils'
 
+// Build-time memoization. Every page (and BaseLayout, for the nav) asks for artworks/series, so the raw
+// Firestore documents are fetched once per build and re-localized per call (cheap, and callers get fresh
+// arrays they may sort). Disabled in `astro dev`, where each refresh must see edits made in the backoffice.
+// A failed load is not cached.
+const memo = new Map<string, Promise<unknown>>()
+function cached<T>(key: string, load: () => Promise<T>): Promise<T> {
+	if (import.meta.env.DEV) return load()
+	let pending = memo.get(key) as Promise<T> | undefined
+	if (!pending) {
+		pending = load().catch((err) => {
+			memo.delete(key)
+			throw err
+		})
+		memo.set(key, pending)
+	}
+	return pending
+}
+
+interface RawDoc {
+	id: string
+	data: () => Record<string, unknown>
+}
+const toRaw = (d: { id: string; data: () => Record<string, unknown> }): RawDoc => {
+	const data = d.data()
+	return { id: d.id, data: () => data }
+}
+
 // Slugs build the public URLs (/works/{slug}, /series/{slug}, …) and the site's lookups. Two documents
 // with the same slug would silently produce a single page, so the build fails instead. Deliberately
 // called OUTSIDE the try/catch of the getters below, which otherwise swallow errors and return [].
@@ -62,8 +89,10 @@ function docToArtwork(d: { id: string; data: () => Record<string, unknown> }, lo
 export async function getArtworks(locale: Locale = 'it'): Promise<Artwork[]> {
 	let artworks: Artwork[]
 	try {
-		const snap = await getDocs(query(collection(db, 'artworks'), orderBy('createdAt', 'desc')))
-		artworks = snap.docs.map((d) => docToArtwork(d, locale))
+		const raw = await cached('artworks', async () =>
+			(await getDocs(query(collection(db, 'artworks'), orderBy('createdAt', 'desc')))).docs.map(toRaw),
+		)
+		artworks = raw.map((d) => docToArtwork(d, locale))
 	} catch (err) {
 		console.error('[fetchContent] getArtworks failed:', err)
 		return []
@@ -114,55 +143,112 @@ export async function getArtworkGallery(artworkId: string, locale: Locale = 'it'
 	}
 }
 
-export async function getPublishedSeries(): Promise<Series[]> {
+// Local-only verification override: SERIES_PREVIEW_ALL=1 treats unpublished series as published so they can
+// be built and inspected before release. Ignored whenever CI is set (GitHub Actions sets CI and
+// GITHUB_ACTIONS), so the scheduled/dispatched production build can never publish draft series.
+const isCI = Boolean(process.env.CI || process.env.GITHUB_ACTIONS)
+const SERIES_PREVIEW_ALL = process.env.SERIES_PREVIEW_ALL === '1' && !isCI
+if (process.env.SERIES_PREVIEW_ALL === '1' && isCI) {
+	console.warn('[fetchContent] SERIES_PREVIEW_ALL is ignored in CI')
+}
+
+// English is complete when every English field whose Italian counterpart exists is filled in.
+// (A series with no Italian intro doesn't need introEn.)
+function isEnglishComplete(data: Record<string, unknown>): boolean {
+	const filled = (v: unknown) => typeof v === 'string' && v.trim() !== ''
+	const pairs: [string, string][] = [['name', 'nameEn'], ['description', 'descriptionEn'], ['intro', 'introEn']]
+	return pairs.every(([it, en]) => !filled(data[it]) || filled(data[en]))
+}
+
+function docToSeries(d: RawDoc, locale: Locale): Series {
+	const data = d.data()
+	const text = (it: unknown, en: unknown) =>
+		it ? localize(String(it), en as string | undefined, locale) : undefined
+	return {
+		hasEnglish: isEnglishComplete(data),
+		id: d.id,
+		name: localize(String(data.name ?? ''), data.nameEn as string | undefined, locale),
+		slug: String(data.slug ?? ''),
+		description: text(data.description, data.descriptionEn),
+		intro: text(data.intro, data.introEn),
+		featuredArtworkId: data.featuredArtworkId ? String(data.featuredArtworkId) : undefined,
+		order: data.order != null ? Number(data.order) : undefined,
+		published: Boolean(data.published),
+	}
+}
+
+// Never orderBy('order'): Firestore drops documents that lack the field. Sort client-side instead.
+function sortSeries(items: Series[], locale: Locale): Series[] {
+	return [...items].sort(
+		(a, b) => (a.order ?? Infinity) - (b.order ?? Infinity) || a.name.localeCompare(b.name, locale),
+	)
+}
+
+export async function getPublishedSeries(locale: Locale = 'it'): Promise<Series[]> {
 	let items: Series[]
 	try {
-		const snap = await getDocs(
-			query(
-				collection(db, 'series'),
-				where('published', '==', true),
-				orderBy('order', 'asc'),
-			),
-		)
-		items = snap.docs.map((d) => {
-			const data = d.data()
-			return {
-				id: d.id,
-				name: String(data.name ?? ''),
-				slug: String(data.slug ?? ''),
-				description: data.description ? String(data.description) : undefined,
-				coverImage: data.coverImage as Series['coverImage'],
-				order: data.order != null ? Number(data.order) : undefined,
-				published: Boolean(data.published),
-			} satisfies Series
+		const raw = await cached('series', async () => {
+			const snap = SERIES_PREVIEW_ALL
+				? await getDocs(collection(db, 'series'))
+				: await getDocs(query(collection(db, 'series'), where('published', '==', true)))
+			return snap.docs.map(toRaw)
 		})
+		items = raw.map((d) => docToSeries(d, locale))
 	} catch (err) {
 		console.error('[fetchContent] getPublishedSeries failed:', err)
 		return []
 	}
 	assertUniqueSlugs('series', items)
-	return items
+	return sortSeries(items, locale)
 }
 
-export async function getSeriesBySlug(slug: string): Promise<Series | null> {
-	try {
-		const snap = await getDocs(query(collection(db, 'series'), where('slug', '==', slug)))
-		if (snap.empty) return null
-		const d = snap.docs[0]
-		const data = d.data()
-		return {
-			id: d.id,
-			name: String(data.name ?? ''),
-			slug: String(data.slug ?? ''),
-			description: data.description ? String(data.description) : undefined,
-			coverImage: data.coverImage as Series['coverImage'],
-			order: data.order != null ? Number(data.order) : undefined,
-			published: Boolean(data.published),
-		}
-	} catch (err) {
-		console.error('[fetchContent] getSeriesBySlug failed:', err)
-		return null
-	}
+export async function getSeriesBySlug(slug: string, locale: Locale = 'it'): Promise<Series | null> {
+	const items = await getPublishedSeries(locale)
+	return items.find((s) => s.slug === slug) ?? null
+}
+
+// A series' artworks in chronological order (year ascending; no year last), tie-broken by title
+// (locale-aware) then slug so the order is stable between builds.
+export function getSeriesArtworks(series: Series, allArtworks: Artwork[], locale: Locale = 'it'): Artwork[] {
+	return allArtworks
+		.filter((a) => a.seriesId === series.id)
+		.sort(
+			(a, b) =>
+				(a.year || Infinity) - (b.year || Infinity) ||
+				a.title.localeCompare(b.title, locale) ||
+				a.slug.localeCompare(b.slug),
+		)
+}
+
+// featuredArtworkId if that artwork is still in the series, otherwise the first one chronologically.
+export function pickFeaturedArtwork(series: Series, sortedArtworks: Artwork[]): Artwork | undefined {
+	return sortedArtworks.find((a) => a.id === series.featuredArtworkId) ?? sortedArtworks[0]
+}
+
+export interface SeriesWithArtworks {
+	series: Series
+	artworks: Artwork[]
+	featured: Artwork | undefined
+}
+
+// Published series joined with their artworks. `listable` = at least one artwork: only those appear in
+// lists, the sitemap and links; a published series with no artworks still gets a (noindex) page.
+export async function getSeriesWithArtworks(locale: Locale = 'it'): Promise<SeriesWithArtworks[]> {
+	const [series, allArtworks] = await Promise.all([getPublishedSeries(locale), getArtworks(locale)])
+	return series.map((s) => {
+		const artworks = getSeriesArtworks(s, allArtworks, locale)
+		return { series: s, artworks, featured: pickFeaturedArtwork(s, artworks) }
+	})
+}
+
+export async function getListableSeries(locale: Locale = 'it'): Promise<SeriesWithArtworks[]> {
+	return (await getSeriesWithArtworks(locale)).filter((x) => x.artworks.length > 0)
+}
+
+// Same rule as getListableSeries (published AND ≥ 1 artwork), as one memoized boolean for BaseLayout,
+// which renders on every page: drives the "Serie"/"Series" nav item.
+export function hasListableSeries(): Promise<boolean> {
+	return cached('hasListableSeries', async () => (await getListableSeries('it')).length > 0)
 }
 
 export async function getTechniques(locale: Locale = 'it'): Promise<Technique[]> {

@@ -1,6 +1,22 @@
 import { defineConfig } from 'astro/config'
 import react from '@astrojs/react'
 import sitemap from '@astrojs/sitemap'
+import { readFileSync } from 'node:fs'
+
+// The sitemap lists only indexable pages. Rather than duplicating each page's indexing rules here (or keeping a
+// manifest file that could go stale in a cached CI workspace), the filter reads the page's own robots meta from
+// the freshly built HTML: whatever is `noindex` (empty series, series without English, empty /series index) is
+// left out. The filter runs at astro:build:done, after every page has been written to dist/.
+const OUT_DIR = './dist'
+function isNoindex(pathname) {
+	try {
+		const dir = decodeURIComponent(pathname).replace(/\/?$/, '/')
+		const html = readFileSync(`${OUT_DIR}${dir}index.html`, 'utf8')
+		return /<meta\s+name="robots"\s+content="[^"]*noindex/i.test(html)
+	} catch {
+		return false
+	}
+}
 
 export default defineConfig({
 	site: 'https://valentinadamiano.it',
@@ -29,7 +45,11 @@ export default defineConfig({
 			},
 			// Only the real /it/* and /en/* content pages are indexable — exclude the root
 			// language-gateway page (src/pages/index.astro), which just redirects.
-			filter: (page) => /\/(it|en)(\/|$)/.test(new URL(page).pathname),
+			filter: (page) => {
+				const { pathname } = new URL(page)
+				if (!/\/(it|en)(\/|$)/.test(pathname)) return false
+				return !isNoindex(pathname)
+			},
 		}),
 	],
 	i18n: {

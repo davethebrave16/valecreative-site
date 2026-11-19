@@ -2,9 +2,10 @@
 import BaseLayout from '@/layouts/BaseLayout.astro'
 import RemoteImage from '@/components/RemoteImage.astro'
 import { IMAGE_SIZES, IMAGE_ASPECTS } from '@/lib/remoteImage'
-import { getPublishedSeries, getArtworks } from '@/lib/fetchContent'
-import { useTranslations, getLocalePath } from '@/i18n/utils'
+import { getListableSeries } from '@/lib/fetchContent'
+import { useTranslations, getLocalePath, type Locale } from '@/i18n/utils'
 import { looksLikeFilename } from '@/lib/altText'
+import { truncateMetaDescription } from '@/lib/metaDescription'
 
 interface Props {
 	locale: string
@@ -13,13 +14,10 @@ interface Props {
 const { locale } = Astro.props
 const t = useTranslations(locale)
 const p = (path: string) => getLocalePath(locale, path)
+const SITE = 'https://valentinadamiano.it'
 
-const [series, allArtworks] = await Promise.all([getPublishedSeries(), getArtworks()])
-
-const countById: Record<string, number> = {}
-for (const a of allArtworks) {
-	if (a.seriesId) countById[a.seriesId] = (countById[a.seriesId] ?? 0) + 1
-}
+// Only published series with at least one artwork are listed.
+const items = await getListableSeries(locale as Locale)
 
 const GRADS = [
 	'linear-gradient(155deg,#33473b 0%,#5d6b4d 40%,#b68a3c 100%)',
@@ -28,22 +26,60 @@ const GRADS = [
 	'radial-gradient(120% 120% at 40% 82%,#b68a3c 0%,#5a4632 42%,#232e26 100%)',
 ]
 
-const pageTitle = locale === 'it' ? 'Serie tematiche' : 'Thematic Series'
+const url = `${SITE}${p('/series')}`
+const schema = {
+	'@context': 'https://schema.org',
+	'@graph': [
+		{
+			'@type': 'CollectionPage',
+			name: t.series.title,
+			description: t.meta.seriesDescription,
+			url,
+			inLanguage: locale,
+			isPartOf: { '@id': `${SITE}/#website` },
+			mainEntity: {
+				'@type': 'ItemList',
+				itemListElement: items.map(({ series }, i) => ({
+					'@type': 'ListItem',
+					position: i + 1,
+					url: `${SITE}${p(`/series/${series.slug}`)}`,
+					name: series.name,
+				})),
+			},
+		},
+		{
+			'@type': 'BreadcrumbList',
+			itemListElement: [
+				{ '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE}${p('/')}` },
+				{ '@type': 'ListItem', position: 2, name: t.nav.series },
+			],
+		},
+	],
+}
 ---
 
-<BaseLayout title={pageTitle} lang={locale} description={t.meta.seriesDescription}>
+<!-- With nothing to list the index is a thin page: noindex (and no hreflang pair, both locales are in the same state). -->
+<BaseLayout
+	title={t.meta.seriesIndexTitle}
+	lang={locale}
+	description={t.meta.seriesDescription}
+	robots={items.length === 0 ? 'noindex,follow' : undefined}
+	noAlternates={items.length === 0}
+>
+	<script slot="head" type="application/ld+json" set:html={JSON.stringify(schema)} />
 	<section class="vd-rise" style="padding:clamp(34px,5vw,64px) 0 clamp(50px,6vw,90px)">
 		<div class="container">
 			<div class="vd-eyebrow">{t.series.eyebrow}</div>
-			<h1 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(34px,5.5vw,62px);margin:10px 0 28px;color:var(--ink)">{t.series.title}</h1>
+			<h1 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(34px,5.5vw,62px);margin:10px 0 0;color:var(--ink)">{t.series.title}</h1>
+			<p style="max-width:58ch;margin:14px 0 clamp(28px,4vw,44px);font-size:16px;line-height:1.65;color:#52564c">{t.series.indexIntro}</p>
 
-			{series.length === 0 ? (
+			{items.length === 0 ? (
 				<p style="color:var(--muted)">{t.series.empty}</p>
 			) : (
 				<div class="vd-cards">
-					{series.map((s, i) => {
-						const count = countById[s.id] ?? 0
-						const cover = s.coverImage?.original ? s.coverImage : undefined
+					{items.map(({ series: s, artworks, featured }, i) => {
+						const cover = featured?.coverImage?.original ? featured.coverImage : undefined
+						const alt = t.series.artworkAlt(featured?.title ?? s.name, s.name)
 						return (
 							<a
 								href={p(`/series/${s.slug}`)}
@@ -52,14 +88,14 @@ const pageTitle = locale === 'it' ? 'Serie tematiche' : 'Thematic Series'
 								onmouseout="this.style.borderColor='var(--line)'"
 							>
 								{cover ? (
-									<RemoteImage image={cover} alt={looksLikeFilename(cover.alt) ? s.name : (cover.alt ?? s.name)} sizes={IMAGE_SIZES.cards} aspect={IMAGE_ASPECTS.card} style="width:100%;height:210px;object-fit:cover;display:block" />
+									<RemoteImage image={cover} alt={looksLikeFilename(cover.alt) ? alt : (cover.alt ?? alt)} sizes={IMAGE_SIZES.cards} aspect={IMAGE_ASPECTS.card} priority={i === 0} style="width:100%;height:210px;object-fit:cover;display:block" />
 								) : (
 									<div style={`height:210px;background:${GRADS[i % GRADS.length]}`}></div>
 								)}
 								<div style="padding:20px">
-									<div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--bark)">{t.series.worksCount(count)}</div>
-									<div style="font-family:'Cormorant Garamond',serif;font-size:27px;font-weight:600;color:var(--ink);margin-top:6px">{s.name}</div>
-									{s.description && <p style="font-size:14.5px;line-height:1.65;color:#52564c;margin:10px 0 0">{s.description}</p>}
+									<div style="font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--bark)">{t.series.worksCount(artworks.length)}</div>
+									<h2 style="font-family:'Cormorant Garamond',serif;font-size:27px;font-weight:600;color:var(--ink);margin:6px 0 0">{s.name}</h2>
+									{s.description && <p style="font-size:14.5px;line-height:1.65;color:#52564c;margin:10px 0 0">{truncateMetaDescription(s.description, 200)}</p>}
 									<span style="display:inline-block;margin-top:14px;font-weight:600;font-size:14px;color:var(--verde)">{t.series.openLink}</span>
 								</div>
 							</a>

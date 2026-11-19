@@ -12,6 +12,8 @@
 	--line: rgba(31, 42, 34, 0.14);
 	--muted: #6b6558;
 	--rose: #c8536b;
+	/* Text-safe variants (≥ 4.5:1 on the cream #efe7d6): --verde sits at exactly 4.5:1 there, --rose at 3.5:1 */
+	--rose-text: #a8364f;
 	--syellow: #e2b043;
 	--sblue: #4e6fa0;
 }
@@ -136,7 +138,7 @@ main {
 
 .vd-navlink[data-active] {
 	font-weight: 600;
-	color: var(--verde);
+	color: var(--verde-deep);
 }
 
 .vd-langswitch {
@@ -156,11 +158,11 @@ main {
 }
 
 .vd-langswitch-link:hover {
-	color: var(--verde);
+	color: var(--verde-deep);
 }
 
 .vd-langswitch-link[aria-current='true'] {
-	color: var(--verde);
+	color: var(--verde-deep);
 	font-weight: 600;
 }
 

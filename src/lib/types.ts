@@ -27,14 +27,23 @@ export interface Technique {
 	category: TechniqueCategory
 }
 
+// The series cover is its featured artwork (featuredArtworkId, a plain artwork id) — there is no coverImage.
+// `description` is short (cards, hero, meta); `intro` is long plain text for the detail page.
 export interface Series {
 	id: string
 	name: string
+	nameEn?: string
 	slug: string
 	description?: string
-	coverImage?: ImageObject
+	descriptionEn?: string
+	intro?: string
+	introEn?: string
+	featuredArtworkId?: string
 	order?: number
 	published: boolean
+	// Derived at build time, not stored: true when nameEn/descriptionEn/introEn are all filled (wherever the
+	// Italian field exists). Incomplete → the /en page is noindex and the it<->en hreflang pair is dropped.
+	hasEnglish: boolean
 }
 
 export type ArtworkOrigin = 'personal' | 'commissioned'

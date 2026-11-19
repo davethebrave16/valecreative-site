@@ -26,6 +26,10 @@ export const IMAGE_SIZES = {
 	aboutThumb: '(min-width: 820px) 160px, (min-width: 560px) 23vw, calc(50vw - 24px)',
 	// .vd-detailwrap main column (1.7fr from 860px): 376 / 552 / 560 / 738px
 	workMain: '(min-width: 1320px) 738px, (min-width: 860px) calc(58vw - 20px), calc(100vw - 36px)',
+	// Series detail hero: the whole artwork (uncropped) in a box with the artwork's own ratio. Right column
+	// (1.1fr of 2, gap 48px) from 900px; capped in height, so it can be narrower than this for portraits
+	// (an over-estimate only costs a slightly larger variant, never a blurry one).
+	seriesHero: '(min-width: 1320px) 640px, (min-width: 900px) 48vw, calc(100vw - 36px)',
 }
 
 // Width/height ratio of boxes that crop with object-fit: cover. Variants are cropped to this ratio at
