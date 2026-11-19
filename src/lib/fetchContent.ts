@@ -8,26 +8,27 @@ import {
 	where,
 	orderBy,
 } from 'firebase/firestore'
+import type { DocumentData, Query } from 'firebase/firestore'
 import { db } from './firebaseConfig'
 import type { Artwork, Category, GalleryImage, Series, Technique, Content } from './types'
 import { localize, type Locale } from '../i18n/utils'
 import { sortByPosition } from './utils'
 
-// Build-time memoization. Every page (and BaseLayout, for the nav) asks for artworks/series, so the raw
-// Firestore documents are fetched once per build and re-localized per call (cheap, and callers get fresh
-// arrays they may sort). Disabled in `astro dev`, where each refresh must see edits made in the backoffice.
-// A failed load is not cached.
-const memo = new Map<string, Promise<unknown>>()
+// Build-time memoization. Every page (and BaseLayout, for the nav) asks for the same collections, so each
+// collection / gallery is read from Firestore ONCE per build (module level, shared by all pages and locales)
+// and re-localized per call — cheap, and callers get fresh arrays they may sort. Reads per build therefore
+// scale with the number of documents, not pages. In `astro dev` entries expire after 60 s (and always on
+// restart), so edits made in the backoffice show up without a read per request. A failed load is not cached.
+const memo = new Map<string, { at: number; pending: Promise<unknown> }>()
+const DEV_TTL_MS = 60_000
 function cached<T>(key: string, load: () => Promise<T>): Promise<T> {
-	if (import.meta.env.DEV) return load()
-	let pending = memo.get(key) as Promise<T> | undefined
-	if (!pending) {
-		pending = load().catch((err) => {
-			memo.delete(key)
-			throw err
-		})
-		memo.set(key, pending)
-	}
+	const hit = memo.get(key)
+	if (hit && (!import.meta.env.DEV || Date.now() - hit.at < DEV_TTL_MS)) return hit.pending as Promise<T>
+	const pending = load().catch((err) => {
+		memo.delete(key)
+		throw err
+	})
+	memo.set(key, { at: Date.now(), pending })
 	return pending
 }
 
@@ -39,6 +40,15 @@ const toRaw = (d: { id: string; data: () => Record<string, unknown> }): RawDoc =
 	const data = d.data()
 	return { id: d.id, data: () => data }
 }
+
+// The only Firestore reads of the site build: one per collection (+ one per artwork gallery).
+const loadDocs = async (q: Query<DocumentData>): Promise<RawDoc[]> => (await getDocs(q)).docs.map(toRaw)
+const rawArtworks = () => cached('artworks', () => loadDocs(query(collection(db, 'artworks'), orderBy('createdAt', 'desc'))))
+const rawTechniques = () => cached('techniques', () => loadDocs(query(collection(db, 'techniques'), orderBy('name', 'asc'))))
+const rawCategories = () => cached('categories', () => loadDocs(query(collection(db, 'categories'), orderBy('name', 'asc'))))
+const rawContents = () => cached('contents', () => loadDocs(query(collection(db, 'contents'), where('published', '==', true))))
+const rawGallery = (artworkId: string) =>
+	cached(`gallery:${artworkId}`, () => loadDocs(query(collection(db, `artworks/${artworkId}/gallery`), orderBy('uploadedAt', 'asc'))))
 
 // Slugs build the public URLs (/works/{slug}, /series/{slug}, …) and the site's lookups. Two documents
 // with the same slug would silently produce a single page, so the build fails instead. Deliberately
@@ -89,10 +99,7 @@ function docToArtwork(d: { id: string; data: () => Record<string, unknown> }, lo
 export async function getArtworks(locale: Locale = 'it'): Promise<Artwork[]> {
 	let artworks: Artwork[]
 	try {
-		const raw = await cached('artworks', async () =>
-			(await getDocs(query(collection(db, 'artworks'), orderBy('createdAt', 'desc')))).docs.map(toRaw),
-		)
-		artworks = raw.map((d) => docToArtwork(d, locale))
+		artworks = (await rawArtworks()).map((d) => docToArtwork(d, locale))
 	} catch (err) {
 		console.error('[fetchContent] getArtworks failed:', err)
 		return []
@@ -103,10 +110,8 @@ export async function getArtworks(locale: Locale = 'it'): Promise<Artwork[]> {
 
 export async function getArtworkBySlug(slug: string, locale: Locale = 'it'): Promise<Artwork | null> {
 	try {
-		const snap = await getDocs(query(collection(db, 'artworks'), where('slug', '==', slug)))
-		if (snap.empty) return null
-		const d = snap.docs[0]
-		return docToArtwork(d, locale)
+		const d = (await rawArtworks()).find((x) => x.data().slug === slug)
+		return d ? docToArtwork(d, locale) : null
 	} catch (err) {
 		console.error('[fetchContent] getArtworkBySlug failed:', err)
 		return null
@@ -115,10 +120,7 @@ export async function getArtworkBySlug(slug: string, locale: Locale = 'it'): Pro
 
 export async function getArtworkGallery(artworkId: string, locale: Locale = 'it'): Promise<GalleryImage[]> {
 	try {
-		const snap = await getDocs(
-			query(collection(db, `artworks/${artworkId}/gallery`), orderBy('uploadedAt', 'asc')),
-		)
-		const images = snap.docs.map((d) => {
+		const images = (await rawGallery(artworkId)).map((d) => {
 			const data = d.data()
 			return {
 				id: d.id,
@@ -187,12 +189,9 @@ function sortSeries(items: Series[], locale: Locale): Series[] {
 export async function getPublishedSeries(locale: Locale = 'it'): Promise<Series[]> {
 	let items: Series[]
 	try {
-		const raw = await cached('series', async () => {
-			const snap = SERIES_PREVIEW_ALL
-				? await getDocs(collection(db, 'series'))
-				: await getDocs(query(collection(db, 'series'), where('published', '==', true)))
-			return snap.docs.map(toRaw)
-		})
+		const raw = await cached('series', () =>
+			loadDocs(SERIES_PREVIEW_ALL ? collection(db, 'series') : query(collection(db, 'series'), where('published', '==', true))),
+		)
 		items = raw.map((d) => docToSeries(d, locale))
 	} catch (err) {
 		console.error('[fetchContent] getPublishedSeries failed:', err)
@@ -254,8 +253,7 @@ export function hasListableSeries(): Promise<boolean> {
 export async function getTechniques(locale: Locale = 'it'): Promise<Technique[]> {
 	let items: Technique[]
 	try {
-		const snap = await getDocs(query(collection(db, 'techniques'), orderBy('name', 'asc')))
-		items = snap.docs.map((d) => {
+		items = (await rawTechniques()).map((d) => {
 			const data = d.data()
 			return {
 				id: d.id,
@@ -277,9 +275,8 @@ export async function getTechniques(locale: Locale = 'it'): Promise<Technique[]>
 
 export async function getTechniqueBySlug(slug: string, locale: Locale = 'it'): Promise<Technique | null> {
 	try {
-		const snap = await getDocs(query(collection(db, 'techniques'), where('slug', '==', slug)))
-		if (snap.empty) return null
-		const d = snap.docs[0]
+		const d = (await rawTechniques()).find((x) => x.data().slug === slug)
+		if (!d) return null
 		const data = d.data()
 		return {
 			id: d.id,
@@ -299,10 +296,7 @@ export async function getTechniqueBySlug(slug: string, locale: Locale = 'it'): P
 export async function getPublishedContents(locale: Locale = 'it'): Promise<Content[]> {
 	let items: Content[]
 	try {
-		const snap = await getDocs(
-			query(collection(db, 'contents'), where('published', '==', true)),
-		)
-		items = snap.docs.map((d) => {
+		items = (await rawContents()).map((d) => {
 			const data = d.data()
 			return {
 				id: d.id,
@@ -324,8 +318,7 @@ export async function getPublishedContents(locale: Locale = 'it'): Promise<Conte
 export async function getCategories(locale: Locale = 'it'): Promise<Category[]> {
 	let items: Category[]
 	try {
-		const snap = await getDocs(query(collection(db, 'categories'), orderBy('name', 'asc')))
-		items = snap.docs.map((d) => {
+		items = (await rawCategories()).map((d) => {
 			const data = d.data()
 			return {
 				id: d.id,
@@ -347,11 +340,8 @@ export async function getCategories(locale: Locale = 'it'): Promise<Category[]> 
 
 export async function getContentBySlug(slug: string, locale: Locale = 'it'): Promise<Content | null> {
 	try {
-		const snap = await getDocs(
-			query(collection(db, 'contents'), where('slug', '==', slug), where('published', '==', true)),
-		)
-		if (snap.empty) return null
-		const d = snap.docs[0]
+		const d = (await rawContents()).find((x) => x.data().slug === slug)
+		if (!d) return null
 		const data = d.data()
 		return {
 			id: d.id,

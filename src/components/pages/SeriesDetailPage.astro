@@ -1,7 +1,8 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro'
 import RemoteImage from '@/components/RemoteImage.astro'
-import { IMAGE_SIZES, gridImageProps, getOgImage, getRemoteSrcset } from '@/lib/remoteImage'
+import { blurHashToDataUri } from '@/lib/blurHashUtils'
+import { SERIES_HERO_MOBILE_MEDIA, SERIES_HERO_DESKTOP_MEDIA, seriesHeroSizes, gridImageProps, getOgImage, getSeriesHeroSources } from '@/lib/remoteImage'
 import { getCategories } from '@/lib/fetchContent'
 import { useTranslations, getLocalePath, type Locale } from '@/i18n/utils'
 import { looksLikeFilename } from '@/lib/altText'
@@ -41,10 +42,12 @@ function cellGridStyle(orient: string) {
 const isEmpty = artworks.length === 0
 const heroImage = featured?.coverImage?.original ? featured.coverImage : undefined
 const heroAlt = featured ? t.series.artworkAlt(featured.title, series.name) : series.name
-const heroPreloadSrcset = heroImage ? await getRemoteSrcset(heroImage, 'avif') : ''
+const heroSources = heroImage ? await getSeriesHeroSources(heroImage) : undefined
+const heroPlaceholder = heroImage?.blurHash ? blurHashToDataUri(heroImage.blurHash, 8, 6) : ''
 const ogImage = await getOgImage(heroImage)
 // The hero shows the whole artwork: its box takes the artwork's own ratio (explicit, so CLS stays 0).
 const heroRatio = heroImage?.width && heroImage?.height ? heroImage.width / heroImage.height : 4 / 3
+const heroSizes = seriesHeroSizes(heroRatio)
 
 // Indexing: an empty series is thin content (noindex both locales). A series whose English text is
 // incomplete shows Italian copy on /en: that page is noindex and neither page advertises the it<->en pair.
@@ -125,49 +128,60 @@ const schema = {
 	ogImageHeight={ogImage?.height}
 >
 	<script slot="head" type="application/ld+json" set:html={JSON.stringify(schema)} />
-	{heroImage && (
-		<link slot="head" rel="preload" as="image" type="image/avif" imagesrcset={heroPreloadSrcset} imagesizes={IMAGE_SIZES.seriesHero} fetchpriority="high" />
+	<!-- One preload per breakpoint, same media/srcset/sizes as the <picture> sources below -->
+	{heroSources && (
+		<link slot="head" rel="preload" as="image" type="image/avif" media={SERIES_HERO_MOBILE_MEDIA} imagesrcset={heroSources.mobile.avif} imagesizes={heroSizes} fetchpriority="high" />
+	)}
+	{heroSources && (
+		<link slot="head" rel="preload" as="image" type="image/avif" media={SERIES_HERO_DESKTOP_MEDIA} imagesrcset={heroSources.full.avif} imagesizes={heroSizes} fetchpriority="high" />
 	)}
 
-	<section>
-		<!-- Hero: text + the whole featured artwork as a real <img> (LCP + image search), never cropped -->
-		<div class="vd-shero" style={heroImage ? undefined : 'background:radial-gradient(130% 120% at 30% 14%,#d9b25e 0%,#6b4f37 44%,#243029 100%)'}>
-			<div class={`container vd-shero-grid${heroImage ? '' : ' vd-shero-solo'}`}>
-				<div class="vd-rise-move">
-					<a href={p('/series')} data-back-link style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.85);display:inline-block;margin-bottom:16px">{t.series.backLink}</a>
-					<h1 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(36px,5.2vw,68px);margin:0;color:#fff">{series.name}</h1>
-					{series.description && (
-						<p style="max-width:54ch;margin:14px 0 0;font-size:clamp(16px,1.7vw,19px);line-height:1.6;color:#ece5d6">{series.description}</p>
-					)}
-					{heroImage && introParagraphs.length > 0 && (
-						<!-- Desktop only: the free space beside the artwork carries the intro. Mobile keeps it below the hero (this copy is display:none there). -->
-						<div class="vd-intro-hero">
-							{introParagraphs.map((para) => (
-								<p>{para}</p>
-							))}
-						</div>
-					)}
-				</div>
-				{heroImage && (
-					<div class="vd-shero-art" style={`--r:${heroRatio.toFixed(4)}`}>
-						<RemoteImage image={heroImage} alt={heroAlt} sizes={IMAGE_SIZES.seriesHero} priority style="display:block;width:100%;height:100%;object-fit:contain" />
-					</div>
-				)}
-			</div>
+	<!-- One grid for hero + content: the intro is a single element that moves by grid placement (beside the
+	     artwork on desktop, under the hero on mobile). The dark band is its own element spanning the hero rows. -->
+	<section class={`vd-sgrid${heroImage ? '' : ' vd-solo'}`}>
+		<div class="vd-sbg" aria-hidden="true" style={heroImage ? undefined : 'background:radial-gradient(130% 120% at 30% 14%,#d9b25e 0%,#6b4f37 44%,#243029 100%)'}></div>
+
+		<div class="vd-stext vd-rise-move">
+			<a href={p('/series')} data-back-link style="font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.85);display:inline-block;margin-bottom:16px">{t.series.backLink}</a>
+			<h1 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(36px,5.2vw,68px);margin:0;color:#fff">{series.name}</h1>
+			{series.description && (
+				<p style="max-width:54ch;margin:14px 0 0;font-size:clamp(16px,1.7vw,19px);line-height:1.6;color:#ece5d6">{series.description}</p>
+			)}
 		</div>
 
+		{heroImage && (
+			<!-- Hero: the whole featured artwork as a real <img> (LCP + image search), never cropped -->
+			<div class="vd-shero-art" style={`--r:${heroRatio.toFixed(4)}`}>
+				<picture>
+					<source media={SERIES_HERO_MOBILE_MEDIA} type="image/avif" srcset={heroSources.mobile.avif} sizes={heroSizes} />
+					<source media={SERIES_HERO_MOBILE_MEDIA} type="image/webp" srcset={heroSources.mobile.webp} sizes={heroSizes} />
+					<source type="image/avif" srcset={heroSources.full.avif} sizes={heroSizes} />
+					<img
+						src={heroSources.src}
+						srcset={heroSources.full.webp}
+						sizes={heroSizes}
+						alt={heroAlt}
+						width={heroSources.width}
+						height={heroSources.height}
+						loading="eager"
+						fetchpriority="high"
+						decoding="async"
+						style={`${heroPlaceholder ? `background:url('${heroPlaceholder}') center/cover no-repeat;` : ''}display:block;width:100%;height:100%;object-fit:contain`}
+					/>
+				</picture>
+			</div>
+		)}
+
 		{introParagraphs.length > 0 && (
-			<div class={`container${heroImage ? ' vd-intro-below' : ''}`} style="padding-top:clamp(34px,4vw,56px)">
-				<div style="max-width:68ch">
-					{introParagraphs.map((para) => (
-						<p style="font-size:16.5px;line-height:1.75;color:#2f3a32;margin:0 0 1.1em">{para}</p>
-					))}
-				</div>
+			<div class="vd-sintro">
+				{introParagraphs.map((para) => (
+					<p>{para}</p>
+				))}
 			</div>
 		)}
 
 		<!-- Artworks grid, chronological -->
-		<div class="container" style="padding-block:clamp(34px,4vw,56px) clamp(50px,6vw,90px)">
+		<div class="container vd-sbelow" style="padding-block:clamp(34px,4vw,56px) clamp(50px,6vw,90px)">
 			{isEmpty ? (
 				<p style="color:var(--muted)">{t.series.noWorks}</p>
 			) : (
@@ -210,25 +224,67 @@ const schema = {
 </BaseLayout>
 
 <style>
-	.vd-shero { background: #243029; }
-	.vd-shero-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; padding-block: clamp(34px, 5vw, 72px); }
+	/* Tracks: full-bleed gutters + two content columns (c1 text / c2 artwork). The gutter equals .container's
+	   padding-inline, so content aligns with the header and the artworks grid below. */
+	.vd-sgrid {
+		--gut: clamp(18px, 4vw, 52px);
+		display: grid;
+		grid-template-columns:
+			[full-start] max(var(--gut), calc((100% - 1320px) / 2 + var(--gut)))
+			[c1-start] minmax(0, 1fr) [c1-end c2-start] 0px [c2-end]
+			max(var(--gut), calc((100% - 1320px) / 2 + var(--gut))) [full-end];
+	}
+	/* Mobile: dark band = text + artwork rows; the intro follows on the page background. */
+	.vd-sbg { grid-column: full-start / full-end; grid-row: 1 / 3; background: #243029; }
+	.vd-stext { grid-column: c1-start / c2-end; grid-row: 1; padding-top: clamp(34px, 5vw, 72px); }
 	/* Box = the artwork's own ratio (--r), capped in height; width shrinks with the cap, so nothing is cropped
 	   or letterboxed and the space is reserved before the image loads. */
 	.vd-shero-art {
-		--maxh: min(72svh, 720px);
+		--maxh: min(60svh, 600px); /* keep in sync with seriesHeroSizes() */
+		grid-column: c1-start / c2-end;
+		grid-row: 2;
 		aspect-ratio: var(--r);
 		width: min(100%, calc(var(--maxh) * var(--r)));
-		margin-inline: auto;
+		margin: 28px auto clamp(34px, 5vw, 72px);
 	}
+	.vd-sintro { grid-column: c1-start / c2-end; grid-row: 3; max-width: 68ch; padding-top: clamp(34px, 4vw, 56px); }
+	.vd-sintro p { margin: 0 0 1.1em; font-size: 16.5px; line-height: 1.75; color: #2f3a32; }
+	.vd-sbelow { grid-column: full-start / full-end; grid-row: 4; }
+
+	/* No featured image: the band wraps the text only and the intro stays below on every screen size. */
+	.vd-solo .vd-sbg { grid-row: 1; }
+	.vd-solo .vd-stext { padding-bottom: clamp(34px, 5vw, 72px); }
+	.vd-solo .vd-sintro { grid-row: 2; }
+	.vd-solo .vd-sbelow { grid-row: 3; }
+
 	@media (min-width: 900px) {
-		.vd-shero-grid:not(.vd-shero-solo) { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 48px; align-items: center; }
-		.vd-shero-art { --maxh: min(78svh, 760px); margin-inline: 0 0; justify-self: end; }
-	}
-	.vd-intro-hero { display: none; }
-	@media (min-width: 900px) {
-		.vd-intro-hero { display: block; max-width: 60ch; margin-top: 26px; padding-top: 22px; border-top: 1px solid rgba(255, 255, 255, 0.18); }
-		.vd-intro-hero p { margin: 0 0 1em; font-size: 15.5px; line-height: 1.7; color: #e4dccb; }
-		.vd-intro-hero p:last-child { margin-bottom: 0; }
-		.vd-intro-below { display: none; }
+		.vd-sgrid:not(.vd-solo) {
+			grid-template-columns:
+				[full-start] max(var(--gut), calc((100% - 1320px) / 2 + var(--gut)))
+				[c1-start] minmax(0, 0.9fr) [c1-end] 48px [c2-start] minmax(0, 1.1fr) [c2-end]
+				max(var(--gut), calc((100% - 1320px) / 2 + var(--gut))) [full-end];
+		}
+		/* Desktop: the band covers text, intro and artwork; text and intro sit in column 1, centred against the artwork. */
+		.vd-sgrid:not(.vd-solo) .vd-sbg { grid-row: 1 / 3; }
+		.vd-sgrid:not(.vd-solo) .vd-stext { grid-column: c1-start / c1-end; grid-row: 1; align-self: end; padding-top: 0; }
+		.vd-sgrid:not(.vd-solo) .vd-shero-art {
+			--maxh: min(75svh, 720px); /* keep in sync with seriesHeroSizes() */
+			grid-column: c2-start / c2-end;
+			grid-row: 1 / 3;
+			justify-self: end;
+			margin: clamp(34px, 5vw, 72px) 0;
+		}
+		.vd-sgrid:not(.vd-solo) .vd-sintro {
+			grid-column: c1-start / c1-end;
+			grid-row: 2;
+			align-self: start;
+			max-width: 60ch;
+			margin-top: 26px;
+			padding-top: 22px;
+			border-top: 1px solid rgba(255, 255, 255, 0.18);
+		}
+		.vd-sgrid:not(.vd-solo) .vd-sintro p { font-size: 15.5px; line-height: 1.7; color: #e4dccb; }
+		.vd-sgrid:not(.vd-solo) .vd-sintro p:last-child { margin-bottom: 0; }
+		.vd-sgrid:not(.vd-solo) .vd-sbelow { grid-row: 3; }
 	}
 </style>
