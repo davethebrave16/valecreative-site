@@ -79,6 +79,9 @@ export const it = {
 		backLink: '← Tutte le serie',
 		seriesWorks: 'Opere della serie',
 		noWorks: 'Nessuna opera in questa serie ancora.',
+		indexIntro: 'Ogni serie raccoglie opere unite da un soggetto, una storia o un periodo creativo, in ordine cronologico.',
+		worksLink: 'Esplora anche le serie tematiche →',
+		artworkAlt: (title: string, series: string) => `${title} — dalla serie ${series}`,
 	},
 
 	// Techniques
@@ -256,6 +259,13 @@ export const it = {
 	meta: {
 		homeDescription: 'Artista e pittrice tra Pisa e Lucca: quadri a olio, ritratti su commissione e incisioni. Realizza anche oggetti personalizzati fatti a mano.',
 		worksDescription: 'Opere originali e su commissione: paesaggi, ritratti, animali, disegni, incisioni e oggetti personalizzati fatti a mano.',
+		seriesIndexTitle: 'Serie tematiche di Valentina Damiano',
+		seriesTitle: (name: string) => {
+			const full = `${name} — Serie di Valentina Damiano`
+			return full.length <= 60 ? full : `${name} — Serie`
+		},
+		seriesFallback: (name: string, count: number) =>
+			`${name}: ${count === 1 ? 'un\'opera' : `${count} opere`} della serie omonima di Valentina Damiano, pittrice e incisore tra Pisa e Lucca.`,
 		seriesDescription: 'Le serie tematiche di Valentina Damiano: raccolte di dipinti unite da soggetto, tecnica o periodo creativo. Boschi, paesaggi e visioni oniriche.',
 		techniquesDescription: 'Pittura a olio e acquerello, disegno, incisione, pirografia su legno e sbalzo su rame: le tecniche per opere originali e oggetti personalizzati su commissione.',
 		processDescription: 'Come nasce un\'opera su commissione di Valentina Damiano: ascolto, bozzetto, realizzazione e consegna. Ritratti, opere murali e pirografie su misura, tra Pisa e Lucca.',
@@ -286,7 +296,7 @@ export const it = {
 	// Cookie consent banner
 	cookieConsent: {
 		text: 'Con il tuo consenso usiamo Google Analytics, per capire come viene usato il sito, e il Meta Pixel, per misurare i risultati delle nostre attività su Facebook e Instagram. Senza consenso nessuno dei due viene attivato.',
-		learnMore: 'Scopri di più',
+		learnMore: 'Scopri di più sui cookie',
 		accept: 'Accetta',
 		reject: 'Rifiuta',
 		customize: 'Personalizza',

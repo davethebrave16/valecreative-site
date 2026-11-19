@@ -17,6 +17,7 @@ import '../styles/global.css'
 // Preloaded: the homepage hero h1 (LCP text) uses Cormorant Garamond 600.
 import cormorant600Url from '@fontsource/cormorant-garamond/files/cormorant-garamond-latin-600-normal.woff2?url'
 import { useTranslations, getLocalePath } from '@/i18n/utils'
+import { hasListableSeries } from '@/lib/fetchContent'
 import CookieConsentBanner from '@/components/CookieConsentBanner.astro'
 import { Image } from 'astro:assets'
 import logo from '@/assets/logo.png'
@@ -24,6 +25,12 @@ import logoWhite from '@/assets/logo-white.png'
 
 interface Props {
 	title: string
+	// Replaces the default "{title} — Vale Creative" when a page needs full control of its <title> (≤ 60 chars).
+	fullTitle?: string
+	// e.g. 'noindex,follow'; no robots meta is emitted when omitted.
+	robots?: string
+	// Omit the hreflang alternates (it/en/x-default): for pages whose counterpart is noindexed or doesn't exist.
+	noAlternates?: boolean
 	description?: string
 	lang?: string
 	ogImage?: string
@@ -34,6 +41,9 @@ interface Props {
 
 const {
 	title,
+	fullTitle,
+	robots,
+	noAlternates = false,
 	description = 'Vale Creative — il portfolio di Valentina Damiano',
 	lang,
 	ogImage,
@@ -50,9 +60,13 @@ const pathname = Astro.url.pathname
 const isActive = (href: string) =>
 	href === p('/') ? pathname === p('/') || pathname === p('') : pathname.startsWith(href)
 
+// "Serie"/"Series" appears only once at least one series is listable (memoized: one fetch per build).
+const showSeriesNav = await hasListableSeries()
+
 const navLinks = [
 	{ label: t.nav.home, href: p('/') },
 	{ label: t.nav.works, href: p('/works') },
+	...(showSeriesNav ? [{ label: t.nav.series, href: p('/series') }] : []),
 	{ label: t.nav.process, href: p('/process') },
 	{ label: t.nav.techniques, href: p('/techniques') },
 	{ label: t.nav.about, href: p('/about') },
@@ -79,7 +93,7 @@ const itHref = locale === 'it' ? pathname : switchPath
 const enHref = locale === 'en' ? pathname : switchPath
 
 const resolvedOgImage = ogImage ?? `${SITE}/og-default.jpg`
-const pageTitle = `${title} — Vale Creative`
+const pageTitle = fullTitle ?? `${title} — Vale Creative`
 ---
 
 <!doctype html>
@@ -89,6 +103,7 @@ const pageTitle = `${title} — Vale Creative`
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="description" content={description} />
 		<meta name="theme-color" content="#2e403a" />
+		{robots && <meta name="robots" content={robots} />}
 		<title>{pageTitle}</title>
 
 		<!-- Canonical -->
@@ -96,9 +111,9 @@ const pageTitle = `${title} — Vale Creative`
 
 		<!-- Hreflang alternates. x-default points at the root language gateway (src/pages/index.astro),
 		     which picks /it or /en for the visitor rather than assuming Italian. -->
-		<link rel="alternate" hreflang="it" href={itUrl} />
-		<link rel="alternate" hreflang="en" href={enUrl} />
-		<link rel="alternate" hreflang="x-default" href={`${SITE}/`} />
+		{!noAlternates && <link rel="alternate" hreflang="it" href={itUrl} />}
+		{!noAlternates && <link rel="alternate" hreflang="en" href={enUrl} />}
+		{!noAlternates && <link rel="alternate" hreflang="x-default" href={`${SITE}/`} />}
 
 		<!-- Open Graph -->
 		<meta property="og:site_name" content="Vale Creative" />
@@ -182,9 +197,9 @@ const pageTitle = `${title} — Vale Creative`
 					))}
 					<a
 						href={p('/contact')}
-						style="font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;font-weight:600;padding:9px 18px;border:1px solid var(--verde);border-radius:999px;color:var(--verde);transition:background .2s,color .2s"
-						onmouseover="this.style.background='var(--verde)';this.style.color='#fff'"
-						onmouseout="this.style.background='';this.style.color='var(--verde)'"
+						style="font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;font-weight:600;padding:9px 18px;border:1px solid var(--verde-deep);border-radius:999px;color:var(--verde-deep);transition:background .2s,color .2s"
+						onmouseover="this.style.background='var(--verde-deep)';this.style.color='#fff'"
+						onmouseout="this.style.background='';this.style.color='var(--verde-deep)'"
 					>
 						{t.nav.contact}
 					</a>

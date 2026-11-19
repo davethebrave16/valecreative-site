@@ -7,6 +7,13 @@ import { getImage } from 'astro:assets'
 import type { ImageObject } from './types'
 
 export const REMOTE_WIDTHS = [400, 800, 1200, 1600]
+// Finer ladder for the series hero only (the largest, LCP image, with a known rendered width): without the
+// 600/960 steps a 354 CSS px box at DPR 2.6 (920 px) would jump from 800w to 1200w.
+export const SERIES_HERO_WIDTHS = [400, 600, 800, 1000, 1200, 1600]
+// Phones (< 900px) stop at 800w: effective DPR is capped instead of shrinking the artwork's box.
+export const SERIES_HERO_MOBILE_WIDTHS = [400, 600, 800]
+export const SERIES_HERO_MOBILE_MEDIA = '(max-width: 899px)'
+export const SERIES_HERO_DESKTOP_MEDIA = '(min-width: 900px)'
 
 // `sizes` per layout, calibrated on the rendered widths measured in Chrome at 412/600/1000/1440px
 // (global.css: .container max 1320px with clamp(18px, 4vw, 52px) gutters → 100vw-36px on phones,
@@ -26,6 +33,24 @@ export const IMAGE_SIZES = {
 	aboutThumb: '(min-width: 820px) 160px, (min-width: 560px) 23vw, calc(50vw - 24px)',
 	// .vd-detailwrap main column (1.7fr from 860px): 376 / 552 / 560 / 738px
 	workMain: '(min-width: 1320px) 738px, (min-width: 860px) calc(58vw - 20px), calc(100vw - 36px)',
+}
+
+// Series detail hero: the whole artwork, uncropped, in a box of the artwork's own ratio capped by HEIGHT:
+//   box width = min(available width, cap × ratio)
+// Mobile cap min(60svh, 600px), available = content width (100vw − 2 × container gutter);
+// from 900px the cap is min(75svh, 720px) and the box lives in the right column (1.1fr of 2, gap 48px:
+// 0.55 × (content − 48px), i.e. 642px from 1320px). These must stay in sync with .vd-shero-art in
+// SeriesDetailPage.astro (`--maxh`, mobile and ≥ 900px).
+export function seriesHeroSizes(ratio: number): string {
+	const r = ratio.toFixed(4)
+	const gutter = 'clamp(18px, 4vw, 52px)'
+	const mobileCap = `min(60svh, 600px) * ${r}`
+	const deskCap = `min(75svh, 720px) * ${r}`
+	return [
+		`(min-width: 1320px) min(642px, calc(${deskCap}))`,
+		`(min-width: 900px) min(calc((100vw - 2 * ${gutter} - 48px) * 0.55), calc(${deskCap}))`,
+		`min(calc(100vw - 2 * ${gutter}), calc(${mobileCap}))`,
+	].join(', ')
 }
 
 // Width/height ratio of boxes that crop with object-fit: cover. Variants are cropped to this ratio at
@@ -51,15 +76,15 @@ export function gridImageProps(orient: string): { sizes: string; aspect: number 
 // Shared transform options: <RemoteImage> and the homepage hero preload must pass exactly the same
 // values so the generated URLs (hashed from src/width/height/format/fit) match.
 // `aspect` crops to that width/height ratio (fit: cover); without it the original ratio is kept.
-export function remoteImageOptions(image: ImageObject, aspect?: number) {
+export function remoteImageOptions(image: ImageObject, aspect?: number, ladder: number[] = REMOTE_WIDTHS) {
 	const { original: src, width: origW, height: origH } = image
 	if (!origW || !origH) {
 		// Legacy documents without dimensions: let Astro fetch them to infer the size (no crop).
-		return { src, widths: REMOTE_WIDTHS.slice(0, 3), inferSize: true as const }
+		return { src, widths: ladder.slice(0, 3), inferSize: true as const }
 	}
 	// Never upscale: Astro only filters widths larger than the source for local imports.
 	const maxWidth = aspect ? Math.min(origW, Math.floor(origH * aspect)) : origW
-	const fitting = REMOTE_WIDTHS.filter((w) => w <= maxWidth)
+	const fitting = ladder.filter((w) => w <= maxWidth)
 	const widths = fitting.length > 0 ? fitting : [maxWidth]
 	const width = widths[widths.length - 1]
 	const height = Math.round(aspect ? width / aspect : (width * origH) / origW)
@@ -69,6 +94,36 @@ export function remoteImageOptions(image: ImageObject, aspect?: number) {
 export async function getRemoteSrcset(image: ImageObject, format: 'avif' | 'webp', aspect?: number): Promise<string> {
 	const result = await getImage({ ...remoteImageOptions(image, aspect), format })
 	return result.srcSet.attribute
+}
+
+// Series hero <picture>/preload sources. The page's <picture> and its preload links are built from this one
+// object, so they always use identical srcsets (and media), and the browser fetches a single variant.
+export interface SeriesHeroSources {
+	width?: number
+	height?: number
+	src: string // fallback <img src> (WebP)
+	mobile: { avif: string; webp: string }
+	full: { avif: string; webp: string }
+}
+
+export async function getSeriesHeroSources(image: ImageObject): Promise<SeriesHeroSources> {
+	const srcset = async (ladder: number[], format: 'avif' | 'webp') =>
+		(await getImage({ ...remoteImageOptions(image, undefined, ladder), format })).srcSet.attribute
+	const full = remoteImageOptions(image, undefined, SERIES_HERO_WIDTHS)
+	const fallback = await getImage({ ...full, format: 'webp' })
+	return {
+		width: 'width' in full ? full.width : undefined,
+		height: 'height' in full ? full.height : undefined,
+		src: fallback.src,
+		mobile: {
+			avif: await srcset(SERIES_HERO_MOBILE_WIDTHS, 'avif'),
+			webp: await srcset(SERIES_HERO_MOBILE_WIDTHS, 'webp'),
+		},
+		full: {
+			avif: await srcset(SERIES_HERO_WIDTHS, 'avif'),
+			webp: await srcset(SERIES_HERO_WIDTHS, 'webp'),
+		},
+	}
 }
 
 // Two WebP sizes for full-width CSS background heroes (series/category detail pages).

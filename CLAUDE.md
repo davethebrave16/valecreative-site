@@ -285,13 +285,13 @@ Applied at three call sites:
 
 ## Bilingual content fields
 
-`artworks`, `techniques`, `categories`, `contents`, and `artworks/{id}/gallery` documents carry optional English sibling fields alongside their Italian text (flat-suffixed with `En`: `titleEn`, `descriptionEn`, `nameEn`, `bodyEn`, `captionEn` — added in the backoffice, see its `CLAUDE.md` → "Bilingual (IT/EN) content fields"). `series` is not part of this — it stays Italian-only.
+`artworks`, `techniques`, `categories`, `contents`, and `artworks/{id}/gallery` documents carry optional English sibling fields alongside their Italian text (flat-suffixed with `En`: `titleEn`, `descriptionEn`, `nameEn`, `bodyEn`, `captionEn` — added in the backoffice, see its `CLAUDE.md` → "Bilingual (IT/EN) content fields"). `series` follows the same pattern (`nameEn`/`descriptionEn`/`introEn`, see "Series" below).
 
 - `src/i18n/utils.ts` exports `localize(it, en, locale)`, which returns `en` when `locale === 'en'` and `en` is non-empty, otherwise falls back to `it`.
 - Every fetcher in `src/lib/fetchContent.ts` that returns localizable text (`getArtworks`, `getArtworkBySlug`, `getArtworkGallery`, `getTechniques`, `getTechniqueBySlug`, `getPublishedContents`, `getContentBySlug`, `getCategories`) takes a `locale: Locale = 'it'` parameter and resolves the correct-language string via `localize()` inside the doc mapper — callers always get back plain, already-localized strings (e.g. `artwork.title`), never the raw `*En` field.
 - Every call site passes `locale as Locale` (the `locale` prop threaded down from `Astro.params.locale` in each `src/pages/[locale]/**` route). If you add a new fetch call, pass locale through the same way — grep `fetchContent` imports in `src/components/pages/*.astro` for the pattern.
 - `[slug]` pages (`works/[slug].astro`, `techniques/[slug].astro`) fetch the full list **once per locale** inside `getStaticPaths()` (`locales.map(async (locale) => getXxx(locale))`, then `.flat()`) rather than fetching once and reusing across both locale routes — otherwise the `props.item` passed to the detail page would always be the Italian-only data even on `/en/*`.
-- `getPublishedSeries`/`getSeriesBySlug` are unchanged (no `locale` param) since `series` is out of scope for this feature.
+- `getPublishedSeries(locale)`/`getSeriesBySlug(slug, locale)` localize too; see "Series" below.
 
 ## Categories — index grid + dedicated gallery pages
 
@@ -309,6 +309,22 @@ This used to be a single-page, client-side filterable gallery (`WorksGrid.tsx`, 
 
 Both `WorksIndexPage.astro` and `CategoryDetailPage.astro` use `locale`/`getLocalePath()` the same way every other shared page component does — see "Using translations in a shared page component" above.
 
+## Series
+
+`series` docs: `name`/`nameEn`, `slug`, `description`/`descriptionEn` (short: cards, hero, meta), `intro`/`introEn` (long plain text, paragraphs split on blank lines, rendered escaped — never in meta/cards), `featuredArtworkId`, `order?`, `published`. There is no `coverImage`: the cover is the featured artwork (`featuredArtworkId` if it is still in the series, else the first artwork chronologically). `artworks.seriesId` is a DocumentReference (unwrapped in `docToArtwork`).
+
+- **Data** (`fetchContent.ts`): `getPublishedSeries` never uses `orderBy('order')` (Firestore would drop series without `order`) — sorted client-side (order, then name). `getSeriesArtworks` sorts by year ascending (no year last), then title, then slug. `getListableSeries` = published AND ≥ 1 artwork: only those appear in `/series`, the homepage teaser (max 4), the `/works` link and the sitemap.
+- **Memoization**: `fetchContent.ts` fetches the raw `artworks` and `series` documents once per build (`cached()`; re-localized per call; disabled in `astro dev`; failed loads are not cached). `BaseLayout` renders on every page and calls `hasListableSeries()` (same rule as `getListableSeries`) for the nav, so this is what keeps it from multiplying Firestore reads.
+- **Indexing rules** (each page's robots meta is the single source of truth):
+  - 0 artworks → both locales `noindex,follow`.
+  - English incomplete (`series.hasEnglish` false: `nameEn`/`descriptionEn`/`introEn` missing wherever the Italian field exists) → the `/en` page is `noindex,follow`, and **both** pages drop the it↔en/x-default hreflang pair (`noAlternates` prop of `BaseLayout`) so the Italian page never points at a noindexed one. The `/en` index cards stay.
+  - `/series` index with no listable series → both locales `noindex,follow`, no hreflang.
+  - The sitemap `filter` in `astro.config.mjs` reads each page's robots meta from the built `dist/` HTML and drops `noindex` pages: no manifest, no cached state, nothing to go stale. (It runs at `astro:build:done`; `OUT_DIR` there must match the Astro `outDir`.)
+- **Detail page** (`SeriesDetailPage.astro`): every published series gets a page in both locales (unpublished: none). The hero shows the **whole** featured artwork, never cropped: a text column plus a real `<RemoteImage priority>` (AVIF preload with the identical `getRemoteSrcset` options, not a CSS background) in a box with the artwork's own ratio (`--r` = width/height, explicit so CLS is 0), height-capped (`--maxh`: `min(60svh, 600px)` on mobile, `min(75svh, 720px)` from 900px; box width = min(available width, cap × ratio)). Encoder default quality (≈50 AVIF). Its `sizes` come from `seriesHeroSizes(ratio)` in `src/lib/remoteImage.ts` (exact rendered width incl. the height cap — keep it in sync with the CSS caps) and it is a hand-written `<picture>` (not `<RemoteImage>`) built from `getSeriesHeroSources()`: a phone source (`media="(max-width: 899px)"`, AVIF then WebP, ladder capped at 800w = `SERIES_HERO_MOBILE_WIDTHS`, i.e. the effective DPR is capped instead of shrinking the box) and the full ladder (`SERIES_HERO_WIDTHS`, 400/600/800/1000/1200/1600) for desktop. The two AVIF preload links (one per media query) use the same srcsets and `sizes` from the same object, so the browser fetches exactly one hero variant per viewport (verified at 412 px DPR 2.6 / 1.75 and 1440 px DPR 1). There is no `IMAGE_ASPECTS.seriesHero` (no crop).
+- **SEO**: `<title>` via `BaseLayout`'s `fullTitle` prop (`meta.seriesTitle(name)`, ≤ 60 chars); meta description = `truncateMetaDescription(description)` or the unique `meta.seriesFallback`; JSON-LD `@graph` = `CollectionPage` (+ `ItemList` of `VisualArtwork`) + `CreativeWorkSeries` + `BreadcrumbList`.
+- **Nav**: "Serie"/"Series" after Works (desktop, mobile, footer) appears only when at least one series is listable — the same rule as the homepage teaser and the `/works` link. No flag.
+- **Local preview of unpublished series**: `SERIES_PREVIEW_ALL=1 npm run build` treats unpublished series as published. It is **ignored when `CI` or `GITHUB_ACTIONS` is set** (a warning is logged), so the production workflow can never publish drafts.
+
 ## Techniques Index — Grouped Accordion
 
 `TechniquesIndexPage.astro` (`/it|en/techniques`) groups techniques by `category` instead of rendering one flat list:
@@ -323,7 +339,7 @@ Artwork thumbnails in `CategoryArtworkGrid.astro` (top-right corner of each grid
 - `for_sale` → `var(--verde)` (green)
 - `sold` and `not_for_sale` → `var(--rose)` (both map to the same red/rose — the site never visually distinguishes "sold" from "not for sale" by color, only through the tooltip/label text)
 
-`--rose` (`src/styles/global.css`) is the same token used for form validation errors elsewhere (`CommissionRequestForm.jsx`) — reused here rather than introducing a new red.
+`--rose` (`src/styles/global.css`) is the same token used for form validation errors elsewhere (`CommissionRequestForm.jsx`) — reused here rather than introducing a new red. The label *text* uses `--rose-text` (`#a8364f`, ≥ 4.5:1 on the cream page background; `--rose` itself is 3.5:1) and `--verde-deep` for "available"; the dot keeps the brand colours. Likewise `--verde` is exactly 4.5:1 on the cream header, so header text links (active nav link, language switch, Contact button, artwork CTA link) use `--verde-deep` — keep that when adding green text on `#efe7d6`.
 
 The grid dot also carries a native `title="..."` tooltip sourced from `availabilityLabels` (the localized `{for_sale, sold, not_for_sale}` dictionary, passed into `CategoryArtworkGrid` from `CategoryDetailPage.astro` as `t.works.availability`), so the exact status is still recoverable per-artwork even though the color itself is binary.
 

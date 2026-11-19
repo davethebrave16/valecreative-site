@@ -1,25 +1,26 @@
 ---
 import SeriesDetailPage from '@/components/pages/SeriesDetailPage.astro'
-import { getPublishedSeries } from '@/lib/fetchContent'
+import { getSeriesWithArtworks, type SeriesWithArtworks } from '@/lib/fetchContent'
 import { locales } from '@/i18n/utils'
-import type { Series } from '@/lib/types'
 
+// Every published series gets a page in both locales (unpublished ones get none). Whether a page is indexable
+// (empty series, incomplete English) is decided in SeriesDetailPage via its robots meta; the sitemap reads
+// that meta from the built HTML (astro.config.mjs), so there is no second source of truth.
 export async function getStaticPaths() {
-	const series = await getPublishedSeries()
-	return locales.flatMap((locale) =>
-		series.map((s) => ({
-			params: { locale, slug: s.slug },
-			props: { series: s },
-		}))
+	const perLocale = await Promise.all(
+		locales.map(async (locale) => ({ locale, items: await getSeriesWithArtworks(locale) })),
+	)
+	return perLocale.flatMap(({ locale, items }) =>
+		items.map((item) => ({ params: { locale, slug: item.series.slug }, props: { item } })),
 	)
 }
 
 interface Props {
-	series: Series
+	item: SeriesWithArtworks
 }
 
 const { locale } = Astro.params
-const { series } = Astro.props
+const { item } = Astro.props
 ---
 
-<SeriesDetailPage locale={locale} series={series} />
+<SeriesDetailPage locale={locale} series={item.series} artworks={item.artworks} featured={item.featured} />

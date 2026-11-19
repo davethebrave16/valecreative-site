@@ -78,6 +78,9 @@ export const en = {
 		backLink: '← All series',
 		seriesWorks: 'Works in this series',
 		noWorks: 'No works in this series yet.',
+		indexIntro: 'Each series gathers artworks united by a subject, a story or a creative period, in chronological order.',
+		worksLink: 'Also explore the thematic series →',
+		artworkAlt: (title: string, series: string) => `${title} — from the ${series} series`,
 	},
 
 	// Techniques
@@ -255,6 +258,13 @@ export const en = {
 	meta: {
 		homeDescription: 'Artist and painter based between Pisa and Lucca: oil paintings, commissioned portraits and prints, plus personalised handmade gifts.',
 		worksDescription: 'Original and commissioned works: landscapes, portraits, animals, drawings, prints and personalised handmade gifts.',
+		seriesIndexTitle: 'Thematic series by Valentina Damiano',
+		seriesTitle: (name: string) => {
+			const full = `${name} — Series by Valentina Damiano`
+			return full.length <= 60 ? full : `${name} — Series`
+		},
+		seriesFallback: (name: string, count: number) =>
+			`${name}: ${count === 1 ? 'one artwork' : `${count} artworks`} from the series by Valentina Damiano, painter and engraver between Pisa and Lucca.`,
 		seriesDescription: 'Thematic series by Valentina Damiano: collections of paintings united by subject, technique, or creative period. Forests, landscapes, and dreamlike visions.',
 		techniquesDescription: 'Oil and watercolour painting, drawing, printmaking, wood pyrography and copper repoussé: techniques for original works and personalised commissions.',
 		processDescription: 'How a commissioned artwork by Valentina Damiano comes to life: listening, sketch, painting and delivery. Bespoke portraits, murals and pyrography from Pisa and Lucca, Tuscany.',
@@ -285,7 +295,7 @@ export const en = {
 	// Cookie consent banner
 	cookieConsent: {
 		text: 'With your consent we use Google Analytics, to understand how the site is used, and the Meta Pixel, to measure the results of our activity on Facebook and Instagram. Without consent neither is activated.',
-		learnMore: 'Learn more',
+		learnMore: 'Learn more about cookies',
 		accept: 'Accept',
 		reject: 'Reject',
 		customize: 'Customize',

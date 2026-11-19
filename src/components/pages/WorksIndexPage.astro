@@ -2,7 +2,7 @@
 import BaseLayout from '@/layouts/BaseLayout.astro'
 import RemoteImage from '@/components/RemoteImage.astro'
 import { IMAGE_SIZES, IMAGE_ASPECTS } from '@/lib/remoteImage'
-import { getArtworks, getCategories } from '@/lib/fetchContent'
+import { getArtworks, getCategories, getListableSeries } from '@/lib/fetchContent'
 import { useTranslations, getLocalePath, type Locale } from '@/i18n/utils'
 import { looksLikeFilename } from '@/lib/altText'
 
@@ -14,9 +14,10 @@ const { locale } = Astro.props
 const t = useTranslations(locale)
 const p = (path: string) => getLocalePath(locale, path)
 
-const [allArtworks, categories] = await Promise.all([
+const [allArtworks, categories, listableSeries] = await Promise.all([
 	getArtworks(locale as Locale),
 	getCategories(locale as Locale),
+	getListableSeries(locale as Locale),
 ])
 
 const artworksById = Object.fromEntries(allArtworks.map((a) => [a.id, a]))
@@ -53,6 +54,9 @@ const pageTitle = locale === 'it' ? 'Dipinti, ritratti e oggetti personalizzati'
 			<div class="vd-eyebrow">{t.works.eyebrow}</div>
 			<h1 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(34px,5.5vw,62px);margin:10px 0 0;color:var(--ink)">{t.works.title}</h1>
 			<p style="max-width:58ch;margin:14px 0 0;font-size:16px;line-height:1.65;color:#52564c">{t.works.subtitle}</p>
+			{listableSeries.length > 0 && (
+				<p style="margin:12px 0 0"><a href={p('/series')} style="font-weight:600;font-size:14px;color:var(--verde-deep)">{t.series.worksLink}</a></p>
+			)}
 
 			{visibleCategories.length === 0 ? (
 				<p style="color:var(--muted);margin-top:2rem">{t.works.empty}</p>
