@@ -139,6 +139,14 @@ const schema = {
 					{series.description && (
 						<p style="max-width:54ch;margin:14px 0 0;font-size:clamp(16px,1.7vw,19px);line-height:1.6;color:#ece5d6">{series.description}</p>
 					)}
+					{heroImage && introParagraphs.length > 0 && (
+						<!-- Desktop only: the free space beside the artwork carries the intro. Mobile keeps it below the hero (this copy is display:none there). -->
+						<div class="vd-intro-hero">
+							{introParagraphs.map((para) => (
+								<p>{para}</p>
+							))}
+						</div>
+					)}
 				</div>
 				{heroImage && (
 					<div class="vd-shero-art" style={`--r:${heroRatio.toFixed(4)}`}>
@@ -149,7 +157,7 @@ const schema = {
 		</div>
 
 		{introParagraphs.length > 0 && (
-			<div class="container" style="padding-top:clamp(34px,4vw,56px)">
+			<div class={`container${heroImage ? ' vd-intro-below' : ''}`} style="padding-top:clamp(34px,4vw,56px)">
 				<div style="max-width:68ch">
 					{introParagraphs.map((para) => (
 						<p style="font-size:16.5px;line-height:1.75;color:#2f3a32;margin:0 0 1.1em">{para}</p>
@@ -203,7 +211,7 @@ const schema = {
 
 <style>
 	.vd-shero { background: #243029; }
-	.vd-shero-grid { display: grid; gap: 28px; padding-block: clamp(34px, 5vw, 72px); }
+	.vd-shero-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; padding-block: clamp(34px, 5vw, 72px); }
 	/* Box = the artwork's own ratio (--r), capped in height; width shrinks with the cap, so nothing is cropped
 	   or letterboxed and the space is reserved before the image loads. */
 	.vd-shero-art {
@@ -215,5 +223,12 @@ const schema = {
 	@media (min-width: 900px) {
 		.vd-shero-grid:not(.vd-shero-solo) { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 48px; align-items: center; }
 		.vd-shero-art { --maxh: min(78svh, 760px); margin-inline: 0 0; justify-self: end; }
+	}
+	.vd-intro-hero { display: none; }
+	@media (min-width: 900px) {
+		.vd-intro-hero { display: block; max-width: 60ch; margin-top: 26px; padding-top: 22px; border-top: 1px solid rgba(255, 255, 255, 0.18); }
+		.vd-intro-hero p { margin: 0 0 1em; font-size: 15.5px; line-height: 1.7; color: #e4dccb; }
+		.vd-intro-hero p:last-child { margin-bottom: 0; }
+		.vd-intro-below { display: none; }
 	}
 </style>
